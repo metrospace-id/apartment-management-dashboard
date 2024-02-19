@@ -1,5 +1,5 @@
 import React, {
-  ReactNode, useEffect, useRef, useState,
+  ReactNode, useEffect, useRef, useState, Suspense,
 } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
@@ -83,62 +83,65 @@ function Layout({ children }: LayoutProps) {
   }, [])
 
   return (
-    <main className="h-[100vh] flex relative">
-      <SideBar open={isSidebarOpen} />
-      {isSidebarOpen && (
-        <div className="absolute w-screen h-screen block z-10 bg-black opacity-70 sm:hidden" onClick={handleClickSideBar} role="presentation" />
-      )}
+    <Suspense>
+      <main className="h-[100vh] flex relative">
+        <SideBar open={isSidebarOpen} />
+        {isSidebarOpen && (
+          <div className="absolute w-screen h-screen block z-10 bg-black opacity-70 sm:hidden" onClick={handleClickSideBar} role="presentation" />
+        )}
 
-      <div className="flex-1">
-        <header className="px-6 flex bg-white border-b border-slate-100 shadow-sm gap-4 dark:bg-black dark:border-slate-700">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center relative">
+        <div className="flex-1">
+          <header className="p-4 flex bg-white border-b border-slate-100 shadow-sm gap-4 dark:bg-black dark:border-slate-700">
+
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center relative">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
+                  role="presentation"
+                  onClick={handleClickSideBar}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="hidden flex-1 items-center gap-1 sm:flex">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+
+              <div className="px-2">
+                <input placeholder="Cari..." className="outline-none text-slate-600 bg-white dark:bg-black dark:text-white" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 mr-0 ml-auto">
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
+                className="flex items-center justify-center relative"
                 role="presentation"
-                onClick={handleClickSideBar}
+                onClick={handleClickFullScreen}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          <div className="flex-1 flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-
-            <div className="py-6 px-2">
-              <input placeholder="Cari..." className="outline-none text-slate-600 bg-white dark:bg-black dark:text-white" />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div
-              className="flex items-center justify-center relative"
-              role="presentation"
-              onClick={handleClickFullScreen}
-            >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                </svg>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-center relative" ref={notificationElRef}>
-              <div
-                className={`${isNotificationOpen ? 'bg-slate-200 dark:bg-slate-700' : ''} w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700`}
-                role="presentation"
-                onClick={handleClickNotification}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                </svg>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                  </svg>
+                </div>
               </div>
 
-              {isNotificationOpen && (
+              <div className="flex items-center justify-center relative" ref={notificationElRef}>
+                <div
+                  className={`${isNotificationOpen ? 'bg-slate-200 dark:bg-slate-700' : ''} w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700`}
+                  role="presentation"
+                  onClick={handleClickNotification}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                  </svg>
+                </div>
+
+                {isNotificationOpen && (
                 <div className="absolute shadow-lg rounded-md w-[320px] z-10 bg-white top-10 right-0 overflow-hidden">
                   <div className="bg-sky-700 p-4 dark:bg-black">
                     <p className="text-md text-white font-medium">Notifikasi</p>
@@ -160,86 +163,87 @@ function Layout({ children }: LayoutProps) {
                     </ul>
                   </div>
                 </div>
-              )}
+                )}
+              </div>
+
+              <div className="flex items-center justify-center relative">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
+                  role="presentation"
+                  onClick={handleClickTheme}
+                >
+                  {theme === 'dark' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-600 dark:text-white">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                    </svg>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center justify-center relative">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
-                role="presentation"
-                onClick={handleClickTheme}
-              >
-                {theme === 'dark' ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-600 dark:text-white">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
-                  </svg>
+            <div className="flex items-center justify-center">
+              <div className="relative" ref={profileElRef}>
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200"
+                  role="presentation"
+                  onClick={handleClickProfile}
+                >
+                  <img src="https://via.placeholder.com/200x200" className="rounded-full w-8 h-8" alt="avatar" />
+                </div>
+
+                {isProfileOpen && (
+                <div className="absolute shadow-lg rounded-md w-[200px] z-10 bg-white top-10 right-0 overflow-hidden dark:bg-slate-900">
+                  <div className="p-4">
+                    <p className="text-xs text-slate-600 font-medium">Halo, Uje</p>
+                  </div>
+                  <div className="border-b border-slate-200 py-2">
+                    <ul>
+                      <li className="py-2 px-4 cursor-pointer flex gap-1 items-center hover:bg-slate-200 dark:hover:bg-slate-700" onClick={() => navigation('/profile')} role="presentation">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                        </svg>
+                        <p className="text-sm text-slate-600 font-medium dark:text-white">Profile</p>
+                      </li>
+                      <li className="py-2 px-4 cursor-pointer flex gap-1 items-center hover:bg-slate-200 dark:hover:bg-slate-700" onClick={() => navigation('/todo')} role="presentation">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+                        </svg>
+                        <p className="text-sm text-slate-600 font-medium dark:text-white">Todo List</p>
+                      </li>
+                      <li className="py-2 px-4 cursor-pointer flex gap-1 items-center hover:bg-slate-200 dark:hover:bg-slate-700" onClick={() => navigation('/note')} role="presentation">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                        </svg>
+                        <p className="text-sm text-slate-600 font-medium dark:text-white">Notes</p>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="py-2">
+                    <ul>
+                      <li className="py-2 px-4 cursor-pointer flex gap-1 items-center hover:bg-slate-200 dark:hover:bg-slate-700" onClick={handleClickLogout} role="presentation">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
+                        </svg>
+                        <p className="text-sm text-slate-600 font-medium dark:text-white">Logout</p>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
                 )}
               </div>
             </div>
+
+          </header>
+          <div className="w-full h-[calc(100vh-72px)] overflow-scroll flex flex-col bg-slate-100 dark:bg-slate-800">
+            {children}
           </div>
-
-          <div className="flex items-center justify-center">
-            <div className="relative" ref={profileElRef}>
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200"
-                role="presentation"
-                onClick={handleClickProfile}
-              >
-                <img src="https://via.placeholder.com/200x200" className="rounded-full w-8 h-8" alt="avatar" />
-              </div>
-
-              {isProfileOpen && (
-              <div className="absolute shadow-lg rounded-md w-[200px] z-10 bg-white top-10 right-0 overflow-hidden dark:bg-slate-900">
-                <div className="p-4">
-                  <p className="text-xs text-slate-600 font-medium">Halo, Uje</p>
-                </div>
-                <div className="border-b border-slate-200 py-2">
-                  <ul>
-                    <li className="py-2 px-4 cursor-pointer flex gap-1 items-center hover:bg-slate-200 dark:hover:bg-slate-700" onClick={() => navigation('/profile')} role="presentation">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                      </svg>
-                      <p className="text-sm text-slate-600 font-medium dark:text-white">Profile</p>
-                    </li>
-                    <li className="py-2 px-4 cursor-pointer flex gap-1 items-center hover:bg-slate-200 dark:hover:bg-slate-700" onClick={() => navigation('/todo')} role="presentation">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
-                      </svg>
-                      <p className="text-sm text-slate-600 font-medium dark:text-white">Todo List</p>
-                    </li>
-                    <li className="py-2 px-4 cursor-pointer flex gap-1 items-center hover:bg-slate-200 dark:hover:bg-slate-700" onClick={() => navigation('/note')} role="presentation">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                      </svg>
-                      <p className="text-sm text-slate-600 font-medium dark:text-white">Notes</p>
-                    </li>
-                  </ul>
-                </div>
-                <div className="py-2">
-                  <ul>
-                    <li className="py-2 px-4 cursor-pointer flex gap-1 items-center hover:bg-slate-200 dark:hover:bg-slate-700" onClick={handleClickLogout} role="presentation">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
-                      </svg>
-                      <p className="text-sm text-slate-600 font-medium dark:text-white">Logout</p>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              )}
-            </div>
-          </div>
-
-        </header>
-        <div className="w-full h-[calc(100vh-72px)] overflow-scroll flex flex-col bg-slate-100 dark:bg-slate-800">
-          {children}
         </div>
-      </div>
-    </main>
+      </main>
+    </Suspense>
   )
 }
 

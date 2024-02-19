@@ -119,7 +119,7 @@ function Layout({ children }: LayoutProps) {
 
             <div className="flex items-center gap-2 mr-0 ml-auto">
               <div
-                className="flex items-center justify-center relative"
+                className="hidden sm:flex items-center justify-center relative"
                 role="presentation"
                 onClick={handleClickFullScreen}
               >

@@ -1,10 +1,11 @@
-import useOutsideClick from 'hooks/useOutsideClick'
-import {
+import React, {
   ReactNode, useEffect, useRef, useState,
 } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-import SideBar from './SideBar'
+import useOutsideClick from 'hooks/useOutsideClick'
+
+const SideBar = React.lazy(() => import('components/SideBar'))
 
 const NOTIFICATIONS = Array.from(Array(10).keys()).map((key) => ({
   title: `Notifikasi ke ${key + 1}`,
@@ -20,6 +21,7 @@ function Layout({ children }: LayoutProps) {
   const navigation = useNavigate()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isSidebarOpen, setIsSideBarOpen] = useState(true)
   const [theme, setTheme] = useState(localStorage.theme)
 
   const notificationElRef = useRef<HTMLDivElement | null>(null)
@@ -34,6 +36,10 @@ function Layout({ children }: LayoutProps) {
 
   const handleClickProfile = () => {
     setIsProfileOpen((prevState) => !prevState)
+  }
+
+  const handleClickSideBar = () => {
+    setIsSideBarOpen((prevState) => !prevState)
   }
 
   const handleClickFullScreen = () => {
@@ -70,14 +76,34 @@ function Layout({ children }: LayoutProps) {
     if (!localStorage.token && location.pathname !== '/login') {
       navigation('/login')
     }
+
+    if (window.innerWidth < 640) {
+      setIsSideBarOpen(false)
+    }
   }, [])
 
   return (
-    <main className="h-[100vh] flex">
-      <SideBar />
+    <main className="h-[100vh] flex relative">
+      <SideBar open={isSidebarOpen} />
+      {isSidebarOpen && (
+        <div className="absolute w-screen h-screen block z-10 bg-black opacity-70 sm:hidden" onClick={handleClickSideBar} role="presentation" />
+      )}
 
       <div className="flex-1">
         <header className="px-6 flex bg-white border-b border-slate-100 shadow-sm gap-4 dark:bg-black dark:border-slate-700">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center relative">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
+                role="presentation"
+                onClick={handleClickSideBar}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+              </div>
+            </div>
+          </div>
           <div className="flex-1 flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />

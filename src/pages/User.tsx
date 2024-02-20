@@ -7,11 +7,13 @@ import Badge from 'components/Badge'
 import Button from 'components/Button'
 import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
+import Popover from 'components/Popover'
 import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
 import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import Toggle from 'components/Form/Toggle'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Toast from 'components/Toast'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -30,10 +32,12 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
+    hasAction: true,
   },
 ]
 
 const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
+  id: key + 1,
   name: `Lorem Ipsum ${key + 1}`,
   email: `lorem_ipsum${key + 1}@email.com`,
   roles: [1, 2],
@@ -55,21 +59,50 @@ const ROLES = [
 
 const PAGE_SIZE = 25
 
+const MODAL_CONFIRM_TYPE: Record<string, { title: string, description: string, message: string }> = {
+  create: {
+    title: 'Simpan data baru',
+    description: 'Data baru akan disimpan, apakah anda yakin?',
+    message: 'Berhasil menyimpan data',
+  },
+  update: {
+    title: 'Simpan perubahan',
+    description: 'Data perubahan akan disimpan, apakah anda yakin?',
+    message: 'Berhasil merubah data',
+  },
+  delete: {
+    title: 'Hapus data',
+    description: 'Data akan dihapus, apakah anda yakin?',
+    message: 'Berhasil menghapus data',
+  },
+}
+
 function User() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
+    id: 0,
     email: '',
     roles: [0],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
+  const [toast, setToast] = useState({
+    open: false,
+    message: '',
+  })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
     readOnly: false,
   })
+  const [modalConfirm, setModalConfirm] = useState({
+    title: '',
+    description: '',
+    open: false,
+  })
+  const [submitType, setSubmitType] = useState('create')
 
   const debounceSearch = useDebounce(search, 500)
 
@@ -78,16 +111,41 @@ function User() {
     [page, data],
   )
 
+  const handleCloseToast = () => {
+    setToast({
+      open: false,
+      message: '',
+    })
+  }
+
   const handleModalFormClose = () => {
     setModalForm({
       title: '',
       open: false,
       readOnly: false,
     })
+    setModalConfirm((prevState) => ({
+      ...prevState,
+      open: false,
+    }))
     setFields({
+      id: 0,
       email: '',
       roles: [0],
     })
+  }
+
+  const handleModalConfirmClose = () => {
+    if (submitType !== 'delete') {
+      setModalForm((prevState) => ({
+        ...prevState,
+        open: true,
+      }))
+    }
+    setModalConfirm((prevState) => ({
+      ...prevState,
+      open: false,
+    }))
   }
 
   const handleModalCreateOpen = () => {
@@ -105,18 +163,34 @@ function User() {
       readOnly: true,
     })
     setFields({
+      id: userData.id,
       email: userData.email,
       roles: userData.roles,
     })
   }
 
-  const handleModalEditOpen = (userData: any) => {
+  const handleModalUpdateOpen = (userData: any) => {
     setModalForm({
-      title: 'Edit User',
+      title: 'Ubah User',
       open: true,
       readOnly: false,
     })
     setFields({
+      id: userData.id,
+      email: userData.email,
+      roles: userData.roles,
+    })
+  }
+
+  const handleModalDeleteOpen = (userData: any) => {
+    setModalConfirm({
+      title: MODAL_CONFIRM_TYPE.delete.title,
+      description: MODAL_CONFIRM_TYPE.delete.description,
+      open: true,
+    })
+    setSubmitType('delete')
+    setFields({
+      id: userData.id,
       email: userData.email,
       roles: userData.roles,
     })
@@ -154,15 +228,33 @@ function User() {
     }))
   }
 
+  const handleClickConfirm = (type: string) => {
+    setModalForm((prevState) => ({
+      ...prevState,
+      open: false,
+    }))
+    setModalConfirm({
+      title: MODAL_CONFIRM_TYPE[type].title,
+      description: MODAL_CONFIRM_TYPE[type].description,
+      open: true,
+    })
+    setSubmitType(type)
+  }
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
       handleModalFormClose()
+      setToast({
+        open: true,
+        message: MODAL_CONFIRM_TYPE[submitType].message,
+      })
     }, 500)
   }
 
   const tableDatas = TABLE_DATA.map((column) => ({
+    id: column.id,
     name: column.name,
     email: column.email,
     role: (
@@ -174,15 +266,21 @@ function User() {
     ),
     action: (
       <div className="flex items-center gap-1">
-        <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
-          <IconFile className="w-4 h-4" />
-        </Button>
-        <Button variant="primary" size="sm" icon onClick={() => handleModalEditOpen(column)}>
-          <IconEdit className="w-4 h-4" />
-        </Button>
-        <Button variant="danger" size="sm" icon>
-          <IconTrash className="w-4 h-4" />
-        </Button>
+        <Popover content="Detail">
+          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+            <IconFile className="w-4 h-4" />
+          </Button>
+        </Popover>
+        <Popover content="Ubah">
+          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+            <IconEdit className="w-4 h-4" />
+          </Button>
+        </Popover>
+        <Popover content="Hapus">
+          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
+            <IconTrash className="w-4 h-4" />
+          </Button>
+        </Popover>
       </div>
     ),
   }))
@@ -213,9 +311,11 @@ function User() {
 
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
-          <div className="mb-4 flex gap-4 items-center">
-            <Input placeholder="Cari nama, email" onChange={(e) => setSearch(e.target.value)} value={search} />
-            <Button className="ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
+          <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
+            <div className="w-full sm:w-[250px]">
+              <Input placeholder="Cari nama, email" onChange={(e) => setSearch(e.target.value)} fullWidth />
+            </div>
+            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
           </div>
 
           <Table
@@ -257,14 +357,26 @@ function User() {
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
           {!modalForm.readOnly && (
-            <Button onClick={handleClickSubmit}>Kirim</Button>
+            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
           )}
+        </div>
+      </Modal>
+
+      <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
+        <div className="p-6">
+          <p className="text-sm text-slate-600">{modalConfirm.description}</p>
+        </div>
+        <div className="flex gap-2 justify-end p-4">
+          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
       {isLoadingSubmit && (
         <LoadingOverlay />
       )}
+
+      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
 
     </Layout>
   )

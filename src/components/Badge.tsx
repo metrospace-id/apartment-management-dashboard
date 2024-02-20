@@ -24,7 +24,7 @@ function Badge({
 
   return (
     // eslint-disable-next-line react/button-has-type
-    <span {...props} className={`text-[10px] font-medium p-1 rounded ${backgroundColorClass} ${className}`}>
+    <span {...props} className={`text-[10px] font-medium py-1 px-2 rounded ${backgroundColorClass} ${className}`}>
       {children}
     </span>
   )

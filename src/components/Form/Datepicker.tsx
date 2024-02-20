@@ -87,7 +87,7 @@ export default function DatePicker({
   const datePickerRef = useRef<HTMLDivElement | null>(null)
   const handleChange = (selectedDate: Date) => {
     onChange?.(selectedDate)
-    setLocalValue(dayjs(selectedDate).format('d MMMM YYYY'))
+    setLocalValue(dayjs(selectedDate).format('D MMMM YYYY'))
   }
 
   const dateValue = value ? new Date(value) : new Date()
@@ -103,7 +103,7 @@ export default function DatePicker({
 
   useEffect(() => {
     if (value) {
-      setLocalValue(dayjs(value).format('d MMMM YYYY'))
+      setLocalValue(dayjs(value).format('D MMMM YYYY'))
     }
   }, [value])
 

@@ -10,17 +10,19 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 function Input({
-  label, fullWidth, helperText, error, rightIcon, leftIcon, ...props
+  label, fullWidth, helperText, error, rightIcon, leftIcon, className, disabled, ...props
 }: InputProps) {
   return (
-    <div className="w-full text-left">
+    <div className={`w-full text-left ${disabled ? 'opacity-70' : ''} ${className}`}>
       {label && <p className="text-sm font-medium text-slate-600 mb-1">{label}</p>}
-      <div className={`${fullWidth ? 'w-full' : ''} outline-blue-400 ${error ? 'outline outline-red-500' : ''} flex items-center gap-2 border rounded px-4 py-2 has-[:focus]:outline`}>
+      <div className={`${fullWidth ? 'w-full' : 'max-w-[300px]'} outline-blue-400 ${error ? 'outline outline-red-500' : ''} h-[42px] flex items-center gap-2 border border-slate-200 rounded px-4 py-2 has-[:focus]:outline bg-white dark:bg-slate-800 dark:border-slate-800`}>
         {leftIcon}
-        <input {...props} className={`${fullWidth ? 'w-full' : ''} min-w-[300px] outline-none`} />
+        <input {...props} className="flex-1 outline-none text-slate-600 bg-white dark:bg-slate-800 dark:placeholder:text-slate-200 dark:text-white" />
         {rightIcon}
       </div>
-      <p className={`text-xs font-medium ${error ? 'text-red-500' : 'text-slate-500'} mt-1`}>{helperText}</p>
+      {helperText && (
+        <p className={`text-xs font-medium ${error ? 'text-red-500' : 'text-slate-500'} mt-1`}>{helperText}</p>
+      )}
     </div>
   )
 }

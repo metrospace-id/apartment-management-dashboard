@@ -1,10 +1,12 @@
+import { lazy } from 'react'
 import {
   createBrowserRouter,
 } from 'react-router-dom'
 
-import Login from 'pages/Login'
-import Home from 'pages/Home'
-import Error404 from 'pages/Error/404'
+const Login = lazy(() => import('pages/Login'))
+const Home = lazy(() => import('pages/Home'))
+const User = lazy(() => import('pages/User'))
+const Error404 = lazy(() => import('pages/Error/404'))
 
 const router = createBrowserRouter([
   {
@@ -16,8 +18,8 @@ const router = createBrowserRouter([
     Component: Login,
   },
   {
-    path: 'about',
-    element: <div>About</div>,
+    path: '/user',
+    Component: User,
   },
   {
     path: '*',

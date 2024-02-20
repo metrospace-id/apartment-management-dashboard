@@ -6,6 +6,7 @@ import {
 const Login = lazy(() => import('pages/Login'))
 const Home = lazy(() => import('pages/Home'))
 const User = lazy(() => import('pages/User'))
+const Calendar = lazy(() => import('pages/Calendar'))
 const Error404 = lazy(() => import('pages/Error/404'))
 
 const router = createBrowserRouter([
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
   {
     path: '/user',
     Component: User,
+  },
+  {
+    path: '/calendar',
+    Component: Calendar,
   },
   {
     path: '*',

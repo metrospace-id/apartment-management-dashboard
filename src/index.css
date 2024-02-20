@@ -15,9 +15,33 @@
   }
 }
 
+:root {
+  --fc-button-text-color: #fff;
+  --fc-button-bg-color: #0369a1;
+  --fc-button-border-color: #0369a1;
+  --fc-button-hover-bg-color: #0891b2;
+  --fc-button-hover-border-color: #0891b2;
+  --fc-button-active-bg-color: #075985;
+  --fc-button-active-border-color: #075985;
+}
 
 body {
   font-family: "Poppins", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.fc-col-header, .fc-scrollgrid-sync-table, .fc-daygrid-body {
+  width: 100% !important;
+}
+
+
+@media (max-width: 1199px) {
+  .fc .fc-toolbar {
+    align-items: center;
+    flex-direction: column;
+  }
+  .fc-view-harness.fc-view-harness-active {
+    min-height: calc(100vh - 330px);
+  }
 }

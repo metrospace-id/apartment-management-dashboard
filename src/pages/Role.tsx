@@ -22,14 +22,6 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'name',
   },
   {
-    label: 'Email',
-    key: 'email',
-  },
-  {
-    label: 'Role',
-    key: 'role',
-  },
-  {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
@@ -39,32 +31,24 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 
 const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
-  name: `Lorem Ipsum ${key + 1}`,
-  email: `lorem_ipsum${key + 1}@email.com`,
-  roles: [1, 2],
+  name: `Role Lorem Ipsum ${key + 1}`,
+  permissions: [1, 2, 3, 4, 5],
 }))
 
-const ROLES = [
-  {
-    label: 'Admin',
-    value: 1,
-  },
-  {
-    label: 'Pegawai',
-    value: 2,
-  },
-  {
-    label: 'TRO',
-    value: 3,
-  }]
+const PERMISSIONS = Array.from(Array(50).keys()).map((key) => ({
+  id: key + 1,
+  name: `dashboard-permission-${key + 1}`,
+  description: `Deskripsi permission ${key + 1}`,
+  parent: `parent-permission-${key + 1}`,
+}))
 
-function PageUser() {
+function PageRole() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
     id: 0,
     email: '',
-    roles: [0],
+    permissions: [0],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -112,7 +96,7 @@ function PageUser() {
     setFields({
       id: 0,
       email: '',
-      roles: [0],
+      permissions: [0],
     })
   }
 
@@ -131,39 +115,39 @@ function PageUser() {
 
   const handleModalCreateOpen = () => {
     setModalForm({
-      title: 'Tambah User Baru',
+      title: 'Tambah Role Baru',
       open: true,
       readOnly: false,
     })
   }
 
-  const handleModalDetailOpen = (userData: any) => {
+  const handleModalDetailOpen = (selectedData: any) => {
     setModalForm({
-      title: 'Detail User',
+      title: 'Detail Role',
       open: true,
       readOnly: true,
     })
     setFields({
-      id: userData.id,
-      email: userData.email,
-      roles: userData.roles,
+      id: selectedData.id,
+      email: selectedData.email,
+      permissions: selectedData.permissions,
     })
   }
 
-  const handleModalUpdateOpen = (userData: any) => {
+  const handleModalUpdateOpen = (selectedData: any) => {
     setModalForm({
-      title: 'Ubah User',
+      title: 'Ubah Role',
       open: true,
       readOnly: false,
     })
     setFields({
-      id: userData.id,
-      email: userData.email,
-      roles: userData.roles,
+      id: selectedData.id,
+      email: selectedData.email,
+      permissions: selectedData.permissions,
     })
   }
 
-  const handleModalDeleteOpen = (userData: any) => {
+  const handleModalDeleteOpen = (selectedData: any) => {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
@@ -171,24 +155,24 @@ function PageUser() {
     })
     setSubmitType('delete')
     setFields({
-      id: userData.id,
-      email: userData.email,
-      roles: userData.roles,
+      id: selectedData.id,
+      email: selectedData.email,
+      permissions: selectedData.permissions,
     })
   }
 
-  const handleSelectRoles = (roleId: number) => {
+  const handleSelectPermission = (permissionId: number) => {
     if (!modalForm.readOnly) {
-      if (fields.roles.includes(roleId)) {
-        const newRoles = [...fields.roles].filter((role) => role !== roleId)
+      if (fields.permissions.includes(permissionId)) {
+        const newPermissions = [...fields.permissions].filter((permission) => permission !== permissionId)
         setFields((prevState) => ({
           ...prevState,
-          roles: newRoles,
+          permissions: newPermissions,
         }))
       } else {
         setFields((prevState) => ({
           ...prevState,
-          roles: [...prevState.roles, roleId],
+          permissions: [...prevState.permissions, permissionId],
         }))
       }
     }
@@ -237,14 +221,6 @@ function PageUser() {
   const tableDatas = TABLE_DATA.map((column) => ({
     id: column.id,
     name: column.name,
-    email: column.email,
-    role: (
-      <div className="">
-        {column.roles.map((role) => (
-          <Badge className="mx-1" key={role}>{`Role ${role}`}</Badge>
-        ))}
-      </div>
-    ),
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -272,8 +248,7 @@ function PageUser() {
       setTimeout(() => {
         setIsLoadingData(false)
         const newData = tableDatas.filter(
-          (tableData) => tableData.email.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
+          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
         )
         setData(newData)
       }, 500)
@@ -288,13 +263,13 @@ function PageUser() {
 
   return (
     <Layout>
-      <Breadcrumb title="User" />
+      <Breadcrumb title="Role" />
 
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[250px]">
-              <Input placeholder="Cari nama, email" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
           </div>
@@ -311,7 +286,7 @@ function PageUser() {
         </div>
       </div>
 
-      <Modal open={modalForm.open} title={modalForm.title}>
+      <Modal open={modalForm.open} title={modalForm.title} size="md">
         <form autoComplete="off" className="flex flex-col gap-4 p-6">
           <Input
             placeholder="email@domain.com"
@@ -322,14 +297,14 @@ function PageUser() {
             readOnly={modalForm.readOnly}
           />
           <div>
-            <p className="text-sm text-slate-600 font-medium">Pilih Role</p>
-            <div className="grid grid-cols-2 mt-2 sm:grid-cols-4 gap-4">
-              {ROLES.map((role) => (
+            <p className="text-sm text-slate-600 font-medium">Pilih Permission</p>
+            <div className="grid grid-cols-2 mt-2 lg:grid-cols-4 md:grid-cols-3 gap-4">
+              {PERMISSIONS.map((permission) => (
                 <Toggle
-                  key={role.value}
-                  label={role.label}
-                  checked={fields.roles.includes(role.value)}
-                  onChange={() => handleSelectRoles(role.value)}
+                  key={permission.id}
+                  label={permission.description}
+                  checked={fields.permissions.includes(permission.id)}
+                  onChange={() => handleSelectPermission(permission.id)}
                 />
               ))}
             </div>
@@ -363,4 +338,4 @@ function PageUser() {
   )
 }
 
-export default PageUser
+export default PageRole

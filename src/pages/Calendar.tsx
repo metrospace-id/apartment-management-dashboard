@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction'
+import interactionPlugin from '@fullcalendar/interaction'
 import idLocale from '@fullcalendar/core/locales/id'
 import dayjs from 'dayjs'
 
+import Toggle from 'components/Form/Toggle'
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
 import Modal from 'components/Modal'
@@ -13,7 +14,7 @@ import Button from 'components/Button'
 import DatePicker from 'components/Form/Datepicker'
 import Input from 'components/Form/Input'
 import Radio from 'components/Form/Radio'
-import Toggle from 'components/Form/Toggle'
+import TextArea from 'components/Form/TextArea'
 import { DateSelectArg, EventClickArg } from '@fullcalendar/core'
 
 const EVENT_TYPE_CLASS_NAME: Record<string, string> = {
@@ -23,10 +24,11 @@ const EVENT_TYPE_CLASS_NAME: Record<string, string> = {
 
 const EVENTS = [
   {
+    id: 13,
     title: 'Meeting bersama teman',
     description: 'Deskripsi meeting bersama teman teman lagi hahaha',
-    start: dayjs().toDate(),
-    end: dayjs().add(1, 'hour').toDate(),
+    start: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+    end: dayjs().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
     allDay: false,
     type: 'public',
   },
@@ -53,10 +55,13 @@ function Calendar() {
   const [data, setData] = useState<any[]>([])
   const [modalEventOpen, setModalEventOpen] = useState(false)
   const [fields, setFields] = useState({
+    id: 0,
     title: '',
     description: '',
     start: '',
     end: '',
+    timeStart: '',
+    timeEnd: '',
     allDay: true,
     type: 'private',
   })
@@ -69,10 +74,13 @@ function Calendar() {
   const handleModalEventClose = () => {
     setModalEventOpen(false)
     setFields({
+      id: 0,
       title: '',
       description: '',
       start: '',
       end: '',
+      timeStart: '',
+      timeEnd: '',
       allDay: true,
       type: 'private',
     })
@@ -88,10 +96,13 @@ function Calendar() {
   const handleClickEvent = (arg: EventClickArg) => {
     setModalEventOpen(true)
     setFields({
+      id: +arg.event._def.publicId,
       title: arg.event._def.title,
       description: arg.event._def.extendedProps.description,
-      start: dayjs(arg.event._instance?.range.start).format('YYYY-MM-DD HH:mm:ss'),
-      end: arg.event._instance?.range.end ? dayjs(arg.event._instance?.range.end).format('YYYY-MM-DD HH:mm:ss') : '',
+      start: dayjs(arg.event._instance?.range.start).format('YYYY-MM-DD'),
+      timeStart: dayjs(arg.event._instance?.range.start).format('HH:mm'),
+      end: arg.event._instance?.range.end ? dayjs(arg.event._instance?.range.end).format('YYYY-MM-DD') : '',
+      timeEnd: arg.event._instance?.range.end ? dayjs(arg.event._instance?.range.end).format('HH:mm') : '',
       allDay: arg.event._def.allDay,
       type: arg.event._def.extendedProps.type,
     })
@@ -100,26 +111,41 @@ function Calendar() {
   const handleSelectDate = (arg: DateSelectArg) => {
     setModalEventOpen(true)
     setFields({
+      id: 0,
       title: '',
       description: '',
-      start: dayjs(arg.start).format('YYYY-MM-DD HH:mm:ss'),
-      end: dayjs(arg.end).format('YYYY-MM-DD HH:mm:ss'),
+      start: dayjs(arg.start).format('YYYY-MM-DD'),
+      end: dayjs(arg.end).format('YYYY-MM-DD'),
+      timeStart: dayjs(arg.start).format('HH:mm'),
+      timeEnd: dayjs(arg.end).format('HH:mm'),
       allDay: arg.allDay,
       type: 'private',
     })
   }
 
   const handleSubmit = () => {
+    const submitData = {
+      ...fields,
+      id: data.length,
+      start: dayjs(`${fields.start} ${fields.timeStart}`).format('YYYY-MM-DD HH:mm:ss'),
+      end: dayjs(`${fields.end} ${fields.timeEnd}`).format('YYYY-MM-DD HH:mm:ss'),
+    }
+
+    console.log(submitData)
+
     setData((prevState) => [
       ...prevState,
-      fields,
+      submitData,
     ])
+
     handleModalEventClose()
   }
 
   useEffect(() => {
     setData(EVENTS)
   }, [])
+
+  console.log(data)
 
   // console.log(fields)
   // console.log(dayjs('2024-02-28 00:00:00').toDate(), new Date())
@@ -144,7 +170,7 @@ function Calendar() {
             select={handleSelectDate}
             eventClick={handleClickEvent}
             locale={idLocale}
-            dayCellClassNames="bg-white cursor-pointer text-slate-600 [&.fc-day-today]:!bg-sky-200 hover:bg-sky-50 dark:bg-slate-900 dark:text-white dark:[&.fc-day-today]:!bg-sky-700"
+            dayCellClassNames="bg-white cursor-pointer text-slate-600 [&.fc-day-today]:!bg-sky-200 hover:bg-sky-50 dark:bg-slate-900 dark:text-white dark:[&.fc-day-today]:!bg-sky-700 dark:border-slate-600"
             dayHeaderClassNames="bg-sky-700 text-white"
             expandRows
             selectable
@@ -152,38 +178,72 @@ function Calendar() {
         </div>
       </div>
 
-      <Modal open={modalEventOpen}>
-        <form autoComplete="off" className="flex flex-col gap-4 p-6">
-          <Input
-            placeholder="Nama event"
-            label="Nama event"
-            name="title"
-            value={fields.title}
-            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-          />
-
+      <Modal open={modalEventOpen} size="sm" title={fields.id ? 'Edit Acara' : 'Buat Acara Baru'}>
+        <form autoComplete="off" className="grid grid-cols-2 gap-4 p-6">
           <DatePicker
             label="Tanggal mulai"
             placeholder="Tanggal mulai"
             name="start"
             value={fields.start ? dayjs(fields.start).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD HH:mm:ss'))}
+            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            disabled
           />
 
-          {/* <Toggle
-            label="Acara sehari"
-            checked={fields.allDay}
-            name="allDay"
-            onChange={(e) => handleChangeField(e.target.name, !fields.allDay)}
-          /> */}
-
-          {/* {!fields.allDay && ( */}
           <DatePicker
             label="Tanggal selesai"
             placeholder="Tanggal selesai"
             name="end"
             value={fields.end ? dayjs(fields.end).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('end', dayjs(selectedDate).format('YYYY-MM-DD HH:mm:ss'))}
+            onChange={(selectedDate) => handleChangeField('end', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            disabled
+          />
+
+          <Toggle
+            label="Acara sehari"
+            checked={fields.allDay}
+            name="allDay"
+            onChange={(e) => handleChangeField(e.target.name, !fields.allDay)}
+          />
+
+          <div />
+
+          {!fields.allDay && (
+          <>
+            <Input
+              placeholder="Jam mulai"
+              label="Jam mulai"
+              name="timeStart"
+              value={fields.timeStart}
+              onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+              type="time"
+            />
+
+            <Input
+              placeholder="Jam selesai"
+              label="Jam selesai"
+              name="timeEnd"
+              value={fields.timeEnd}
+              onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+              type="time"
+            />
+          </>
+          )}
+
+          <Input
+            placeholder="Nama acara"
+            label="Nama acara"
+            name="title"
+            value={fields.title}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+          />
+
+          <TextArea
+            placeholder="Deskripsi acara"
+            label="Deskripsi acara"
+            name="description"
+            value={fields.description}
+            rows={4}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
           />
 
           {/* )} */}

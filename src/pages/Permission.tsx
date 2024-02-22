@@ -3,7 +3,6 @@ import { useState, useMemo, useEffect } from 'react'
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
 import Table from 'components/Table/Table'
-import Badge from 'components/Badge'
 import Button from 'components/Button'
 import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
@@ -11,9 +10,10 @@ import Popover from 'components/Popover'
 import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
 import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
-import Toggle from 'components/Form/Toggle'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
+import TextArea from 'components/Form/TextArea'
+import Autocomplete from 'components/Form/Autocomplete'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
@@ -22,12 +22,12 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'name',
   },
   {
-    label: 'Email',
-    key: 'email',
+    label: 'Description',
+    key: 'description',
   },
   {
-    label: 'Role',
-    key: 'role',
+    label: 'Parent',
+    key: 'parent',
   },
   {
     label: 'Aksi',
@@ -39,32 +39,19 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 
 const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
-  name: `Lorem Ipsum ${key + 1}`,
-  email: `lorem_ipsum${key + 1}@email.com`,
-  roles: [1, 2],
+  name: `dashboard-permission-${key + 1}`,
+  description: 'Deskripsi permission',
+  parent: `parent-permission-${key + 1}`,
 }))
 
-const ROLES = [
-  {
-    label: 'Admin',
-    value: 1,
-  },
-  {
-    label: 'Pegawai',
-    value: 2,
-  },
-  {
-    label: 'TRO',
-    value: 3,
-  }]
-
-function PageUser() {
+function PagePermission() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
     id: 0,
-    email: '',
-    roles: [0],
+    name: '',
+    description: '',
+    parent: '',
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -111,8 +98,9 @@ function PageUser() {
     }))
     setFields({
       id: 0,
-      email: '',
-      roles: [0],
+      name: '',
+      description: '',
+      parent: '',
     })
   }
 
@@ -131,39 +119,41 @@ function PageUser() {
 
   const handleModalCreateOpen = () => {
     setModalForm({
-      title: 'Tambah User Baru',
+      title: 'Tambah Permission Baru',
       open: true,
       readOnly: false,
     })
   }
 
-  const handleModalDetailOpen = (userData: any) => {
+  const handleModalDetailOpen = (fieldData: any) => {
     setModalForm({
-      title: 'Detail User',
+      title: 'Detail Permission',
       open: true,
       readOnly: true,
     })
     setFields({
-      id: userData.id,
-      email: userData.email,
-      roles: userData.roles,
+      id: fieldData.id,
+      name: fieldData.name,
+      description: fieldData.description,
+      parent: fieldData.parent,
     })
   }
 
-  const handleModalUpdateOpen = (userData: any) => {
+  const handleModalUpdateOpen = (fieldData: any) => {
     setModalForm({
-      title: 'Ubah User',
+      title: 'Ubah Permission',
       open: true,
       readOnly: false,
     })
     setFields({
-      id: userData.id,
-      email: userData.email,
-      roles: userData.roles,
+      id: fieldData.id,
+      name: fieldData.name,
+      description: fieldData.description,
+      parent: fieldData.parent,
     })
   }
 
-  const handleModalDeleteOpen = (userData: any) => {
+  const handleModalDeleteOpen = (fieldData: any) => {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
@@ -171,27 +161,11 @@ function PageUser() {
     })
     setSubmitType('delete')
     setFields({
-      id: userData.id,
-      email: userData.email,
-      roles: userData.roles,
+      id: fieldData.id,
+      name: fieldData.name,
+      description: fieldData.description,
+      parent: fieldData.parent,
     })
-  }
-
-  const handleSelectRoles = (roleId: number) => {
-    if (!modalForm.readOnly) {
-      if (fields.roles.includes(roleId)) {
-        const newRoles = [...fields.roles].filter((role) => role !== roleId)
-        setFields((prevState) => ({
-          ...prevState,
-          roles: newRoles,
-        }))
-      } else {
-        setFields((prevState) => ({
-          ...prevState,
-          roles: [...prevState.roles, roleId],
-        }))
-      }
-    }
   }
 
   const handleChangePage = (pageNumber: number) => {
@@ -237,14 +211,8 @@ function PageUser() {
   const tableDatas = TABLE_DATA.map((column) => ({
     id: column.id,
     name: column.name,
-    email: column.email,
-    role: (
-      <div className="">
-        {column.roles.map((role) => (
-          <Badge className="mx-1" key={role}>{`Role ${role}`}</Badge>
-        ))}
-      </div>
-    ),
+    description: column.description,
+    parent: column.parent,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -272,8 +240,7 @@ function PageUser() {
       setTimeout(() => {
         setIsLoadingData(false)
         const newData = tableDatas.filter(
-          (tableData) => tableData.email.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
+          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
         )
         setData(newData)
       }, 500)
@@ -288,13 +255,13 @@ function PageUser() {
 
   return (
     <Layout>
-      <Breadcrumb title="User" />
+      <Breadcrumb title="Permission" />
 
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[250px]">
-              <Input placeholder="Cari nama, email" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
           </div>
@@ -312,28 +279,39 @@ function PageUser() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="flex flex-col gap-4 p-6">
+        <form autoComplete="off" className="grid grid-cols-2 gap-4 p-6">
           <Input
-            placeholder="email@domain.com"
-            label="Email"
-            name="email"
-            value={fields.email}
+            placeholder="Nama Permission"
+            label="Nama Permission"
+            name="name"
+            value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
           />
-          <div>
-            <p className="text-sm text-slate-600 font-medium">Pilih Role</p>
-            <div className="grid grid-cols-2 mt-2 sm:grid-cols-4 gap-4">
-              {ROLES.map((role) => (
-                <Toggle
-                  key={role.value}
-                  label={role.label}
-                  checked={fields.roles.includes(role.value)}
-                  onChange={() => handleSelectRoles(role.value)}
-                />
-              ))}
-            </div>
-          </div>
+          <TextArea
+            placeholder="Deskripsi Permission"
+            label="Deskripsi Permission"
+            name="description"
+            value={fields.description}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+          />
+          <Autocomplete
+            placeholder="Parent Permission"
+            label="Parent Permission"
+            name="parent"
+            items={TABLE_DATA.map((tableData) => ({
+              label: tableData.name,
+              value: tableData.name,
+            }))}
+            value={{
+              label: TABLE_DATA.find((tableData) => tableData.name === fields.parent)?.name || '',
+              value: TABLE_DATA.find((tableData) => tableData.name === fields.parent)?.name || '',
+            }}
+            onChange={(value) => handleChangeField('parent', value.value)}
+            readOnly={modalForm.readOnly}
+          />
+
         </form>
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
@@ -363,4 +341,4 @@ function PageUser() {
   )
 }
 
-export default PageUser
+export default PagePermission

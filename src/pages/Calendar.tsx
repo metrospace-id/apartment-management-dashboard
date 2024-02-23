@@ -44,7 +44,7 @@ const eventClassNameByType = (eventType: string) => EVENT_TYPE_CLASS_NAME[eventT
 function renderEventContent(eventInfo: any) {
   // console.log(eventInfo)
   return (
-    <span className="flex gap-1 overflow-hidden text-ellipsis">
+    <span className="flex gap-1 overflow-hidden text-ellipsis whitespace-nowrap">
       <b>{eventInfo.timeText}</b>
       <i>{eventInfo.event.title}</i>
     </span>

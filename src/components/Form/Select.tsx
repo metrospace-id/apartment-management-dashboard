@@ -2,7 +2,7 @@ import React from 'react'
 
 export interface OptionProps {
   label: string
-  value: string | number
+  value?: string | number
   disabled?: boolean
 }
 

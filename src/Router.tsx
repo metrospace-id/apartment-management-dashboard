@@ -1,44 +1,53 @@
-import { lazy } from 'react'
 import {
   createBrowserRouter,
 } from 'react-router-dom'
 
-const Login = lazy(() => import('pages/Login'))
-const Home = lazy(() => import('pages/Home'))
-const Permission = lazy(() => import('pages/Permission'))
-const Role = lazy(() => import('pages/Role'))
-const User = lazy(() => import('pages/User'))
-const Calendar = lazy(() => import('pages/Calendar'))
-const Error404 = lazy(() => import('pages/Error/404'))
+import PageLogin from 'pages/Login'
+import PageHome from 'pages/Home'
+import PagePermission from 'pages/Permission'
+import PageRole from 'pages/Role'
+import PageUser from 'pages/User'
+import PageUnitApartment from 'pages/Unit/Apartment'
+import PageUnitCafe from 'pages/Unit/Cafe'
+import PageCalendar from 'pages/Calendar'
+import PageError404 from 'pages/Error/404'
 
 const router = createBrowserRouter([
   {
     path: '/',
-    Component: Home,
+    Component: PageHome,
   },
   {
     path: '/login',
-    Component: Login,
+    Component: PageLogin,
   },
   {
     path: '/permission',
-    Component: Permission,
+    Component: PagePermission,
   },
   {
     path: '/role',
-    Component: Role,
+    Component: PageRole,
   },
   {
     path: '/user',
-    Component: User,
+    Component: PageUser,
+  },
+  {
+    path: '/unit/apartment',
+    Component: PageUnitApartment,
+  },
+  {
+    path: '/unit/cafe',
+    Component: PageUnitCafe,
   },
   {
     path: '/calendar',
-    Component: Calendar,
+    Component: PageCalendar,
   },
   {
     path: '*',
-    Component: Error404,
+    Component: PageError404,
   },
 ])
 

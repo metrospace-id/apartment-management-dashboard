@@ -34,7 +34,7 @@ export default function Modal({
       style={customStyles}
       contentLabel="Modal"
       onRequestClose={onClose}
-      className={`w-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute ${maxWidth} max-h-[90%] overflow-scroll`}
+      className={`w-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute ${maxWidth} max-h-[90%] overflow-scroll no-scrollbar`}
     >
       <div className="h-full border rounded bg-white border-slate-100 dark:bg-black dark:border-slate-800">
         {title && (

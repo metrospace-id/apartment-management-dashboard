@@ -1,4 +1,3 @@
-import { Suspense } from 'react'
 import {
   RouterProvider,
 } from 'react-router-dom'
@@ -11,9 +10,8 @@ dayjs.locale(id)
 
 function App() {
   return (
-    <Suspense fallback={<div />}>
-      <RouterProvider router={router} />
-    </Suspense>
+
+    <RouterProvider router={router} />
   )
 }
 

@@ -22,7 +22,7 @@ import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
 import dayjs from 'dayjs'
 import Select from 'components/Form/Select'
-import DatePicker from 'components/Form/DatePickers'
+import DatePicker from 'components/Form/DatePicker'
 
 const PAGE_NAME = 'Penghuni'
 

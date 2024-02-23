@@ -2,9 +2,10 @@ import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
 
 function Home() {
+  const PAGE_NAME = 'Dashboard'
   return (
     <Layout>
-      <Breadcrumb title="Dashboard" />
+      <Breadcrumb title={PAGE_NAME} />
 
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="w-full p-4 bg-white rounded-lg">

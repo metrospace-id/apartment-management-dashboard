@@ -15,6 +15,8 @@ import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import Select from 'components/Form/Select'
 
+const PAGE_NAME = 'Unit Cafe'
+
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Unit ID',
@@ -125,7 +127,7 @@ function PageUnitCafe() {
 
   const handleModalCreateOpen = () => {
     setModalForm({
-      title: 'Tambah Unit Baru',
+      title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
       readOnly: false,
     })
@@ -133,7 +135,7 @@ function PageUnitCafe() {
 
   const handleModalDetailOpen = (fieldData: any) => {
     setModalForm({
-      title: 'Detail Unit',
+      title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
@@ -148,7 +150,7 @@ function PageUnitCafe() {
 
   const handleModalUpdateOpen = (fieldData: any) => {
     setModalForm({
-      title: 'Ubah Unit',
+      title: `Ubah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
@@ -265,7 +267,7 @@ function PageUnitCafe() {
 
   return (
     <Layout>
-      <Breadcrumb title="Cafe" />
+      <Breadcrumb title={PAGE_NAME} />
 
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">

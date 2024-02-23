@@ -3,7 +3,6 @@ import { useState, useMemo, useEffect } from 'react'
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
 import Table from 'components/Table/Table'
-import Badge from 'components/Badge'
 import Button from 'components/Button'
 import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
@@ -15,6 +14,8 @@ import Toggle from 'components/Form/Toggle'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+
+const PAGE_NAME = 'Role'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -115,7 +116,7 @@ function PageRole() {
 
   const handleModalCreateOpen = () => {
     setModalForm({
-      title: 'Tambah Role Baru',
+      title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
       readOnly: false,
     })
@@ -123,7 +124,7 @@ function PageRole() {
 
   const handleModalDetailOpen = (selectedData: any) => {
     setModalForm({
-      title: 'Detail Role',
+      title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
@@ -136,7 +137,7 @@ function PageRole() {
 
   const handleModalUpdateOpen = (selectedData: any) => {
     setModalForm({
-      title: 'Ubah Role',
+      title: `Ubah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
@@ -263,7 +264,7 @@ function PageRole() {
 
   return (
     <Layout>
-      <Breadcrumb title="Role" />
+      <Breadcrumb title={PAGE_NAME} />
 
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
@@ -286,7 +287,7 @@ function PageRole() {
         </div>
       </div>
 
-      <Modal open={modalForm.open} title={modalForm.title} size="md">
+      <Modal open={modalForm.open} title={modalForm.title} size="lg">
         <form autoComplete="off" className="flex flex-col gap-4 p-6">
           <Input
             placeholder="email@domain.com"
@@ -298,7 +299,7 @@ function PageRole() {
           />
           <div>
             <p className="text-sm text-slate-600 font-medium">Pilih Permission</p>
-            <div className="grid grid-cols-2 mt-2 lg:grid-cols-4 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 mt-2 xl:grid-cols-4 md:grid-cols-3 gap-4">
               {PERMISSIONS.map((permission) => (
                 <Toggle
                   key={permission.id}

@@ -16,6 +16,8 @@ import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 
+const PAGE_NAME = 'User'
+
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Name',
@@ -131,7 +133,7 @@ function PageUser() {
 
   const handleModalCreateOpen = () => {
     setModalForm({
-      title: 'Tambah User Baru',
+      title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
       readOnly: false,
     })
@@ -139,7 +141,7 @@ function PageUser() {
 
   const handleModalDetailOpen = (userData: any) => {
     setModalForm({
-      title: 'Detail User',
+      title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
@@ -152,7 +154,7 @@ function PageUser() {
 
   const handleModalUpdateOpen = (userData: any) => {
     setModalForm({
-      title: 'Ubah User',
+      title: `Ubah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
@@ -288,7 +290,7 @@ function PageUser() {
 
   return (
     <Layout>
-      <Breadcrumb title="User" />
+      <Breadcrumb title={PAGE_NAME} />
 
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">

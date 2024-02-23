@@ -34,9 +34,9 @@ export default function Modal({
       style={customStyles}
       contentLabel="Modal"
       onRequestClose={onClose}
-      className={`w-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute ${maxWidth} max-h-[90%] overflow-scroll no-scrollbar`}
+      className={`w-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute ${maxWidth} max-h-[90%] overflow-scroll no-scrollbar focus-visible:outline-none`}
     >
-      <div className="h-full border rounded bg-white border-slate-100 dark:bg-black dark:border-slate-800">
+      <div className="h-full border rounded bg-white border-slate-100 focus-visible:outline-none dark:bg-black dark:border-slate-800">
         {title && (
           <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
             <p className="text-xl font-semibold text-slate-600 dark:text-white">{title}</p>

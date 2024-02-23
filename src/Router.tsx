@@ -10,6 +10,13 @@ import PageUser from 'pages/User'
 import PageUnitApartment from 'pages/Unit/Apartment'
 import PageUnitCafe from 'pages/Unit/Cafe'
 import PageCalendar from 'pages/Calendar'
+import PageCategoryWork from 'pages/Category/Work'
+import PageCategoryRenovation from 'pages/Category/Renovation'
+import PageCategoryItem from 'pages/Category/Item'
+import PageAssetGroup from 'pages/Asset/Group'
+import PageAssetLocation from 'pages/Asset/Location'
+import PageAssetType from 'pages/Asset/Type'
+import PageAssetList from 'pages/Asset/List'
 import PageError404 from 'pages/Error/404'
 
 const router = createBrowserRouter([
@@ -40,6 +47,34 @@ const router = createBrowserRouter([
   {
     path: '/unit/cafe',
     Component: PageUnitCafe,
+  },
+  {
+    path: '/category/work',
+    Component: PageCategoryWork,
+  },
+  {
+    path: '/category/renovation',
+    Component: PageCategoryRenovation,
+  },
+  {
+    path: '/category/item',
+    Component: PageCategoryItem,
+  },
+  {
+    path: '/asset/group',
+    Component: PageAssetGroup,
+  },
+  {
+    path: '/asset/location',
+    Component: PageAssetLocation,
+  },
+  {
+    path: '/asset/type',
+    Component: PageAssetType,
+  },
+  {
+    path: '/asset/list',
+    Component: PageAssetList,
   },
   {
     path: '/calendar',

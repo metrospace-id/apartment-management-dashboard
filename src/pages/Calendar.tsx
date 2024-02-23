@@ -17,6 +17,8 @@ import Radio from 'components/Form/Radio'
 import TextArea from 'components/Form/TextArea'
 import { DateSelectArg, EventClickArg } from '@fullcalendar/core'
 
+const PAGE_NAME = 'Kalender'
+
 const EVENT_TYPE_CLASS_NAME: Record<string, string> = {
   private: 'bg-green-700 border-green-700 px-1 cursor-pointer text-white hover:opacity-70 hover:bg-red-500',
   public: 'bg-yellow-700 border-yellow-700 px-1 cursor-pointer text-white hover:opacity-70 hover:bg-red-500',
@@ -152,7 +154,7 @@ function Calendar() {
 
   return (
     <Layout>
-      <Breadcrumb title="Calendar" />
+      <Breadcrumb title={PAGE_NAME} />
 
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">

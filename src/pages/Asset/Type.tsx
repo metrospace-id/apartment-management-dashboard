@@ -12,24 +12,14 @@ import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
-import TextArea from 'components/Form/TextArea'
-import Autocomplete from 'components/Form/Autocomplete'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 
-const PAGE_NAME = 'Permission'
+const PAGE_NAME = 'Jenis Aset'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
-    label: 'Name',
+    label: 'Nama',
     key: 'name',
-  },
-  {
-    label: 'Description',
-    key: 'description',
-  },
-  {
-    label: 'Parent',
-    key: 'parent',
   },
   {
     label: 'Aksi',
@@ -41,19 +31,15 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 
 const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
-  name: `dashboard-permission-${key + 1}`,
-  description: 'Deskripsi permission',
-  parent: `parent-permission-${key + 1}`,
+  name: `Jenis Aset ${key + 1}`,
 }))
 
-function PagePermission() {
+function PageAssetType() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
     id: 0,
     name: '',
-    description: '',
-    parent: '',
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -101,8 +87,6 @@ function PagePermission() {
     setFields({
       id: 0,
       name: '',
-      description: '',
-      parent: '',
     })
   }
 
@@ -121,7 +105,7 @@ function PagePermission() {
 
   const handleModalCreateOpen = () => {
     setModalForm({
-      title: `Tambah ${PAGE_NAME} Baru`,
+      title: `Tambah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
@@ -136,8 +120,6 @@ function PagePermission() {
     setFields({
       id: fieldData.id,
       name: fieldData.name,
-      description: fieldData.description,
-      parent: fieldData.parent,
     })
   }
 
@@ -150,8 +132,6 @@ function PagePermission() {
     setFields({
       id: fieldData.id,
       name: fieldData.name,
-      description: fieldData.description,
-      parent: fieldData.parent,
     })
   }
 
@@ -165,8 +145,6 @@ function PagePermission() {
     setFields({
       id: fieldData.id,
       name: fieldData.name,
-      description: fieldData.description,
-      parent: fieldData.parent,
     })
   }
 
@@ -213,8 +191,6 @@ function PagePermission() {
   const tableDatas = TABLE_DATA.map((column) => ({
     id: column.id,
     name: column.name,
-    description: column.description,
-    parent: column.parent,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -283,34 +259,11 @@ function PagePermission() {
       <Modal open={modalForm.open} title={modalForm.title}>
         <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
           <Input
-            placeholder="Nama Permission"
-            label="Nama Permission"
+            placeholder="Nama Jenis Aset"
+            label="Nama Jenis Aset"
             name="name"
             value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-          />
-          <TextArea
-            placeholder="Deskripsi Permission"
-            label="Deskripsi Permission"
-            name="description"
-            value={fields.description}
-            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-          />
-          <Autocomplete
-            placeholder="Parent Permission"
-            label="Parent Permission"
-            name="parent"
-            items={TABLE_DATA.map((tableData) => ({
-              label: tableData.name,
-              value: tableData.name,
-            }))}
-            value={{
-              label: TABLE_DATA.find((tableData) => tableData.name === fields.parent)?.name || '',
-              value: TABLE_DATA.find((tableData) => tableData.name === fields.parent)?.name || '',
-            }}
-            onChange={(value) => handleChangeField('parent', value.value)}
             readOnly={modalForm.readOnly}
           />
 
@@ -343,4 +296,4 @@ function PagePermission() {
   )
 }
 
-export default PagePermission
+export default PageAssetType

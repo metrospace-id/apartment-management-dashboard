@@ -12,7 +12,6 @@ import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
-import TextArea from 'components/Form/TextArea'
 import Autocomplete from 'components/Form/Autocomplete'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 
@@ -318,6 +317,7 @@ function PageAssetList() {
             value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
+            fullWidth
           />
 
           <Autocomplete
@@ -334,6 +334,7 @@ function PageAssetList() {
             }}
             onChange={(value) => handleChangeField('group_id', value.value)}
             readOnly={modalForm.readOnly}
+            fullWidth
           />
 
           <Autocomplete
@@ -350,6 +351,7 @@ function PageAssetList() {
             }}
             onChange={(value) => handleChangeField('location_id', value.value)}
             readOnly={modalForm.readOnly}
+            fullWidth
           />
 
           <Autocomplete
@@ -366,6 +368,7 @@ function PageAssetList() {
             }}
             onChange={(value) => handleChangeField('type_id', value.value)}
             readOnly={modalForm.readOnly}
+            fullWidth
           />
 
         </form>
@@ -379,7 +382,7 @@ function PageAssetList() {
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
         </div>
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>

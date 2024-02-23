@@ -265,6 +265,7 @@ function PageCategoryWork() {
             value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
+            fullWidth
           />
 
         </form>
@@ -278,7 +279,7 @@ function PageCategoryWork() {
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
         </div>
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>

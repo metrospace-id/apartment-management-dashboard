@@ -48,7 +48,7 @@ function PageRole() {
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
     id: 0,
-    email: '',
+    name: '',
     permissions: [0],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
@@ -96,7 +96,7 @@ function PageRole() {
     }))
     setFields({
       id: 0,
-      email: '',
+      name: '',
       permissions: [0],
     })
   }
@@ -130,7 +130,7 @@ function PageRole() {
     })
     setFields({
       id: selectedData.id,
-      email: selectedData.email,
+      name: selectedData.name,
       permissions: selectedData.permissions,
     })
   }
@@ -143,7 +143,7 @@ function PageRole() {
     })
     setFields({
       id: selectedData.id,
-      email: selectedData.email,
+      name: selectedData.name,
       permissions: selectedData.permissions,
     })
   }
@@ -157,7 +157,7 @@ function PageRole() {
     setSubmitType('delete')
     setFields({
       id: selectedData.id,
-      email: selectedData.email,
+      name: selectedData.name,
       permissions: selectedData.permissions,
     })
   }
@@ -290,12 +290,13 @@ function PageRole() {
       <Modal open={modalForm.open} title={modalForm.title} size="lg">
         <form autoComplete="off" className="flex flex-col gap-4 p-6">
           <Input
-            placeholder="email@domain.com"
-            label="Email"
-            name="email"
-            value={fields.email}
+            placeholder="Nama Role"
+            label="Nama Role"
+            name="name"
+            value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
+            fullWidth
           />
           <div>
             <p className="text-sm text-slate-600 font-medium">Pilih Permission</p>
@@ -321,7 +322,7 @@ function PageRole() {
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
         </div>
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>

@@ -12,13 +12,13 @@ interface ModalProps {
 }
 
 export default function Modal({
-  open = false, size = 'sm', onClose, children, title,
+  open = false, size = 'md', onClose, children, title,
 }: ModalProps) {
-  let maxWidth = 'max-w-[90%] sm:max-w-[50%]'
+  let maxWidth = 'max-w-[90%] md:max-w-[50%]'
   if (size === 'md') {
-    maxWidth = 'max-w-[90%] sm:max-w-[70%]'
+    maxWidth = 'max-w-[90%] md:max-w-[70%]'
   } else if (size === 'lg') {
-    maxWidth = 'max-w-[90%] sm:max-w-[90%]'
+    maxWidth = 'max-w-[90%] md:max-w-[90%]'
   }
 
   const customStyles = {

@@ -94,7 +94,7 @@ function Layout({ children }: LayoutProps) {
         <div className="absolute w-screen h-screen block z-20 bg-black opacity-70 sm:hidden dark:opacity-30" onClick={handleClickSideBar} role="presentation" />
       )}
 
-      <div className="flex-1">
+      <div className={`relative flex-1 w-full ${isSidebarOpen ? 'max-w-[calc(100vw-250px)]' : ''}`}>
         <header className="p-4 flex bg-white border-b border-slate-100 shadow-sm gap-4 dark:bg-black dark:border-slate-700">
 
           <div className="flex items-center gap-2">
@@ -232,7 +232,7 @@ function Layout({ children }: LayoutProps) {
           </div>
 
         </header>
-        <div className="w-full h-[calc(100vh-65px)] overflow-scroll bg-slate-100 dark:bg-slate-800 relative">
+        <div className={`${isSidebarOpen ? 'max-w-[calc(100vw-250px)]' : ''} h-[calc(100vh-65px)] overflow-scroll bg-slate-100 dark:bg-slate-800 relative`}>
           {children}
         </div>
       </div>

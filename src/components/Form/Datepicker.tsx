@@ -75,6 +75,7 @@ export default function DatePicker({
   option,
   disableFuture,
   disabled,
+  readOnly,
   ...props
 }: DatepickerProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -125,7 +126,7 @@ export default function DatePicker({
           disabled={disabled}
           value={localValue}
           rightIcon={<IconCalendar className="w-4 h-4 lg:w-5 lg:h-5" />}
-          onFocus={disabled ? () => null : () => setIsOpen(true)}
+          onFocus={disabled || readOnly ? () => null : () => setIsOpen(true)}
           readOnly
         />
       </TWDatepicker>

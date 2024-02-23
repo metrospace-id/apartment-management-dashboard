@@ -20,8 +20,11 @@ import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { exportToExcel } from 'utils/export'
 import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
+import dayjs from 'dayjs'
+import Select from 'components/Form/Select'
+import DatePicker from 'components/Form/DatePicker'
 
-const PAGE_NAME = 'Pemilik'
+const PAGE_NAME = 'Penghuni'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -29,7 +32,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'unit_code',
   },
   {
-    label: 'Nama Pemilik',
+    label: 'Nama Penghuni',
     key: 'name',
   },
   {
@@ -37,8 +40,20 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'phone',
   },
   {
-    label: 'Email',
-    key: 'email',
+    label: 'Nama Pemilik',
+    key: 'owner_name',
+  },
+  {
+    label: 'Hub. Dengan Pemilik',
+    key: 'relation',
+  },
+  {
+    label: 'Tanggal Masuk',
+    key: 'start_date',
+  },
+  {
+    label: 'Tanggal Keluar',
+    key: 'end_date',
   },
   {
     label: 'Aksi',
@@ -52,11 +67,14 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
   unit_id: key + 1,
   unit_code: `A/01/${key + 1}`,
-  name: `Nama Pemilik ${key + 1}`,
-  address: 'Alamat Lorem Ipsum',
+  name: `Nama Penghuni ${key + 1}`,
   phone: `08123${key + 1}`,
-  email: `email@pemilik${key + 1}.com`,
+  owner_name: `Nama Pemilik ${key + 1}`,
+  relation: 'Keluarga',
+  address: 'Alamat Lorem Ipsum',
   identity_no: `12345${key + 1}`,
+  start_date: '2023-12-31 00:00:00',
+  end_date: '2024-12-31 00:00:00',
   kk_no: `12345${key + 1}`,
   picture: 'https://via.placeholder.com/300x300',
   document: [{
@@ -73,7 +91,7 @@ const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
   floor_no: `${key + 1}`,
 }))
 
-function PageOwner() {
+function PageTenant() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -86,6 +104,9 @@ function PageOwner() {
     identity_no: '',
     kk_no: '',
     picture: '',
+    relation: '',
+    start_date: '',
+    end_date: '',
     documents: [{}],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
@@ -155,6 +176,9 @@ function PageOwner() {
       kk_no: '',
       picture: '',
       documents: [''],
+      relation: '',
+      start_date: '',
+      end_date: '',
     })
   }
 
@@ -197,6 +221,9 @@ function PageOwner() {
       kk_no: fieldData.kk_no,
       picture: fieldData.picture,
       documents: fieldData.document,
+      relation: fieldData.relation,
+      start_date: fieldData.start_date,
+      end_date: fieldData.end_date,
     }))
   }
 
@@ -218,6 +245,9 @@ function PageOwner() {
       kk_no: fieldData.kk_no,
       picture: fieldData.picture,
       documents: fieldData.document,
+      relation: fieldData.relation,
+      start_date: fieldData.start_date,
+      end_date: fieldData.end_date,
     }))
   }
 
@@ -240,6 +270,9 @@ function PageOwner() {
       kk_no: fieldData.kk_no,
       picture: fieldData.picture,
       documents: fieldData.document,
+      relation: fieldData.relation,
+      start_date: fieldData.start_date,
+      end_date: fieldData.end_date,
     }))
   }
 
@@ -362,7 +395,10 @@ function PageOwner() {
     unit_code: column.unit_code,
     name: column.name,
     phone: column.phone,
-    email: column.email,
+    owner_name: column.owner_name,
+    relation: column.relation,
+    start_date: dayjs(column.start_date).format('YYYY-MM-DD'),
+    end_date: dayjs(column.end_date).format('YYYY-MM-DD'),
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -408,7 +444,7 @@ function PageOwner() {
       <Breadcrumb title={PAGE_NAME} />
 
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
-        <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
+        <div className="p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[250px]">
               <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
@@ -451,8 +487,8 @@ function PageOwner() {
           />
 
           <Input
-            placeholder="Nama Pemilik"
-            label="Nama Pemilik"
+            placeholder="Nama Penghuni"
+            label="Nama Penghuni"
             name="name"
             value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
@@ -460,17 +496,58 @@ function PageOwner() {
             fullWidth
           />
 
-          <div className="sm:col-span-2">
-            <TextArea
-              placeholder="Alamat"
-              label="Alamat"
-              name="alamat"
-              value={fields.address}
-              onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-              readOnly={modalForm.readOnly}
-              fullWidth
-            />
-          </div>
+          <DatePicker
+            label="Tanggal Mulai"
+            placeholder="Tanggal Mulai"
+            name="start_date"
+            value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
+            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <DatePicker
+            label="Tanggal Selesai"
+            placeholder="Tanggal Selesai"
+            name="end_date"
+            value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
+            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Select
+            placeholder="Hubungan Dengan Pemilik"
+            label="Hubungan Dengan Pemilik"
+            name="relation"
+            value={fields.relation}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+            options={[{
+              label: 'Pilih Hubungan',
+              value: '',
+              disabled: true,
+            },
+            {
+              label: 'Penghuni',
+              value: 'Penghuni',
+            },
+            {
+              label: 'Keluarga',
+              value: 'Keluarga',
+            }]}
+          />
+
+          <TextArea
+            placeholder="Alamat"
+            label="Alamat"
+            name="alamat"
+            value={fields.address}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
 
           <Input
             placeholder="Nomor HP"
@@ -518,7 +595,7 @@ function PageOwner() {
 
           <div className="flex flex-col gap-2">
             <p className="text-sm font-semibold text-slate-600">
-              Foto Pemilik
+              Foto Penghuni
             </p>
 
             <div>
@@ -634,4 +711,4 @@ function PageOwner() {
   )
 }
 
-export default PageOwner
+export default PageTenant

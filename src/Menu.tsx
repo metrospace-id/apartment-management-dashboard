@@ -165,7 +165,7 @@ export const MENUS: MenuProp[] = [
   {
     code: 'tenant',
     parent_code: '',
-    name: 'Penyewa',
+    name: 'Penghuni',
     url: '/tenant',
     section: 'main',
     icon: (

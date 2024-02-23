@@ -22,7 +22,7 @@ import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
 import dayjs from 'dayjs'
 import Select from 'components/Form/Select'
-import DatePicker from 'components/Form/DatePicker'
+import DatePicker from 'components/Form/DatePickers'
 
 const PAGE_NAME = 'Penghuni'
 
@@ -74,7 +74,7 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   address: 'Alamat Lorem Ipsum',
   identity_no: `12345${key + 1}`,
   start_date: '2023-12-31 00:00:00',
-  end_date: '2024-12-31 00:00:00',
+  end_date: key % 2 ? '2024-12-31 00:00:00' : null,
   kk_no: `12345${key + 1}`,
   picture: 'https://via.placeholder.com/300x300',
   document: [{
@@ -398,7 +398,7 @@ function PageTenant() {
     owner_name: column.owner_name,
     relation: column.relation,
     start_date: dayjs(column.start_date).format('YYYY-MM-DD'),
-    end_date: dayjs(column.end_date).format('YYYY-MM-DD'),
+    end_date: column.end_date ? dayjs(column.end_date).format('YYYY-MM-DD') : '-',
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">

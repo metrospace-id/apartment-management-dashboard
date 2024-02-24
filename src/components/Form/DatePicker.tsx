@@ -33,7 +33,7 @@ const options: IOptions = {
     input: '',
     inputIcon: '',
     selected:
-      'text-base-white bg-primary-500 dark:text-base-white dark:bg-primary-500',
+      'text-white bg-sky-700 dark:text-base-white dark:bg-sky-700',
   },
   icons: {
     prev: () => <IconArrowLeft />,

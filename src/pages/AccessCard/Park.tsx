@@ -20,8 +20,10 @@ import { exportToExcel } from 'utils/export'
 import dayjs from 'dayjs'
 import Select from 'components/Form/Select'
 import DatePicker from 'components/Form/DatePicker'
+import { VEHICLE_TYPE, ACCESS_CARD_TYPE, ACCESS_CARD_DURATION } from 'constants/accessCard'
+import { getAccessCardByType, getVehicleByType } from 'utils/accessCard'
 
-const PAGE_NAME = 'Kartu Akses Unit'
+const PAGE_NAME = 'Kartu Akses Parkir'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -41,12 +43,30 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'card_type',
   },
   {
+    label: 'Jenis Kendaraan',
+    key: 'vehicle_type',
+  },
+  {
+    label: 'Nopol Kendaraan',
+    key: 'vehicle_licence_no',
+  },
+  {
     label: 'Nama Pemohon',
     key: 'requester_name',
   },
   {
     label: 'Status Pemohon',
     key: 'requester_status',
+  },
+  {
+    label: 'Tanggal Aktif',
+    key: 'active_date',
+    className: 'w-[100px]',
+  },
+  {
+    label: 'Tanggal Kadaluwarsa',
+    key: 'expired_date',
+    className: 'w-[100px]',
   },
   {
     label: 'Aksi',
@@ -62,10 +82,18 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   unit_code: `A/01/${key + 1}`,
   card_no: `000${key + 1}`,
   rfid_no: `000000${key + 1}`,
-  card_type: 1,
+  card_type: key % 2 ? 2 : 3,
+  period_type: 1,
+  period_value: 1,
+  vehicle_type: key % 2 ? 1 : 2,
+  vehicle_brand: 'Hitam',
+  vehicle_color: 'Mazda RX8',
+  vehicle_licence_no: `B${key + 1}AN`,
   requester_name: `Nama Penyewa ${key + 1}`,
   requester_status: 'Penyewa',
   request_date: '2023-12-31 00:00:00',
+  active_date: '2023-12-31 00:00:00',
+  expired_date: '2024-12-31 00:00:00',
 }))
 
 const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
@@ -76,7 +104,7 @@ const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
   floor_no: `${key + 1}`,
 }))
 
-function PageAccessCardUnit() {
+function PageAccessCardVehicle() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -84,14 +112,25 @@ function PageAccessCardUnit() {
     unit_id: 0,
     card_no: '',
     rfid_no: '',
+    card_type: 2,
+    period_type: 1,
+    period_value: 1,
+    vehicle_type: 0,
+    vehicle_brand: '',
+    vehicle_color: '',
+    vehicle_licence_no: '',
     requester_name: '',
     requester_status: '',
     request_date: dayjs().format('YYYY-MM-DD'),
+    expired_date: dayjs().add(1, 'year').format('YYYY-MM-DD'),
   })
   const [filter, setFilter] = useState({
+    card_type: 1,
     requester_status: '',
     active_start_date: '',
     active_end_date: '',
+    expired_start_date: '',
+    expired_end_date: '',
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -150,9 +189,17 @@ function PageAccessCardUnit() {
       unit_id: 0,
       card_no: '',
       rfid_no: '',
+      period_type: 1,
+      period_value: 1,
+      card_type: 2,
+      vehicle_type: 0,
+      vehicle_brand: '',
+      vehicle_color: '',
+      vehicle_licence_no: '',
       requester_name: '',
       requester_status: '',
       request_date: dayjs().format('YYYY-MM-DD'),
+      expired_date: dayjs().add(1, 'year').format('YYYY-MM-DD'),
     })
   }
 
@@ -197,9 +244,17 @@ function PageAccessCardUnit() {
       unit_id: fieldData.unit_id,
       card_no: fieldData.card_no,
       rfid_no: fieldData.rfid_no,
+      period_type: fieldData.period_type,
+      period_value: fieldData.period_value,
+      card_type: fieldData.card_type,
+      vehicle_type: fieldData.vehicle_type,
+      vehicle_brand: fieldData.vehicle_brand,
+      vehicle_color: fieldData.vehicle_color,
+      vehicle_licence_no: fieldData.vehicle_licence_no,
       requester_name: fieldData.requester_name,
       requester_status: fieldData.requester_status,
       request_date: fieldData.request_date,
+      expired_date: fieldData.expired_date,
     }))
   }
 
@@ -215,9 +270,17 @@ function PageAccessCardUnit() {
       unit_id: fieldData.unit_id,
       card_no: fieldData.card_no,
       rfid_no: fieldData.rfid_no,
+      period_type: fieldData.period_type,
+      period_value: fieldData.period_value,
+      card_type: fieldData.card_type,
+      vehicle_type: fieldData.vehicle_type,
+      vehicle_brand: fieldData.vehicle_brand,
+      vehicle_color: fieldData.vehicle_color,
+      vehicle_licence_no: fieldData.vehicle_licence_no,
       requester_name: fieldData.requester_name,
       requester_status: fieldData.requester_status,
       request_date: fieldData.request_date,
+      expired_date: fieldData.expired_date,
     }))
   }
 
@@ -234,6 +297,13 @@ function PageAccessCardUnit() {
       unit_id: fieldData.unit_id,
       card_no: fieldData.card_no,
       rfid_no: fieldData.rfid_no,
+      period_type: fieldData.period_type,
+      period_value: fieldData.period_value,
+      card_type: fieldData.card_type,
+      vehicle_type: fieldData.vehicle_type,
+      vehicle_brand: fieldData.vehicle_brand,
+      vehicle_color: fieldData.vehicle_color,
+      vehicle_licence_no: fieldData.vehicle_licence_no,
       requester_name: fieldData.requester_name,
       requester_status: fieldData.requester_status,
       request_date: fieldData.request_date,
@@ -259,6 +329,10 @@ function PageAccessCardUnit() {
     if (/^\d*$/.test(value) || value === '') {
       handleChangeField(fieldName, value)
     }
+  }
+
+  const handleChangeLicenceNoField = (fieldName: string, value: string) => {
+    handleChangeField(fieldName, value.toUpperCase().replace(/\s/g, ''))
   }
 
   const handleChangeFilterField = (fieldName: string, value: string | number) => {
@@ -306,9 +380,13 @@ function PageAccessCardUnit() {
     unit_code: column.unit_code,
     card_no: column.card_no,
     rfid_no: column.rfid_no,
-    card_type: column.card_type,
+    card_type: getAccessCardByType(column.card_type)?.label,
+    vehicle_type: getVehicleByType(column.vehicle_type)?.label,
+    vehicle_licence_no: column.vehicle_licence_no,
     requester_name: column.requester_name,
     requester_status: column.requester_status,
+    active_date: dayjs(column.active_date).format('YYYY-MM-DD'),
+    expired_date: dayjs(column.expired_date).format('YYYY-MM-DD'),
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -431,6 +509,59 @@ function PageAccessCardUnit() {
             type="tel"
           />
 
+          <div className="flex gap-4 flex-col sm:gap-2 sm:flex-row">
+            <Input
+              placeholder="Lama Periode Kartu"
+              label="Lama Periode Kartu"
+              name="period_value"
+              value={fields.period_value}
+              onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+              readOnly={modalForm.readOnly}
+              fullWidth
+              type="tel"
+            />
+
+            <Select
+              placeholder="Jenis Periode Kartu"
+              label="Jenis Periode Kartu"
+              name="period_type"
+              value={fields.period_type}
+              onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+              readOnly={modalForm.readOnly}
+              fullWidth
+              options={[{
+                label: 'Pilih Periode Kartu',
+                value: '',
+                disabled: true,
+              },
+              ...ACCESS_CARD_DURATION.map(((duration) => ({
+                value: duration.id,
+                label: duration.label,
+              }))),
+              ]}
+            />
+          </div>
+
+          <Select
+            placeholder="Jenis Kartu"
+            label="Jenis Kartu"
+            name="card_type"
+            value={filter.card_type}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+            options={[{
+              label: 'Pilih Jenis Kartu',
+              value: '',
+              disabled: true,
+            },
+            ...ACCESS_CARD_TYPE.map(((type) => ({
+              value: type.id,
+              label: type.label,
+            }))),
+            ]}
+          />
+
           <Input
             placeholder="Nama Pemohon"
             label="Nama Pemohon"
@@ -464,6 +595,56 @@ function PageAccessCardUnit() {
             }]}
           />
 
+          <Select
+            placeholder="Jenis Kendaraan"
+            label="Jenis Kendaraan"
+            name="vehicle_type"
+            value={fields.vehicle_type}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+            options={[{
+              label: 'Pilih Jenis Kendaraan',
+              value: '',
+              disabled: true,
+            },
+            ...VEHICLE_TYPE.map(((vehicle) => ({
+              value: vehicle.id,
+              label: vehicle.label,
+            }))),
+            ]}
+          />
+
+          <Input
+            placeholder="Merk Kendaraan"
+            label="Merk Kendaraan"
+            name="vehicle_brand"
+            value={fields.vehicle_brand}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Input
+            placeholder="Warna Kendaraan"
+            label="Warna Kendaraan"
+            name="vehicle_color"
+            value={fields.vehicle_color}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Input
+            placeholder="Nopol Kendaraan"
+            label="Nopol Kendaraan"
+            name="vehicle_licence_no"
+            value={fields.vehicle_licence_no}
+            onChange={(e) => handleChangeLicenceNoField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
         </form>
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
@@ -475,7 +656,25 @@ function PageAccessCardUnit() {
 
       <Modal open={isModalFilterOpen} title="Filter" size="xs">
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
-
+          <Select
+            placeholder="Jenis Kartu"
+            label="Jenis Kartu"
+            name="card_type"
+            value={filter.card_type}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+            options={[{
+              label: 'Pilih Jenis Kartu',
+              value: '',
+              disabled: true,
+            },
+            ...ACCESS_CARD_TYPE.map(((type) => ({
+              value: type.id,
+              label: type.label,
+            }))),
+            ]}
+          />
           <div className="flex flex-col gap-2 w-full">
             <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Aktif</p>
             <div className="flex flex-col gap-1">
@@ -493,6 +692,29 @@ function PageAccessCardUnit() {
                 name="end_date"
                 value={filter.active_end_date ? dayjs(filter.active_end_date).toDate() : undefined}
                 onChange={(selectedDate) => handleChangeFilterField('active_end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                readOnly={modalForm.readOnly}
+                fullWidth
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 w-full">
+            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Kadaluwarsa</p>
+            <div className="flex flex-col gap-1">
+              <DatePicker
+                placeholder="Tanggal Mulai"
+                name="expired_start_date"
+                value={filter.expired_start_date ? dayjs(filter.expired_start_date).toDate() : undefined}
+                onChange={(selectedDate) => handleChangeFilterField('expired_start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                readOnly={modalForm.readOnly}
+                fullWidth
+              />
+
+              <DatePicker
+                placeholder="Tanggal Selesai"
+                name="expired_end_date"
+                value={filter.expired_end_date ? dayjs(filter.expired_end_date).toDate() : undefined}
+                onChange={(selectedDate) => handleChangeFilterField('expired_end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
                 readOnly={modalForm.readOnly}
                 fullWidth
               />
@@ -548,4 +770,4 @@ function PageAccessCardUnit() {
   )
 }
 
-export default PageAccessCardUnit
+export default PageAccessCardVehicle

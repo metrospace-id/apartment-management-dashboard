@@ -22,7 +22,7 @@ import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
 import dayjs from 'dayjs'
 import Select from 'components/Form/Select'
-import DatePicker from 'components/Form/SelectDatePicker'
+import DatePicker from 'components/Form/DatePicker'
 
 const PAGE_NAME = 'Penghuni'
 
@@ -70,7 +70,7 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   name: `Nama Penghuni ${key + 1}`,
   phone: `08123${key + 1}`,
   owner_name: `Nama Pemilik ${key + 1}`,
-  relation: 'Keluarga',
+  relation: 'Penyewa',
   address: 'Alamat Lorem Ipsum',
   identity_no: `12345${key + 1}`,
   start_date: '2023-12-31 00:00:00',
@@ -532,7 +532,7 @@ function PageTenant() {
             placeholder="Tanggal Mulai"
             name="start_date"
             value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            onChange={(selectedDate) => handleChangeField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -542,7 +542,7 @@ function PageTenant() {
             placeholder="Tanggal Selesai"
             name="end_date"
             value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            onChange={(selectedDate) => handleChangeField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -561,8 +561,8 @@ function PageTenant() {
               disabled: true,
             },
             {
-              label: 'Penghuni',
-              value: 'Penghuni',
+              label: 'Penyewa',
+              value: 'Penyewa',
             },
             {
               label: 'Keluarga',
@@ -719,8 +719,8 @@ function PageTenant() {
             label="Tanggal Mulai"
             placeholder="Tanggal Mulai"
             name="start_date"
-            value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            value={filter.start_date ? dayjs(filter.start_date).toDate() : undefined}
+            onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -729,8 +729,8 @@ function PageTenant() {
             label="Tanggal Selesai"
             placeholder="Tanggal Selesai"
             name="end_date"
-            value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            value={filter.end_date ? dayjs(filter.end_date).toDate() : undefined}
+            onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -749,8 +749,8 @@ function PageTenant() {
               disabled: true,
             },
             {
-              label: 'Penghuni',
-              value: 'Penghuni',
+              label: 'Penyewa',
+              value: 'Penyewa',
             },
             {
               label: 'Keluarga',

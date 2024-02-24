@@ -17,14 +17,14 @@ export interface SelectProps extends React.InputHTMLAttributes<HTMLSelectElement
 }
 
 function Select({
-  label, fullWidth, helperText, error, rightIcon, leftIcon, className, options, ...props
+  label, fullWidth, helperText, error, rightIcon, leftIcon, className, options, readOnly, ...props
 }: SelectProps) {
   return (
     <div className={`w-full text-left ${className}`}>
       {label && <p className="text-sm font-medium text-slate-600 mb-2">{label}</p>}
       <div className={`${fullWidth ? 'w-full' : 'max-w-[300px]'} outline-blue-400 ${error ? 'outline outline-red-500' : ''} h-[42px] flex items-center gap-2 border border-slate-200 rounded px-4 py-2 has-[:focus]:outline bg-white dark:bg-slate-800 dark:border-slate-800`}>
         {leftIcon}
-        <select {...props} className="flex-1 outline-none text-slate-600 bg-white dark:bg-slate-800 dark:placeholder:text-slate-200 dark:text-white">
+        <select {...props} disabled={readOnly} className="flex-1 outline-none text-slate-600 bg-white dark:bg-slate-800 dark:placeholder:text-slate-200 dark:text-white">
           {options.map((option) => (
             <option
               key={option.value}

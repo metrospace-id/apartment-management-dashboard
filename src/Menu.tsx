@@ -196,15 +196,15 @@ export const MENUS: MenuProp[] = [
   {
     code: 'access-card-vehicle',
     parent_code: 'access-card',
-    name: 'Akses Kendaraan',
-    url: '/access-card/vehicle',
+    name: 'Akses Parkir',
+    url: '/access-card/park',
     section: 'main',
   },
   {
     code: 'vehicle',
     parent_code: 'access-card',
     name: 'List Kendaraan',
-    url: 'access-card/vehicle',
+    url: 'access-card/vehicle-list',
     section: 'main',
   },
   {

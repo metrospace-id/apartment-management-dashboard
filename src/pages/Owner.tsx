@@ -390,7 +390,8 @@ function PageOwner() {
       setTimeout(() => {
         setIsLoadingData(false)
         const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
+          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase())
+          || tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
         )
         setData(newData)
       }, 500)
@@ -411,7 +412,7 @@ function PageOwner() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[250px]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari nama, no. unit" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <div className="sm:ml-auto flex gap-1">
               <Button onClick={handleExportExcel} variant="warning">Export</Button>

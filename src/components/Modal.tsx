@@ -7,7 +7,7 @@ interface ModalProps {
   title?: string
   open?: boolean
   onClose?: () => void
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'xs'|'sm' | 'md' | 'lg'
   children?: React.ReactNode
 }
 
@@ -19,6 +19,8 @@ export default function Modal({
     maxWidth = 'max-w-[90%] md:max-w-[70%]'
   } else if (size === 'lg') {
     maxWidth = 'max-w-[90%] md:max-w-[90%]'
+  } else if (size === 'xs') {
+    maxWidth = 'max-w-[90%] md:max-w-[400px]'
   }
 
   const customStyles = {

@@ -22,7 +22,7 @@ import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
 import dayjs from 'dayjs'
 import Select from 'components/Form/Select'
-import DatePicker from 'components/Form/DatePicker'
+import DatePicker from 'components/Form/SelectDatePicker'
 
 const PAGE_NAME = 'Penghuni'
 
@@ -109,6 +109,11 @@ function PageTenant() {
     end_date: '',
     documents: [{}],
   })
+  const [filter, setFilter] = useState({
+    relation: '',
+    start_date: '',
+    end_date: '',
+  })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [isWebcamOpen, setIsWebcamOpen] = useState(false)
@@ -117,6 +122,7 @@ function PageTenant() {
     message: '',
   })
   const [search, setSearch] = useState('')
+  const [isModalFilterOpen, setIsModalFilterOpen] = useState(false)
   const [isModalDeleteDocumentOpen, setIsModalDeleteDocumentOpen] = useState(false)
   const [modalForm, setModalForm] = useState({
     title: '',
@@ -201,6 +207,14 @@ function PageTenant() {
       open: true,
       readOnly: false,
     })
+  }
+
+  const handleModalFilterOpen = () => {
+    setIsModalFilterOpen(true)
+  }
+
+  const handleModalFilterClose = () => {
+    setIsModalFilterOpen(false)
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
@@ -302,6 +316,13 @@ function PageTenant() {
     }
   }
 
+  const handleChangeFilterField = (fieldName: string, value: string | number) => {
+    setFilter((prevState) => ({
+      ...prevState,
+      [fieldName]: value,
+    }))
+  }
+
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
@@ -324,6 +345,14 @@ function PageTenant() {
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
+    }, 500)
+  }
+
+  const handleSubmitFilter = () => {
+    setIsLoadingData(true)
+    handleModalFilterClose()
+    setTimeout(() => {
+      setIsLoadingData(false)
     }, 500)
   }
 
@@ -426,7 +455,8 @@ function PageTenant() {
       setTimeout(() => {
         setIsLoadingData(false)
         const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
+          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase())
+          || tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
         )
         setData(newData)
       }, 500)
@@ -447,8 +477,9 @@ function PageTenant() {
         <div className="p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[250px]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari nama, no. unit" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
+            <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
             <div className="sm:ml-auto flex gap-1">
               <Button onClick={handleExportExcel} variant="warning">Export</Button>
               <Button onClick={handleModalCreateOpen}>Tambah</Button>
@@ -678,6 +709,58 @@ function PageTenant() {
           {!modalForm.readOnly && (
             <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
           )}
+        </div>
+      </Modal>
+
+      <Modal open={isModalFilterOpen} title="Filter" size="xs">
+        <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
+
+          <DatePicker
+            label="Tanggal Mulai"
+            placeholder="Tanggal Mulai"
+            name="start_date"
+            value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
+            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <DatePicker
+            label="Tanggal Selesai"
+            placeholder="Tanggal Selesai"
+            name="end_date"
+            value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
+            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Select
+            placeholder="Hubungan Dengan Pemilik"
+            label="Hubungan Dengan Pemilik"
+            name="relation"
+            value={filter.relation}
+            onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+            options={[{
+              label: 'Pilih Hubungan',
+              value: '',
+              disabled: true,
+            },
+            {
+              label: 'Penghuni',
+              value: 'Penghuni',
+            },
+            {
+              label: 'Keluarga',
+              value: 'Keluarga',
+            }]}
+          />
+        </form>
+        <div className="flex gap-2 justify-end p-4">
+          <Button onClick={handleModalFilterClose} variant="default">Tutup</Button>
+          <Button onClick={handleSubmitFilter}>Kirim</Button>
         </div>
       </Modal>
 

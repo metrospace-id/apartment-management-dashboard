@@ -19,6 +19,7 @@ import PageAssetType from 'pages/Asset/Type'
 import PageAssetList from 'pages/Asset/List'
 import PageOwner from 'pages/Owner'
 import PageTenant from 'pages/Tenant'
+import PageAccessCardUnit from 'pages/AccessCard/Unit'
 import PageError404 from 'pages/Error/404'
 
 const router = createBrowserRouter([
@@ -85,6 +86,10 @@ const router = createBrowserRouter([
   {
     path: '/tenant',
     Component: PageTenant,
+  },
+  {
+    path: '/access-card/unit',
+    Component: PageAccessCardUnit,
   },
   {
     path: '/calendar',

@@ -238,7 +238,7 @@ function PageAssetLocation() {
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
-            <div className="w-full sm:w-[250px]">
+            <div className="w-full sm:w-[30%]">
               <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>

@@ -9,7 +9,7 @@ import Button from 'components/Button'
 import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
 import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
+import { FileText as IconFile } from 'components/Icons'
 import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
@@ -20,8 +20,9 @@ import { exportToExcel } from 'utils/export'
 import dayjs from 'dayjs'
 import Select from 'components/Form/Select'
 import DatePicker from 'components/Form/DatePicker'
+import { getVehicleByType } from 'utils/accessCard'
 
-const PAGE_NAME = 'Kartu Akses Unit'
+const PAGE_NAME = 'List Kendaraan'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -37,8 +38,20 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'rfid_no',
   },
   {
-    label: 'Jenis Kartu',
-    key: 'card_type',
+    label: 'Jenis Kendaraan',
+    key: 'type',
+  },
+  {
+    label: 'Merk Kendaraan',
+    key: 'brand',
+  },
+  {
+    label: 'Warna Kendaraan',
+    key: 'color',
+  },
+  {
+    label: 'Nopol Kendaraan',
+    key: 'licence_no',
   },
   {
     label: 'Nama Pemohon',
@@ -63,6 +76,10 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   card_no: `000${key + 1}`,
   rfid_no: `000000${key + 1}`,
   card_type: 1,
+  type: key % 2 ? 1 : 2,
+  brand: 'Hitam',
+  color: 'Mazda RX8',
+  licence_no: `B${key + 1}AN`,
   requester_name: `Nama Penyewa ${key + 1}`,
   requester_status: 'Penyewa',
   request_date: '2023-12-31 00:00:00',
@@ -76,7 +93,7 @@ const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
   floor_no: `${key + 1}`,
 }))
 
-function PageAccessCardUnit() {
+function PageAccessCardVehicleList() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -169,14 +186,6 @@ function PageAccessCardUnit() {
     }))
   }
 
-  const handleModalCreateOpen = () => {
-    setModalForm({
-      title: `Tambah ${PAGE_NAME} Baru`,
-      open: true,
-      readOnly: false,
-    })
-  }
-
   const handleModalFilterOpen = () => {
     setIsModalFilterOpen(true)
   }
@@ -191,43 +200,6 @@ function PageAccessCardUnit() {
       open: true,
       readOnly: true,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      card_no: fieldData.card_no,
-      rfid_no: fieldData.rfid_no,
-      requester_name: fieldData.requester_name,
-      requester_status: fieldData.requester_status,
-      request_date: fieldData.request_date,
-    }))
-  }
-
-  const handleModalUpdateOpen = (fieldData: any) => {
-    setModalForm({
-      title: `Ubah ${PAGE_NAME}`,
-      open: true,
-      readOnly: false,
-    })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      card_no: fieldData.card_no,
-      rfid_no: fieldData.rfid_no,
-      requester_name: fieldData.requester_name,
-      requester_status: fieldData.requester_status,
-      request_date: fieldData.request_date,
-    }))
-  }
-
-  const handleModalDeleteOpen = (fieldData: any) => {
-    setModalConfirm({
-      title: MODAL_CONFIRM_TYPE.delete.title,
-      description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
-    })
-    setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
@@ -306,7 +278,10 @@ function PageAccessCardUnit() {
     unit_code: column.unit_code,
     card_no: column.card_no,
     rfid_no: column.rfid_no,
-    card_type: column.card_type,
+    type: getVehicleByType(column.type)?.label,
+    brand: column.brand,
+    color: column.color,
+    licence_no: column.licence_no,
     requester_name: column.requester_name,
     requester_status: column.requester_status,
     action: (
@@ -314,16 +289,6 @@ function PageAccessCardUnit() {
         <Popover content="Detail">
           <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
             <IconFile className="w-4 h-4" />
-          </Button>
-        </Popover>
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
       </div>
@@ -359,12 +324,11 @@ function PageAccessCardUnit() {
         <div className="p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari no. unit, no. kartu" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari no. unit, no. kartu, nopol" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
             <div className="sm:ml-auto flex gap-1">
               <Button onClick={handleExportExcel} variant="warning">Export</Button>
-              <Button onClick={handleModalCreateOpen}>Tambah</Button>
             </div>
           </div>
 
@@ -475,30 +439,6 @@ function PageAccessCardUnit() {
 
       <Modal open={isModalFilterOpen} title="Filter" size="xs">
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
-
-          <div className="flex flex-col gap-2 w-full">
-            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Aktif</p>
-            <div className="flex flex-col gap-1">
-              <DatePicker
-                placeholder="Tanggal Mulai"
-                name="active_start_date"
-                value={filter.active_start_date ? dayjs(filter.active_start_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('active_start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
-                readOnly={modalForm.readOnly}
-                fullWidth
-              />
-
-              <DatePicker
-                placeholder="Tanggal Selesai"
-                name="end_date"
-                value={filter.active_end_date ? dayjs(filter.active_end_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('active_end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
-                readOnly={modalForm.readOnly}
-                fullWidth
-              />
-            </div>
-          </div>
-
           <Select
             placeholder="Status Pemohon"
             label="Status Pemohon"
@@ -548,4 +488,4 @@ function PageAccessCardUnit() {
   )
 }
 
-export default PageAccessCardUnit
+export default PageAccessCardVehicleList

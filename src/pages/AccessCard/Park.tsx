@@ -104,7 +104,15 @@ const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
   floor_no: `${key + 1}`,
 }))
 
-function PageAccessCardVehicle() {
+const VEHICLE_DATA = Array.from(Array(100).keys()).map((key) => ({
+  id: key + 1,
+  type: key % 2 ? 1 : 2,
+  brand: 'Hitam',
+  color: 'Mazda RX8',
+  licence_no: `B${key + 1}AN`,
+}))
+
+function PageAccessCardPark() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -140,6 +148,7 @@ function PageAccessCardVehicle() {
   })
   const [search, setSearch] = useState('')
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false)
+  const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false)
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
@@ -230,6 +239,22 @@ function PageAccessCardVehicle() {
 
   const handleModalFilterClose = () => {
     setIsModalFilterOpen(false)
+  }
+
+  const handleModalHistoryOpen = () => {
+    setIsModalHistoryOpen(true)
+    setModalForm((prevState) => ({
+      ...prevState,
+      open: false,
+    }))
+  }
+
+  const handleModalHistoryClose = () => {
+    setIsModalHistoryOpen(false)
+    setModalForm((prevState) => ({
+      ...prevState,
+      open: true,
+    }))
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
@@ -436,7 +461,7 @@ function PageAccessCardVehicle() {
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
-            <div className="w-full sm:w-[250px]">
+            <div className="w-full sm:w-[30%]">
               <Input placeholder="Cari no. unit, no. kartu" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
@@ -647,10 +672,53 @@ function PageAccessCardVehicle() {
 
         </form>
         <div className="flex gap-2 justify-end p-4">
+          {modalForm.readOnly && (
+            <div className="ml-0 mr-auto">
+              <Button onClick={handleModalHistoryOpen} variant="secondary">Histori</Button>
+            </div>
+          )}
           <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
           {!modalForm.readOnly && (
             <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
           )}
+        </div>
+      </Modal>
+
+      <Modal open={isModalHistoryOpen} title={`Histori ${PAGE_NAME}`}>
+        <div className="p-6 overflow-scroll">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-md w-full max-h-[50vh] overflow-scroll">
+            <table className="border-collapse min-w-full w-max relative">
+              <thead>
+                <tr className="text-center font-semibold text-slate-600 dark:text-white">
+                  <td className="p-2">Jenis</td>
+                  <td className="p-2">Merk</td>
+                  <td className="p-2">Warna</td>
+                  <td className="p-2">Nopol</td>
+                </tr>
+              </thead>
+              <tbody>
+                {VEHICLE_DATA.map((vehicle) => (
+                  <tr key={vehicle.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
+                    <td className="p-2">
+                      {getVehicleByType(vehicle.type)?.label}
+                    </td>
+                    <td className="p-2">
+                      {vehicle.brand}
+                    </td>
+                    <td className="p-2">
+                      {vehicle.color}
+                    </td>
+                    <td className="p-2">
+                      {vehicle.licence_no}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="flex gap-2 justify-start p-4">
+          <Button onClick={handleModalHistoryClose} variant="secondary">Kembali</Button>
         </div>
       </Modal>
 
@@ -770,4 +838,4 @@ function PageAccessCardVehicle() {
   )
 }
 
-export default PageAccessCardVehicle
+export default PageAccessCardPark

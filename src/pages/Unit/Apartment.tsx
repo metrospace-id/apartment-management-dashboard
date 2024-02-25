@@ -14,6 +14,7 @@ import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import Select from 'components/Form/Select'
+import dayjs from 'dayjs'
 
 const PAGE_NAME = 'Unit Apartment'
 
@@ -50,6 +51,22 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   floor_no: `${key + 1}`,
 }))
 
+const OWNER_DATA = Array.from(Array(25).keys()).map((key) => ({
+  id: key + 1,
+  name: `Nama Pemilik ${key + 1}`,
+  phone: `08123${key + 1}`,
+  start_date: '2023-12-31 00:00:00',
+  end_date: key % 2 ? '2024-12-31 00:00:00' : null,
+}))
+
+const TENANT_DATA = Array.from(Array(25).keys()).map((key) => ({
+  id: key + 1,
+  name: `Nama Penyewa ${key + 1}`,
+  phone: `08123${key + 1}`,
+  start_date: '2023-12-31 00:00:00',
+  end_date: key % 2 ? '2024-12-31 00:00:00' : null,
+}))
+
 function PageUnitApartment() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
@@ -72,6 +89,7 @@ function PageUnitApartment() {
     open: false,
     readOnly: false,
   })
+  const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false)
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
@@ -110,6 +128,22 @@ function PageUnitApartment() {
       tower: '',
       unit_code: '',
     })
+  }
+
+  const handleModalHistoryOpen = () => {
+    setIsModalHistoryOpen(true)
+    setModalForm((prevState) => ({
+      ...prevState,
+      open: false,
+    }))
+  }
+
+  const handleModalHistoryClose = () => {
+    setIsModalHistoryOpen(false)
+    setModalForm((prevState) => ({
+      ...prevState,
+      open: true,
+    }))
   }
 
   const handleModalConfirmClose = () => {
@@ -272,7 +306,7 @@ function PageUnitApartment() {
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
-            <div className="w-full sm:w-[250px]">
+            <div className="w-full sm:w-[30%]">
               <Input placeholder="Cari tower, lantai, nomor" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
@@ -330,10 +364,91 @@ function PageUnitApartment() {
 
         </form>
         <div className="flex gap-2 justify-end p-4">
+          {modalForm.readOnly && (
+            <div className="ml-0 mr-auto">
+              <Button onClick={handleModalHistoryOpen} variant="secondary">Histori</Button>
+            </div>
+          )}
           <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
           {!modalForm.readOnly && (
             <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
           )}
+        </div>
+      </Modal>
+
+      <Modal open={isModalHistoryOpen} title={`Histori ${PAGE_NAME}`}>
+        <div className="p-6 flex gap-2 flex-col sm:flex-row overflow-scroll">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-slate-600 dark:text-white">Histori Pemilik</p>
+            <div className="border border-slate-200 dark:border-slate-700 rounded-md w-max max-h-[50vh] overflow-scroll mt-2">
+              <table className="border-collapse min-w-full w-max relative">
+                <thead>
+                  <tr className="text-center font-semibold text-slate-600 dark:text-white">
+                    <td className="p-2">Nama</td>
+                    <td className="p-2">No. Telepon</td>
+                    <td className="p-2">Tgl Masuk</td>
+                    <td className="p-2">Tgl Keluar</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {OWNER_DATA.map((owner) => (
+                    <tr key={owner.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
+                      <td className="p-2">
+                        {owner.name}
+                      </td>
+                      <td className="p-2">
+                        {owner.phone}
+                      </td>
+                      <td className="p-2">
+                        {dayjs(owner.start_date).format('YYYY-MM-DD')}
+                      </td>
+                      <td className="p-2">
+                        {owner.end_date ? dayjs(owner.end_date).format('YYYY-MM-DD') : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex-1 ">
+            <p className="text-sm font-semibold text-slate-600 dark:text-white">Histori Penyewa</p>
+            <div className="border border-slate-200 dark:border-slate-700 rounded-md w-max max-h-[50vh] overflow-scroll mt-2">
+              <table className="border-collapse min-w-full w-max relative">
+                <thead>
+                  <tr className="text-center font-semibold text-slate-600 dark:text-white">
+                    <td className="p-2">Nama</td>
+                    <td className="p-2">No. Telepon</td>
+                    <td className="p-2">Tgl Masuk</td>
+                    <td className="p-2">Tgl Keluar</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {TENANT_DATA.map((owner) => (
+                    <tr key={owner.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
+                      <td className="p-2">
+                        {owner.name}
+                      </td>
+                      <td className="p-2">
+                        {owner.phone}
+                      </td>
+                      <td className="p-2">
+                        {dayjs(owner.start_date).format('YYYY-MM-DD')}
+                      </td>
+                      <td className="p-2">
+                        {owner.end_date ? dayjs(owner.end_date).format('YYYY-MM-DD') : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+        <div className="flex gap-2 justify-start p-4">
+          <Button onClick={handleModalHistoryClose} variant="secondary">Kembali</Button>
         </div>
       </Modal>
 

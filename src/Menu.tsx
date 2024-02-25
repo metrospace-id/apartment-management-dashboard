@@ -204,7 +204,7 @@ export const MENUS: MenuProp[] = [
     code: 'vehicle',
     parent_code: 'access-card',
     name: 'List Kendaraan',
-    url: 'access-card/vehicle-list',
+    url: '/access-card/vehicle-list',
     section: 'main',
   },
   {

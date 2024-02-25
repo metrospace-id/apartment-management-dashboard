@@ -507,7 +507,7 @@ function PageAccessCardPark() {
               label: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
               value: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.id || '',
             }}
-            onChange={(value) => handleChangeField('group_id', value.value)}
+            onChange={(value) => handleChangeField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -757,7 +757,7 @@ function PageAccessCardPark() {
 
               <DatePicker
                 placeholder="Tanggal Selesai"
-                name="end_date"
+                name="active_end_date"
                 value={filter.active_end_date ? dayjs(filter.active_end_date).toDate() : undefined}
                 onChange={(selectedDate) => handleChangeFilterField('active_end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
                 readOnly={modalForm.readOnly}

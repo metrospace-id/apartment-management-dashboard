@@ -23,6 +23,8 @@ import PageAccessCardUnit from 'pages/AccessCard/Unit'
 import PageAccessCardPark from 'pages/AccessCard/Park'
 import PageAccessCardVehicleList from 'pages/AccessCard/VehicleList'
 import PageError404 from 'pages/Error/404'
+import PageWork from 'pages/Work'
+import PageRenovation from 'pages/Renovation'
 
 const router = createBrowserRouter([
   {
@@ -100,6 +102,14 @@ const router = createBrowserRouter([
   {
     path: '/access-card/vehicle-list',
     Component: PageAccessCardVehicleList,
+  },
+  {
+    path: '/work',
+    Component: PageWork,
+  },
+  {
+    path: '/renovation',
+    Component: PageRenovation,
   },
   {
     path: '/calendar',

@@ -15,38 +15,38 @@ import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
+import DatePicker from 'components/Form/DatePicker'
+import TextArea from 'components/Form/TextArea'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { exportToExcel } from 'utils/export'
 import dayjs from 'dayjs'
-import Select from 'components/Form/Select'
-import DatePicker from 'components/Form/DatePicker'
 
-const PAGE_NAME = 'Kartu Akses Unit'
+const PAGE_NAME = 'Izin Renovasi'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
-    label: 'No. Unit',
+    label: 'No Unit',
     key: 'unit_code',
-  },
-  {
-    label: 'No. Kartu',
-    key: 'card_no',
-  },
-  {
-    label: 'No. RFID',
-    key: 'rfid_no',
-  },
-  {
-    label: 'Jenis Kartu',
-    key: 'card_type',
   },
   {
     label: 'Nama Pemohon',
     key: 'requester_name',
   },
   {
-    label: 'Status Pemohon',
-    key: 'requester_status',
+    label: 'Total Pekerja',
+    key: 'worker_total',
+  },
+  {
+    label: 'Jenis Renovasi',
+    key: 'renovation_category',
+  },
+  {
+    label: 'Tanggal Mulai',
+    key: 'start_date',
+  },
+  {
+    label: 'Tanggal Selsai',
+    key: 'end_date',
   },
   {
     label: 'Aksi',
@@ -60,38 +60,55 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
   unit_id: key + 1,
   unit_code: `A/01/${key + 1}`,
-  card_no: `000${key + 1}`,
-  rfid_no: `000000${key + 1}`,
-  card_type: 1,
-  requester_name: `Nama Penyewa ${key + 1}`,
-  requester_status: 'Penyewa',
-  request_date: '2023-12-31 00:00:00',
+  requester_name: `Nama Pemilik ${key + 1}`,
+  contractor_name: `Nama Kontraktor ${key + 1}`,
+  worker_total: 5,
+  pic_name: `Nama Penanggung Jawab ${key + 1}`,
+  pic_phone: `08123${key + 1}`,
+  supervisor_name: `Nama Pengawas ${key + 1}`,
+  supervisor_phone: `08123${key + 1}`,
+  renovation_category_id: 1,
+  description: `Deskripsi pekerjaan ${key + 1}`,
+  start_date: '2023-12-31 00:00:00',
+  end_date: '2024-12-31 00:00:00',
+}))
+
+const RENOVATION_CATEGORY_DATA = Array.from(Array(100).keys()).map((key) => ({
+  id: key + 1,
+  name: `Kategori Renovasi ${key + 1}`,
 }))
 
 const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
   unit_code: `A/${key + 1}/${key + 1}`,
+  owner_name: `Nama Pemilik ${key + 1}`,
   tower: 'A',
   unit_no: `${key + 1}`,
   floor_no: `${key + 1}`,
 }))
 
-function PageAccessCardUnit() {
+function PageRenovation() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
     id: 0,
     unit_id: 0,
-    card_no: '',
-    rfid_no: '',
     requester_name: '',
-    requester_status: '',
-    request_date: dayjs().format('YYYY-MM-DD'),
+    contractor_name: '',
+    worker_total: 0,
+    pic_name: '',
+    pic_phone: '',
+    supervisor_name: '',
+    supervisor_phone: '',
+    renovation_category_id: 0,
+    start_date: dayjs().format('YYYY-MM-DD'),
+    end_date: dayjs().format('YYYY-MM-DD'),
+    description: '',
   })
   const [filter, setFilter] = useState({
-    requester_status: '',
-    active_start_date: '',
-    active_end_date: '',
+    start_date: '',
+    end_date: '',
+    renovation_category_id: 0,
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -148,12 +165,26 @@ function PageAccessCardUnit() {
     setFields({
       id: 0,
       unit_id: 0,
-      card_no: '',
-      rfid_no: '',
       requester_name: '',
-      requester_status: '',
-      request_date: dayjs().format('YYYY-MM-DD'),
+      contractor_name: '',
+      worker_total: 0,
+      pic_name: '',
+      pic_phone: '',
+      supervisor_name: '',
+      supervisor_phone: '',
+      renovation_category_id: 0,
+      start_date: dayjs().format('YYYY-MM-DD'),
+      end_date: dayjs().format('YYYY-MM-DD'),
+      description: '',
     })
+  }
+
+  const handleModalFilterOpen = () => {
+    setIsModalFilterOpen(true)
+  }
+
+  const handleModalFilterClose = () => {
+    setIsModalFilterOpen(false)
   }
 
   const handleModalConfirmClose = () => {
@@ -177,14 +208,6 @@ function PageAccessCardUnit() {
     })
   }
 
-  const handleModalFilterOpen = () => {
-    setIsModalFilterOpen(true)
-  }
-
-  const handleModalFilterClose = () => {
-    setIsModalFilterOpen(false)
-  }
-
   const handleModalDetailOpen = (fieldData: any) => {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
@@ -195,11 +218,17 @@ function PageAccessCardUnit() {
       ...prevState,
       id: fieldData.id,
       unit_id: fieldData.unit_id,
-      card_no: fieldData.card_no,
-      rfid_no: fieldData.rfid_no,
       requester_name: fieldData.requester_name,
-      requester_status: fieldData.requester_status,
-      request_date: fieldData.request_date,
+      contractor_name: fieldData.contractor_name,
+      worker_total: fieldData.worker_total,
+      pic_name: fieldData.pic_name,
+      pic_phone: fieldData.pic_phone,
+      supervisor_name: fieldData.supervisor_name,
+      supervisor_phone: fieldData.supervisor_phone,
+      renovation_category_id: fieldData.renovation_category_id,
+      start_date: fieldData.start_date,
+      end_date: fieldData.end_date,
+      description: fieldData.description,
     }))
   }
 
@@ -213,11 +242,17 @@ function PageAccessCardUnit() {
       ...prevState,
       id: fieldData.id,
       unit_id: fieldData.unit_id,
-      card_no: fieldData.card_no,
-      rfid_no: fieldData.rfid_no,
       requester_name: fieldData.requester_name,
-      requester_status: fieldData.requester_status,
-      request_date: fieldData.request_date,
+      contractor_name: fieldData.contractor_name,
+      worker_total: fieldData.worker_total,
+      pic_name: fieldData.pic_name,
+      pic_phone: fieldData.pic_phone,
+      supervisor_name: fieldData.supervisor_name,
+      supervisor_phone: fieldData.supervisor_phone,
+      renovation_category_id: fieldData.renovation_category_id,
+      start_date: fieldData.start_date,
+      end_date: fieldData.end_date,
+      description: fieldData.description,
     }))
   }
 
@@ -232,11 +267,17 @@ function PageAccessCardUnit() {
       ...prevState,
       id: fieldData.id,
       unit_id: fieldData.unit_id,
-      card_no: fieldData.card_no,
-      rfid_no: fieldData.rfid_no,
       requester_name: fieldData.requester_name,
-      requester_status: fieldData.requester_status,
-      request_date: fieldData.request_date,
+      contractor_name: fieldData.contractor_name,
+      worker_total: fieldData.worker_total,
+      pic_name: fieldData.pic_name,
+      pic_phone: fieldData.pic_phone,
+      supervisor_name: fieldData.supervisor_name,
+      supervisor_phone: fieldData.supervisor_phone,
+      renovation_category_id: fieldData.renovation_category_id,
+      start_date: fieldData.start_date,
+      end_date: fieldData.end_date,
+      description: fieldData.description,
     }))
   }
 
@@ -246,6 +287,15 @@ function PageAccessCardUnit() {
       setIsLoadingData(false)
       setPage(pageNumber - 1)
     }, 500)
+  }
+
+  const handleChangeUnitField = (fieldName: string, value: string | number) => {
+    const requesterName = UNIT_DATA.find((unit) => unit.id === value)
+    setFields((prevState) => ({
+      ...prevState,
+      requester_name: requesterName?.owner_name || '',
+      [fieldName]: value,
+    }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -304,11 +354,14 @@ function PageAccessCardUnit() {
   const tableDatas = TABLE_DATA.map((column) => ({
     id: column.id,
     unit_code: column.unit_code,
-    card_no: column.card_no,
-    rfid_no: column.rfid_no,
-    card_type: column.card_type,
     requester_name: column.requester_name,
-    requester_status: column.requester_status,
+    contractor_name: column.contractor_name,
+    worker_total: column.worker_total,
+    renovation_category: RENOVATION_CATEGORY_DATA.find((cat) => cat.id === column.renovation_category_id)?.name,
+    renovation_category_id: column.renovation_category_id,
+    start_date: dayjs(column.start_date).format('YYYY-MM-DD'),
+    end_date: dayjs(column.end_date).format('YYYY-MM-DD'),
+    description: column.description,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -336,8 +389,7 @@ function PageAccessCardUnit() {
       setTimeout(() => {
         setIsLoadingData(false)
         const newData = tableDatas.filter(
-          (tableData) => tableData.rfid_no.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.card_no.toLowerCase().includes(debounceSearch.toLowerCase())
+          (tableData) => tableData.requester_name.toLowerCase().includes(debounceSearch.toLowerCase())
           || tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
         )
         setData(newData)
@@ -356,10 +408,10 @@ function PageAccessCardUnit() {
       <Breadcrumb title={PAGE_NAME} />
 
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
-        <div className="p-4 bg-white rounded-lg dark:bg-black">
+        <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari no. unit, no. kartu" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari nama, no. unit" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
             <div className="sm:ml-auto flex gap-1">
@@ -382,16 +434,6 @@ function PageAccessCardUnit() {
 
       <Modal open={modalForm.open} title={modalForm.title}>
         <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
-          <DatePicker
-            label="Tanggal Permohonan"
-            placeholder="Tanggal Permohonan"
-            name="request_date"
-            value={fields.request_date ? dayjs(fields.request_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('request_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
-            readOnly
-            fullWidth
-          />
-
           <Autocomplete
             placeholder="Nomor Unit"
             label="Nomor Unit"
@@ -404,31 +446,9 @@ function PageAccessCardUnit() {
               label: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
               value: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.id || '',
             }}
-            onChange={(value) => handleChangeField('unit_id', value.value)}
+            onChange={(value) => handleChangeUnitField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
-          />
-
-          <Input
-            placeholder="No. Kartu"
-            label="No. Kartu"
-            name="card_no"
-            value={fields.card_no}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-            type="tel"
-          />
-
-          <Input
-            placeholder="No. RFID"
-            label="No. RFID"
-            name="rfid_no"
-            value={fields.rfid_no}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-            type="tel"
           />
 
           <Input
@@ -436,32 +456,119 @@ function PageAccessCardUnit() {
             label="Nama Pemohon"
             name="requester_name"
             value={fields.requester_name}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            disabled
+            fullWidth
+          />
+
+          <Input
+            placeholder="Nama Kontraktor"
+            label="Nama Kontraktor"
+            name="contractor_name"
+            value={fields.contractor_name}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Input
+            placeholder="Jumlah Pekerja"
+            label="Jumlah Pekerja"
+            name="worker_total"
+            type="tel"
+            value={fields.worker_total}
             onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
 
-          <Select
-            placeholder="Status Pemohon"
-            label="Status Pemohon"
-            name="requester_status"
-            value={fields.requester_status}
+          <Input
+            placeholder="Nama Penanggung Jawab"
+            label="Nama Penanggung Jawab"
+            name="pic_name"
+            value={fields.pic_name}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Input
+            placeholder="No. Telepon Penanggung Jawab"
+            label="No. Telepon Penanggung Jawab"
+            name="pic_phone"
+            type="tel"
+            value={fields.pic_phone}
             onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
-            options={[{
-              label: 'Pilih Status',
-              value: '',
-              disabled: true,
-            },
-            {
-              label: 'Penghuni',
-              value: 'Penghuni',
-            },
-            {
-              label: 'Penyewa',
-              value: 'Penyewa',
-            }]}
+          />
+
+          <Input
+            placeholder="Nama Pengawas"
+            label="Nama Pengawas"
+            name="supervisor_name"
+            value={fields.supervisor_name}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Input
+            placeholder="No. Telepon Pengawas"
+            label="No. Telepon Pengawas"
+            name="supervisor_phone"
+            type="tel"
+            value={fields.supervisor_phone}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <DatePicker
+            label="Tanggal Mulai"
+            placeholder="Tanggal Mulai"
+            name="start_date"
+            value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
+            onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <DatePicker
+            label="Tanggal Selesai"
+            placeholder="Tanggal Selesai"
+            name="end_date"
+            value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
+            onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Autocomplete
+            placeholder="Jenis Renovasi"
+            label="Jenis Renovasi"
+            name="renovation_category_id"
+            items={RENOVATION_CATEGORY_DATA.map((itemData) => ({
+              label: itemData.name,
+              value: itemData.id,
+            }))}
+            value={{
+              label: RENOVATION_CATEGORY_DATA.find((itemData) => itemData.id === fields.renovation_category_id)?.name || '',
+              value: RENOVATION_CATEGORY_DATA.find((itemData) => itemData.id === fields.renovation_category_id)?.id || '',
+            }}
+            onChange={(value) => handleChangeField('renovation_category_id', value.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <TextArea
+            placeholder="Deskripsi Renovasi"
+            label="Deskripsi Renovasi"
+            name="description"
+            value={fields.description}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
           />
 
         </form>
@@ -477,50 +584,45 @@ function PageAccessCardUnit() {
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
 
           <div className="flex flex-col gap-2 w-full">
-            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Aktif</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Mulai</p>
             <div className="flex flex-col gap-1">
               <DatePicker
                 placeholder="Tanggal Mulai"
-                name="active_start_date"
-                value={filter.active_start_date ? dayjs(filter.active_start_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('active_start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                name="start_date"
+                value={filter.start_date ? dayjs(filter.start_date).toDate() : undefined}
+                onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
                 readOnly={modalForm.readOnly}
                 fullWidth
               />
 
               <DatePicker
                 placeholder="Tanggal Selesai"
-                name="active_end_date"
-                value={filter.active_end_date ? dayjs(filter.active_end_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('active_end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                name="end_date"
+                value={filter.end_date ? dayjs(filter.end_date).toDate() : undefined}
+                onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
                 readOnly={modalForm.readOnly}
                 fullWidth
               />
             </div>
           </div>
 
-          <Select
-            placeholder="Status Pemohon"
-            label="Status Pemohon"
-            name="requester_status"
-            value={filter.requester_status}
-            onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+          <Autocomplete
+            placeholder="Jenis Renovasi"
+            label="Jenis Renovasi"
+            name="renovation_category_id"
+            items={RENOVATION_CATEGORY_DATA.map((itemData) => ({
+              label: itemData.name,
+              value: itemData.id,
+            }))}
+            value={{
+              label: RENOVATION_CATEGORY_DATA.find((itemData) => itemData.id === filter.renovation_category_id)?.name || '',
+              value: RENOVATION_CATEGORY_DATA.find((itemData) => itemData.id === filter.renovation_category_id)?.id || '',
+            }}
+            onChange={(value) => handleChangeFilterField('renovation_category_id', value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
-            options={[{
-              label: 'Pilih Status',
-              value: '',
-              disabled: true,
-            },
-            {
-              label: 'Penghuni',
-              value: 'Penghuni',
-            },
-            {
-              label: 'Penyewa',
-              value: 'Penyewa',
-            }]}
           />
+
         </form>
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalFilterClose} variant="default">Tutup</Button>
@@ -548,4 +650,4 @@ function PageAccessCardUnit() {
   )
 }
 
-export default PageAccessCardUnit
+export default PageRenovation

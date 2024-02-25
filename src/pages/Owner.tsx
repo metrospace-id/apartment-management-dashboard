@@ -446,7 +446,7 @@ function PageOwner() {
               label: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
               value: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.id || '',
             }}
-            onChange={(value) => handleChangeField('group_id', value.value)}
+            onChange={(value) => handleChangeField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />

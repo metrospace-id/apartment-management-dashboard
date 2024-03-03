@@ -23,12 +23,14 @@ import PageAccessCardUnit from 'pages/AccessCard/Unit'
 import PageAccessCardPark from 'pages/AccessCard/Park'
 import PageAccessCardVehicleList from 'pages/AccessCard/VehicleList'
 import PageError404 from 'pages/Error/404'
-import PageWork from 'pages/Work'
-import PageRenovation from 'pages/Renovation'
-import PageIncomingItem from 'pages/IncomingItem'
-import PageOutcomingItem from 'pages/OutcomingItem'
+import PageWork from 'pages/UnitPermission/Work'
+import PageRenovation from 'pages/UnitPermission/Renovation'
+import PageIncomingItem from 'pages/UnitPermission/IncomingItem'
+import PageOutcomingItem from 'pages/UnitPermission/OutcomingItem'
 import PageItemStock from 'pages/Item/Stock'
 import PageItemHistory from 'pages/Item/History'
+import PageDepartment from 'pages/Department'
+import PageItemRequest from 'pages/Item/Request'
 
 const router = createBrowserRouter([
   {
@@ -50,6 +52,10 @@ const router = createBrowserRouter([
   {
     path: '/user',
     Component: PageUser,
+  },
+  {
+    path: '/department',
+    Component: PageDepartment,
   },
   {
     path: '/unit/apartment',
@@ -108,19 +114,19 @@ const router = createBrowserRouter([
     Component: PageAccessCardVehicleList,
   },
   {
-    path: '/work',
+    path: '/unit-permission/work',
     Component: PageWork,
   },
   {
-    path: '/renovation',
+    path: '/unit-permission/renovation',
     Component: PageRenovation,
   },
   {
-    path: '/incoming-item',
+    path: '/unit-permission/incoming-item',
     Component: PageIncomingItem,
   },
   {
-    path: '/outcoming-item',
+    path: '/unit-permission/outcoming-item',
     Component: PageOutcomingItem,
   },
   {
@@ -130,6 +136,10 @@ const router = createBrowserRouter([
   {
     path: '/item/history',
     Component: PageItemHistory,
+  },
+  {
+    path: '/item/request',
+    Component: PageItemRequest,
   },
   {
     path: '/calendar',

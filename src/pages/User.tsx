@@ -20,7 +20,7 @@ const PAGE_NAME = 'User'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
-    label: 'Name',
+    label: 'Nama',
     key: 'name',
   },
   {

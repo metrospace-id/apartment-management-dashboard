@@ -100,7 +100,6 @@ export default function Autocomplete({
         )}
         value={autocompleteText || ''}
         onChange={(e) => handleChangeAutocompleteText(e.target.value)}
-        className="mb-1"
         onClick={disabled || readOnly ? () => null : handleOpenAutocomplete}
         autoComplete="off"
         disabled={disabled}
@@ -108,14 +107,15 @@ export default function Autocomplete({
         InputRef={inputFieldRef}
         {...props}
       />
-      <div className="relative mt-2" id="form-autocomplete" ref={autocompleteFieldRef}>
+
+      <div className="relative" id="form-autocomplete" ref={autocompleteFieldRef}>
         <ReactModal
           isOpen={isSuggestionBoxShow}
           style={customStyles}
           shouldCloseOnEsc
           shouldCloseOnOverlayClick
           onRequestClose={() => setIsSuggestionBoxShow(false)}
-          className="max-h-[calc(36px*5)] overflow-scroll border border-slate-200 focus-visible:outline-none
+          className="mt-1 max-h-[calc(36px*5)] overflow-scroll border border-slate-200 focus-visible:outline-none
           shadow-sm p-2 rounded-xl absolute z-50 bg-white dark:bg-slate-900 dark:border-slate-600"
         >
           <ol>

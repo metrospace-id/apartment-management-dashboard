@@ -12,10 +12,10 @@ import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
-import Autocomplete from 'components/Form/Autocomplete'
+import TextArea from 'components/Form/TextArea'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 
-const PAGE_NAME = 'List Aset'
+const PAGE_NAME = 'Departmen'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -23,16 +23,8 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'name',
   },
   {
-    label: 'Golongan',
-    key: 'group_name',
-  },
-  {
-    label: 'Lokasi',
-    key: 'location_name',
-  },
-  {
-    label: 'Jenis',
-    key: 'type_name',
+    label: 'Description',
+    key: 'description',
   },
   {
     label: 'Aksi',
@@ -44,39 +36,18 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 
 const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
-  name: `Aset ${key + 1}`,
-  group_id: key + 1,
-  group_name: `Golongan ${key + 1}`,
-  location_id: key + 1,
-  location_name: `Lokasi ${key + 1}`,
-  type_id: key + 1,
-  type_name: `Jenis ${key + 1}`,
+  name: `Departmen ${key + 1}`,
+  description: 'Deskripsi departemen',
 }))
 
-const GROUP_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Golongan Aset ${key + 1}`,
-}))
-
-const LOCATION_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Lokasi Aset ${key + 1}`,
-}))
-
-const TYPE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Jenis Aset ${key + 1}`,
-}))
-
-function PageAssetList() {
+function PageDepartment() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
     id: 0,
     name: '',
-    group_id: 0,
-    location_id: 0,
-    type_id: 0,
+    description: '',
+    parent: '',
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -124,9 +95,8 @@ function PageAssetList() {
     setFields({
       id: 0,
       name: '',
-      group_id: 0,
-      location_id: 0,
-      type_id: 0,
+      description: '',
+      parent: '',
     })
   }
 
@@ -160,9 +130,8 @@ function PageAssetList() {
     setFields({
       id: fieldData.id,
       name: fieldData.name,
-      group_id: fieldData.group_id,
-      location_id: fieldData.location_id,
-      type_id: fieldData.type_id,
+      description: fieldData.description,
+      parent: fieldData.parent,
     })
   }
 
@@ -175,9 +144,8 @@ function PageAssetList() {
     setFields({
       id: fieldData.id,
       name: fieldData.name,
-      group_id: fieldData.group_id,
-      location_id: fieldData.location_id,
-      type_id: fieldData.type_id,
+      description: fieldData.description,
+      parent: fieldData.parent,
     })
   }
 
@@ -191,9 +159,8 @@ function PageAssetList() {
     setFields({
       id: fieldData.id,
       name: fieldData.name,
-      group_id: fieldData.group_id,
-      location_id: fieldData.location_id,
-      type_id: fieldData.type_id,
+      description: fieldData.description,
+      parent: fieldData.parent,
     })
   }
 
@@ -240,9 +207,7 @@ function PageAssetList() {
   const tableDatas = TABLE_DATA.map((column) => ({
     id: column.id,
     name: column.name,
-    group_name: column.group_name,
-    location_name: column.location_name,
-    type_name: column.type_name,
+    description: column.description,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -311,66 +276,23 @@ function PageAssetList() {
       <Modal open={modalForm.open} title={modalForm.title}>
         <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
           <Input
-            placeholder="Nama Aset"
-            label="Nama Aset"
+            placeholder="Nama Permission"
+            label="Nama Permission"
             name="name"
             value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
-
-          <Autocomplete
-            placeholder="Golongan Aset"
-            label="Golongan Aset"
-            name="group_id"
-            items={GROUP_DATA.map((itemData) => ({
-              label: itemData.name,
-              value: itemData.id,
-            }))}
-            value={{
-              label: GROUP_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: GROUP_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
-            }}
-            onChange={(value) => handleChangeField('group_id', value.value)}
+          <TextArea
+            placeholder="Deskripsi Permission"
+            label="Deskripsi Permission"
+            name="description"
+            value={fields.description}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
-
-          <Autocomplete
-            placeholder="Lokasi Aset"
-            label="Lokasi Aset"
-            name="location_id"
-            items={LOCATION_DATA.map((itemData) => ({
-              label: itemData.name,
-              value: itemData.id,
-            }))}
-            value={{
-              label: LOCATION_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: LOCATION_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
-            }}
-            onChange={(value) => handleChangeField('location_id', value.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <Autocomplete
-            placeholder="Jenis Aset"
-            label="Jenis Aset"
-            name="type_id"
-            items={TYPE_DATA.map((itemData) => ({
-              label: itemData.name,
-              value: itemData.id,
-            }))}
-            value={{
-              label: TYPE_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: TYPE_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
-            }}
-            onChange={(value) => handleChangeField('type_id', value.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
         </form>
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
@@ -400,4 +322,4 @@ function PageAssetList() {
   )
 }
 
-export default PageAssetList
+export default PageDepartment

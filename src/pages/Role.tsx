@@ -19,7 +19,7 @@ const PAGE_NAME = 'Role'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
-    label: 'Name',
+    label: 'Nama',
     key: 'name',
   },
   {

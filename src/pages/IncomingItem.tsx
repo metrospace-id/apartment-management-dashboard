@@ -205,7 +205,7 @@ function PageIncomingItem() {
       open: true,
       readOnly: true,
     })
-    console.log(fieldData)
+
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,

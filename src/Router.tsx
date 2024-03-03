@@ -27,6 +27,8 @@ import PageWork from 'pages/Work'
 import PageRenovation from 'pages/Renovation'
 import PageIncomingItem from 'pages/IncomingItem'
 import PageOutcomingItem from 'pages/OutcomingItem'
+import PageItemStock from 'pages/Item/Stock'
+import PageItemHistory from 'pages/Item/History'
 
 const router = createBrowserRouter([
   {
@@ -120,6 +122,14 @@ const router = createBrowserRouter([
   {
     path: '/outcoming-item',
     Component: PageOutcomingItem,
+  },
+  {
+    path: '/item/stock',
+    Component: PageItemStock,
+  },
+  {
+    path: '/item/history',
+    Component: PageItemHistory,
   },
   {
     path: '/calendar',

@@ -25,6 +25,8 @@ import PageAccessCardVehicleList from 'pages/AccessCard/VehicleList'
 import PageError404 from 'pages/Error/404'
 import PageWork from 'pages/Work'
 import PageRenovation from 'pages/Renovation'
+import PageIncomingItem from 'pages/IncomingItem'
+import PageOutcomingItem from 'pages/OutcomingItem'
 
 const router = createBrowserRouter([
   {
@@ -110,6 +112,14 @@ const router = createBrowserRouter([
   {
     path: '/renovation',
     Component: PageRenovation,
+  },
+  {
+    path: '/incoming-item',
+    Component: PageIncomingItem,
+  },
+  {
+    path: '/outcoming-item',
+    Component: PageOutcomingItem,
   },
   {
     path: '/calendar',

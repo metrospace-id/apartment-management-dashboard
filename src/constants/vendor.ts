@@ -1,0 +1,16 @@
+// eslint-disable-next-line import/prefer-default-export
+export const VENDOR_SECTORS = ['Jasa Pengangkutan Sampah',
+  'Jasa Cleaning Service',
+  'Jasa Pengolahan Limbah',
+  'Jasa Pemeliharaan Lift',
+  'Jasa Keamanan',
+  'Jasa Pemeliharaan Taman',
+  'Jasa Pengelolaan Parkir',
+  'Jasa Provider Internet',
+  'Base Transceiver Station (BTS)',
+  'Perbankan',
+  'Alat Tulis Kantor',
+  'Peralatan Listrik',
+  'Peralatan Teknik',
+  'Peralatan Bangunan',
+  'Lainnya']

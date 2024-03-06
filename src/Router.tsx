@@ -31,6 +31,7 @@ import PageItemStock from 'pages/Item/Stock'
 import PageItemHistory from 'pages/Item/History'
 import PageDepartment from 'pages/Department'
 import PageItemRequest from 'pages/Item/Request'
+import PageVendorList from 'pages/Vendor/List'
 
 const router = createBrowserRouter([
   {
@@ -128,6 +129,10 @@ const router = createBrowserRouter([
   {
     path: '/unit-permission/outcoming-item',
     Component: PageOutcomingItem,
+  },
+  {
+    path: '/vendor/list',
+    Component: PageVendorList,
   },
   {
     path: '/item/stock',

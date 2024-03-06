@@ -624,6 +624,22 @@ function PageItemRequest() {
             </div>
           </div>
 
+          <Select
+            placeholder="Jenis Permintaan"
+            label="Jenis Permintaan"
+            name="type"
+            value={fields.type}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+            options={[{
+              label: 'Pilih Jenis Permintaan',
+              value: '',
+              disabled: true,
+            },
+            ...ITEM_REQUEST_TYPE.map((type) => ({ value: type.id, label: type.label }))]}
+          />
+
         </form>
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalFilterClose} variant="default">Tutup</Button>

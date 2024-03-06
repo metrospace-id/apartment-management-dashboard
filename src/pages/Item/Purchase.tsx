@@ -715,6 +715,22 @@ function PageItemPurchase() {
             </div>
           </div>
 
+          <Select
+            placeholder="Jenis Pembelian"
+            label="Jenis Pembelian"
+            name="type"
+            value={fields.type}
+            onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+            options={[{
+              label: 'Pilih Jenis Permintaan',
+              value: '',
+              disabled: true,
+            },
+            ...ITEM_PURCHASE_TYPE.map((type) => ({ value: type.id, label: type.label }))]}
+          />
+
         </form>
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalFilterClose} variant="default">Tutup</Button>

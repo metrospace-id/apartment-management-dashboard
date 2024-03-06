@@ -584,22 +584,6 @@ function PageItemRequest() {
                       </td>
                     </tr>
                   )}
-                  {/* {VEHICLE_DATA.map((vehicle) => (
-                    <tr key={vehicle.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
-                      <td className="p-2">
-                        {getVehicleByType(vehicle.type)?.label}
-                      </td>
-                      <td className="p-2">
-                        {vehicle.brand}
-                      </td>
-                      <td className="p-2">
-                        {vehicle.color}
-                      </td>
-                      <td className="p-2">
-                        {vehicle.licence_no}
-                      </td>
-                    </tr>
-                  ))} */}
                 </tbody>
               </table>
             </div>
@@ -618,7 +602,7 @@ function PageItemRequest() {
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
 
           <div className="flex flex-col gap-2 w-full">
-            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Keluar</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Permintaan</p>
             <div className="flex flex-col gap-1">
               <DatePicker
                 placeholder="Tanggal Awal"

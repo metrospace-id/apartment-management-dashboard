@@ -480,7 +480,7 @@ function PageItemPurchase() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari no. pembelian, departemen" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari no. pembelian, vendor" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
             <div className="sm:ml-auto flex gap-1">
@@ -693,7 +693,7 @@ function PageItemPurchase() {
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
 
           <div className="flex flex-col gap-2 w-full">
-            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Keluar</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Pembelian</p>
             <div className="flex flex-col gap-1">
               <DatePicker
                 placeholder="Tanggal Awal"

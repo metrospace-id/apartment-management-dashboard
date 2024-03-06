@@ -3,13 +3,11 @@ import {
   useEffect,
   useRef,
   useState,
-  lazy,
 } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 import useOutsideClick from 'hooks/useOutsideClick'
-
-const SideBar = lazy(() => import('components/SideBar'))
+import SideBar from './SideBar'
 
 const NOTIFICATIONS = Array.from(Array(10).keys()).map((key) => ({
   title: `Notifikasi ke ${key + 1}`,

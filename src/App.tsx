@@ -10,7 +10,6 @@ dayjs.locale(id)
 
 function App() {
   return (
-
     <RouterProvider router={router} />
   )
 }

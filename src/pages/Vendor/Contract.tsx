@@ -109,7 +109,6 @@ function PageVendorContract() {
     message: '',
   })
   const [search, setSearch] = useState('')
-  const [isModalDeletePictureOpen, setIsModalDeletePictureOpen] = useState(false)
   const [isModalDeleteDocumentOpen, setIsModalDeleteDocumentOpen] = useState(false)
   const [modalForm, setModalForm] = useState({
     title: '',
@@ -269,10 +268,6 @@ function PageVendorContract() {
     setSelectedDocument(fieldData)
   }
 
-  const handleModalDeletePictureOpen = () => {
-    setIsModalDeletePictureOpen(true)
-  }
-
   const handleChangePage = (pageNumber: number) => {
     setIsLoadingData(true)
     setTimeout(() => {
@@ -345,26 +340,6 @@ function PageVendorContract() {
       setFields((prevState) => ({
         ...prevState,
         documents: newDocument,
-      }))
-    }, 500)
-  }
-
-  const handleClickCancelDeletePicture = () => {
-    setIsModalDeletePictureOpen(false)
-  }
-
-  const handleClickSubmitDeletePicture = () => {
-    handleClickCancelDeletePicture()
-    setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
-      setToast({
-        open: true,
-        message: 'Berhasil menghapus foto.',
-      })
-      setFields((prevState) => ({
-        ...prevState,
-        picture: '',
       }))
     }, 500)
   }
@@ -613,16 +588,6 @@ function PageVendorContract() {
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleClickCancelDeleteDocument} variant="default">Kembali</Button>
           <Button onClick={handleClickSubmitDeleteDocument}>Ya</Button>
-        </div>
-      </Modal>
-
-      <Modal open={isModalDeletePictureOpen} title="Hapus Foto" size="sm">
-        <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">Apa anda yakin ingin menghapus foto?</p>
-        </div>
-        <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleClickCancelDeletePicture} variant="default">Kembali</Button>
-          <Button onClick={handleClickSubmitDeletePicture}>Ya</Button>
         </div>
       </Modal>
 

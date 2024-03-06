@@ -10,6 +10,7 @@ import Button from 'components/Button'
 import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
 import Popover from 'components/Popover'
+import TextArea from 'components/Form/TextArea'
 import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
 import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
@@ -19,35 +20,36 @@ import Autocomplete from 'components/Form/Autocomplete'
 import DatePicker from 'components/Form/DatePicker'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { exportToExcel } from 'utils/export'
-import { ITEM_REQUEST_TYPE, ITEM_UNITS } from 'constants/item'
+import { ITEM_PURCHASE_TYPE, ITEM_UNITS, ITEM_PURCHASE_STATUS } from 'constants/item'
+import { VENDOR_SECTORS } from 'constants/vendor'
 import Select from 'components/Form/Select'
 
-const PAGE_NAME = 'Permintaan Barang'
+const PAGE_NAME = 'Pembelian Barang'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
-    label: 'No. Permintaan',
-    key: 'request_no',
+    label: 'No. Pembelian',
+    key: 'purchase_no',
   },
   {
-    label: 'Department',
-    key: 'department_name',
+    label: 'Tanggal',
+    key: 'created_at',
   },
   {
-    label: 'Jenis Permintaan',
+    label: 'Nama Vendor',
+    key: 'vendor_name',
+  },
+  {
+    label: 'No. Telepon Vendor',
+    key: 'vendor_phone',
+  },
+  {
+    label: 'Jenis Pembelian',
     key: 'type',
   },
   {
-    label: 'Dibuat Oleh',
-    key: 'created_by',
-  },
-  {
-    label: 'Disetujui Oleh',
-    key: 'approved_by',
-  },
-  {
-    label: 'Dikeluarkan Oleh',
-    key: 'issued_by',
+    label: 'Status',
+    key: 'status',
   },
   {
     label: 'Aksi',
@@ -63,37 +65,54 @@ const ITEM_LIST = Array.from(Array(5).keys()).map((key) => ({
   name: `Nama Barang ${key + 1}`,
   qty: 99,
   unit: 'Unit',
+  price: 10000,
 }))
 
 const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
-  request_no: `REQ/01/${key + 1}`,
-  department_id: key + 1,
-  department_name: `Nama Deparemen ${key + 1}`,
+  purchase_no: `REQ/01/${key + 1}`,
+  vendor_id: key + 1,
+  vendor_name: `Nama Vendor ${key + 1}`,
+  vendor_phone: `08123${key + 1}`,
   type: (key % 2) + 1,
-  phone_no: `08123${key + 1}`,
-  created_by: `Nama Karyawan ${key + 1}`,
-  approved_by: `Nama Karyawan ${key + 1}`,
-  issued_by: key % 2 ? '-' : `Nama Karyawan ${key + 1}`,
+  status: (key % 3),
   items: ITEM_LIST,
+  note: 'LOREM IPSUM',
+  created_at: '2024-12-31 00:00:00',
 }))
 
-const DEPARTMENT_DATA = Array.from(Array(100).keys()).map((key) => ({
+const VENDOR_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
-  name: `Nama Departemen ${key + 1}`,
+  name: `Nama Vendor ${key + 1}`,
+  contact_name: `Nama Narahubung ${key + 1}`,
+  address: 'Alamat Lorem Ipsum',
+  phone: `08123${key + 1}`,
+  fax: `12345${key + 1}`,
+  email: `email@pemilik${key + 1}.com`,
+  sector: VENDOR_SECTORS[0],
+  notes: 'Keterangan Lorem Ipsum',
+  picture: 'https://via.placeholder.com/300x300',
+  document: [{
+    id: 1,
+    picture: 'https://via.placeholder.com/300x300',
+  }],
 }))
 
-function PageItemRequest() {
+function PageItemPurchase() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
     id: 0,
+    purchase_no: '',
+    vendor_id: 0,
+    vendor_name: '',
+    vendor_phone: '',
+    vendor_sector: '',
     type: 0,
-    department_id: 0,
-    approved_by: '',
-    issued_by: '',
     status: '',
+    note: '',
     items: [],
+    created_at: dayjs().format('YYYY-MM-DD'),
   })
   const [filter, setFilter] = useState({
     start_date: '',
@@ -156,12 +175,16 @@ function PageItemRequest() {
     }))
     setFields({
       id: 0,
+      purchase_no: '',
+      vendor_id: 0,
+      vendor_name: '',
+      vendor_phone: '',
+      vendor_sector: '',
       type: 0,
-      department_id: 0,
-      approved_by: '',
-      issued_by: '',
       status: '',
       items: [],
+      note: '',
+      created_at: dayjs().format('YYYY-MM-DD'),
     })
   }
 
@@ -204,11 +227,16 @@ function PageItemRequest() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
+      purchase_no: fieldData.purchase_no,
+      vendor_id: fieldData.vendor_id,
+      vendor_name: fieldData.vendor_name,
+      vendor_phone: fieldData.vendor_phone,
+      vendor_sector: fieldData.vendor_sector,
       type: fieldData.type,
-      department_id: fieldData.department_id,
-      approved_by: fieldData.approved_by,
-      issued_by: fieldData.issued_by,
+      status: fieldData.status,
       items: fieldData.items,
+      note: fieldData.note,
+      created_at: dayjs().format(fieldData.created_at),
     }))
   }
 
@@ -221,11 +249,16 @@ function PageItemRequest() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
+      purchase_no: fieldData.purchase_no,
+      vendor_id: fieldData.vendor_id,
+      vendor_name: fieldData.vendor_name,
+      vendor_phone: fieldData.vendor_phone,
+      vendor_sector: fieldData.vendor_sector,
       type: fieldData.type,
-      department_id: fieldData.department_id,
-      approved_by: fieldData.approved_by,
-      issued_by: fieldData.issued_by,
+      status: fieldData.status,
       items: fieldData.items,
+      note: fieldData.note,
+      created_at: dayjs().format(fieldData.created_at),
     }))
   }
 
@@ -239,11 +272,16 @@ function PageItemRequest() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
+      purchase_no: fieldData.purchase_no,
+      vendor_id: fieldData.vendor_id,
+      vendor_name: fieldData.vendor_name,
+      vendor_phone: fieldData.vendor_phone,
+      vendor_sector: fieldData.vendor_sector,
       type: fieldData.type,
-      department_id: fieldData.department_id,
-      approved_by: fieldData.approved_by,
-      issued_by: fieldData.issued_by,
+      status: fieldData.status,
       items: fieldData.items,
+      note: fieldData.note,
+      created_at: dayjs().format(fieldData.created_at),
     }))
   }
 
@@ -284,6 +322,7 @@ function PageItemRequest() {
           id: 0,
           item_id: 0,
           qty: 0,
+          price: 0,
           unit: '',
         },
       ],
@@ -333,6 +372,17 @@ function PageItemRequest() {
     }
   }
 
+  const handleChangeVendorField = (vendorId: number) => {
+    const selectedVendor = VENDOR_DATA.find(({ id }) => id === vendorId)
+    setFields((prevState) => ({
+      ...prevState,
+      vendor_id: selectedVendor?.id || 0,
+      vendor_name: selectedVendor?.name || '',
+      vendor_phone: selectedVendor?.phone || '',
+      vendor_sector: selectedVendor?.sector || '',
+    }))
+  }
+
   const handleChangeFilterField = (fieldName: string, value: string | number) => {
     setFilter((prevState) => ({
       ...prevState,
@@ -375,12 +425,12 @@ function PageItemRequest() {
 
   const tableDatas = TABLE_DATA.map((column) => ({
     id: column.id,
-    request_no: column.request_no,
-    department_name: column.department_name,
-    type: ITEM_REQUEST_TYPE.find((type) => type.id === column.type)?.label,
-    created_by: column.created_by,
-    approved_by: column.approved_by,
-    issued_by: column.issued_by,
+    purchase_no: column.purchase_no,
+    created_at: dayjs(column.created_at).format('YYYY-MM-DD'),
+    vendor_name: column.vendor_name,
+    vendor_phone: column.vendor_phone,
+    type: ITEM_PURCHASE_TYPE.find((type) => type.id === column.type)?.label,
+    status: ITEM_PURCHASE_STATUS[column.status].label,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -408,8 +458,8 @@ function PageItemRequest() {
       setTimeout(() => {
         setIsLoadingData(false)
         const newData = tableDatas.filter(
-          (tableData) => tableData.request_no.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.department_name.toLowerCase().includes(debounceSearch.toLowerCase()),
+          (tableData) => tableData.purchase_no.toLowerCase().includes(debounceSearch.toLowerCase())
+          || tableData.vendor_name.toLowerCase().includes(debounceSearch.toLowerCase()),
         )
         setData(newData)
       }, 500)
@@ -430,7 +480,7 @@ function PageItemRequest() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari no. permintaan, departemen" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari no. pembelian, departemen" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
             <div className="sm:ml-auto flex gap-1">
@@ -466,25 +516,52 @@ function PageItemRequest() {
               value: '',
               disabled: true,
             },
-            ...ITEM_REQUEST_TYPE.map((type) => ({ value: type.id, label: type.label }))]}
+            ...ITEM_PURCHASE_TYPE.map((type) => ({ value: type.id, label: type.label }))]}
           />
 
           <Autocomplete
-            placeholder="Departemen"
-            label="Departemen"
-            name="department_id"
-            items={DEPARTMENT_DATA.map((itemData) => ({
+            placeholder="Nama Vendor"
+            label="Nama Vendor"
+            name="vendor_id"
+            items={VENDOR_DATA.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: DEPARTMENT_DATA.find((itemData) => itemData.id === fields.department_id)?.name || '',
-              value: DEPARTMENT_DATA.find((itemData) => itemData.id === fields.department_id)?.id || '',
+              label: VENDOR_DATA.find((itemData) => itemData.id === fields.vendor_id)?.name || '',
+              value: VENDOR_DATA.find((itemData) => itemData.id === fields.vendor_id)?.id || '',
             }}
-            onChange={(value) => handleChangeField('department_id', value.value)}
+            onChange={(value) => handleChangeVendorField(+value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
+
+          <Input
+            placeholder="No. Telepon Vendor"
+            label="No. Telepon Vendor"
+            value={fields.vendor_phone}
+            readOnly
+            fullWidth
+          />
+
+          <Input
+            placeholder="Bidang"
+            label="Bidang"
+            value={fields.vendor_sector}
+            readOnly
+            fullWidth
+          />
+
+          <div className="sm:col-span-2">
+            <TextArea
+              placeholder="Catatan"
+              label="Catatan"
+              name="note"
+              value={fields.note}
+              readOnly={modalForm.readOnly}
+              fullWidth
+            />
+          </div>
 
           <Select
             placeholder="Status"
@@ -494,19 +571,14 @@ function PageItemRequest() {
             onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
-            options={[{
-              label: 'Pilih Status',
-              value: '',
-              disabled: true,
-            },
-            {
-              label: 'Ditolak',
-              value: 1,
-            },
-            {
-              label: 'Diterima',
-              value: 2,
-            }]}
+            options={[
+              {
+                label: 'Pilih Status',
+                value: '',
+                disabled: true,
+              },
+              ...ITEM_PURCHASE_STATUS.map((type) => ({ value: type.id, label: type.label })),
+            ]}
           />
 
           <div className="sm:col-span-2">
@@ -520,6 +592,8 @@ function PageItemRequest() {
                     <td className="p-2">Nama Barang</td>
                     <td className="p-2">Jumlah</td>
                     <td className="p-2">Satuan</td>
+                    <td className="p-2">Harga</td>
+                    <td className="p-2">Sub Total</td>
                     <td className="p-2" aria-label="action" />
                   </tr>
                 </thead>
@@ -546,7 +620,7 @@ function PageItemRequest() {
                         </td>
                         <td className="p-2" aria-label="Qty">
                           <Input
-                            value={item.qty}
+                            value={(+item.qty)}
                             name="qty"
                             onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value)}
                             readOnly={modalForm.readOnly}
@@ -570,6 +644,23 @@ function PageItemRequest() {
                             fullWidth
                           />
                         </td>
+                        <td className="p-2" aria-label="Price">
+                          <Input
+                            value={(+item.price)}
+                            name="price"
+                            onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value)}
+                            readOnly={modalForm.readOnly}
+                            fullWidth
+                          />
+                        </td>
+                        <td className="p-2" aria-label="Price">
+                          <Input
+                            leftIcon={<p>Rp</p>}
+                            value={(item.price * item.qty).toLocaleString('id')}
+                            disabled
+                            fullWidth
+                          />
+                        </td>
                         <td className="p-2 w-fit" aria-label="Item Action">
                           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteItemOpen(item)}>
                             <IconTrash className="text-white" width={16} height={16} />
@@ -579,27 +670,11 @@ function PageItemRequest() {
                     ))
                   ) : (
                     <tr className="text-center font-regular text-slate-500 dark:text-white">
-                      <td className="p-2 text-center" colSpan={4}>
+                      <td className="p-2 text-center" colSpan={6}>
                         Belum Ada Barang
                       </td>
                     </tr>
                   )}
-                  {/* {VEHICLE_DATA.map((vehicle) => (
-                    <tr key={vehicle.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
-                      <td className="p-2">
-                        {getVehicleByType(vehicle.type)?.label}
-                      </td>
-                      <td className="p-2">
-                        {vehicle.brand}
-                      </td>
-                      <td className="p-2">
-                        {vehicle.color}
-                      </td>
-                      <td className="p-2">
-                        {vehicle.licence_no}
-                      </td>
-                    </tr>
-                  ))} */}
                 </tbody>
               </table>
             </div>
@@ -677,4 +752,4 @@ function PageItemRequest() {
   )
 }
 
-export default PageItemRequest
+export default PageItemPurchase

@@ -33,6 +33,7 @@ import PageDepartment from 'pages/Department'
 import PageItemRequest from 'pages/Item/Request'
 import PageVendorList from 'pages/Vendor/List'
 import PageVendorContract from 'pages/Vendor/Contract'
+import PageItemPurchase from 'pages/Item/Purchase'
 
 const router = createBrowserRouter([
   {
@@ -150,6 +151,10 @@ const router = createBrowserRouter([
   {
     path: '/item/request',
     Component: PageItemRequest,
+  },
+  {
+    path: '/item/purchase',
+    Component: PageItemPurchase,
   },
   {
     path: '/calendar',

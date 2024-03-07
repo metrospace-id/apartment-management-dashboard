@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
-@import "~formiojs/dist/formio.full.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import "~formiojs/dist/formio.full.css";
 @import "~@tsed/tailwind-formio/styles/index.css";
 
 @layer utilities {
@@ -52,6 +52,14 @@ body {
 
 .component-edit-container {
   padding: 16px !important;
+}
+
+.component-edit-container .card-header-tabs {
+  position: relative !important;
+  ul.nav-tabs {
+    display: flex;
+    background-color: rgb(229 231 235/var(--tw-bg-opacity));
+  }
 }
 
 .component-edit-container .overflow-auto {

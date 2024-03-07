@@ -18,7 +18,7 @@ function FormBuilder({
     <div className={`w-full ${readOnly || disabled ? 'pointer-events-none' : ''}`}>
       <FormioBuilder
         components={JSON.parse(formComponent || '[]')}
-        options={{ noDefaultSubmitButton: true, template: 'tailwind', iconset: 'fa' }}
+        options={{ noDefaultSubmitButton: true, template: 'tailwind', iconset: 'bx' }}
         onChange={(value) => onChange?.(JSON.stringify(value))}
       />
     </div>

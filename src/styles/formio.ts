@@ -53,7 +53,7 @@ export const themeExtends = {
   fontSize: {
     micro: '.5rem', // 8px
     xxs: '.625rem', // 10px
-    md: '1rem', // 18px
+    md: '1rem', // 16px
   },
   fontWeight: {
     hairline: 100,

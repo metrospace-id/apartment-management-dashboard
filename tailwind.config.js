@@ -1,3 +1,6 @@
+// eslint-disable-next-line import/no-import-module-exports
+import { themeExtends, themeOutline } from './src/styles/formio'
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
@@ -6,7 +9,12 @@ module.exports = {
     './node_modules/tailwind-datepicker-react/dist/**/*.js',
   ],
   theme: {
-    extend: {},
+    extend: {
+      ...themeExtends,
+    },
+    outline: {
+      ...themeOutline,
+    },
   },
   plugins: [],
 }

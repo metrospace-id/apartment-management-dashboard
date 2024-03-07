@@ -1,8 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
+@import "~formiojs/dist/formio.full.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import "~@tsed/tailwind-formio/styles/index.css";
+
 @layer utilities {
   /* Hide scrollbar for Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
@@ -35,6 +38,34 @@ body {
   width: 100% !important;
 }
 
+.formbuilder.grid-cols-12 {
+  grid-template-columns: repeat(12, minmax(0px, 1fr));
+}
+
+.formbuilder.grid-cols-12 .md\:col-span-2  {
+  grid-column: span 2 / span 2;
+}
+
+.formbuilder.grid-cols-12 .md\:col-span-10  {
+  grid-column: span 10 / span 10;
+}
+
+.component-edit-container {
+  padding: 16px !important;
+}
+
+.component-edit-container .overflow-auto {
+  overflow: scroll;
+  padding: 16px 0px;
+}
+
+.component-edit-container .grid-cols-12 {
+  grid-template-columns: repeat(12, minmax(0px, 1fr));
+}
+
+.component-edit-container .grid-cols-12 .col-span-6, .sm\:col-span-6 {
+  grid-column: span 6 / span 6;
+}
 
 @media (max-width: 1199px) {
   .fc .fc-toolbar {

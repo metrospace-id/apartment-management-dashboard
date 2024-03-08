@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import QRCode from 'react-qr-code'
+import { Scanner } from '@yudiel/react-qr-scanner'
+import dayjs from 'dayjs'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -13,32 +14,29 @@ import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
-import Autocomplete from 'components/Form/Autocomplete'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import TextArea from 'components/Form/TextArea'
+import { EXAMPLE_COMPONENTS, EXAMPLE_SUBMISSION } from 'constants/asset'
 
-const PAGE_NAME = 'List Aset'
+import { Form } from 'components/Form/FormBuilder'
+
+const PAGE_NAME = 'List Perawatan'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Kode',
-    key: 'code',
+    key: 'asset_code',
   },
   {
     label: 'Nama',
-    key: 'name',
+    key: 'asset_name',
   },
   {
-    label: 'Golongan',
-    key: 'group_name',
+    label: 'Tanggal',
+    key: 'created_at',
   },
   {
-    label: 'Lokasi',
-    key: 'location_name',
-  },
-  {
-    label: 'Jenis',
-    key: 'type_name',
+    label: 'Oleh',
+    key: 'created_by',
   },
   {
     label: 'Aksi',
@@ -50,7 +48,16 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 
 const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
-  code: '01.01.01.2024.1',
+  asset_code: '01-01-01-2024-1',
+  asset_name: `Aset ${key + 1}`,
+  submission: JSON.stringify(EXAMPLE_SUBMISSION),
+  created_at: '2024-31-12 00:00:00',
+  created_by: 'Pegawai Engineering',
+}))
+
+const ASSET_DATA = Array.from(Array(100).keys()).map((key) => ({
+  id: key + 1,
+  code: '01-01-01-2024-1',
   name: `Aset ${key + 1}`,
   group_id: key + 1,
   group_name: `Golongan ${key + 1}`,
@@ -63,22 +70,7 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   notes: 'Lorem ipsum',
 }))
 
-const GROUP_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Golongan Aset ${key + 1}`,
-}))
-
-const LOCATION_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Lokasi Aset ${key + 1}`,
-}))
-
-const TYPE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Jenis Aset ${key + 1}`,
-}))
-
-function PageAssetList() {
+function PageMaintenanceList() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -91,7 +83,11 @@ function PageAssetList() {
     year: '',
     brand: '',
     notes: '',
+    created_at: dayjs().format('YYYY-MM-DD'),
+    submission: '',
   })
+  const [scannedCode, setScannedCode] = useState('')
+  const [assetForm, setAssetForm] = useState('')
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
@@ -145,6 +141,8 @@ function PageAssetList() {
       year: '',
       brand: '',
       notes: '',
+      created_at: '',
+      submission: '',
     })
   }
 
@@ -185,7 +183,10 @@ function PageAssetList() {
       year: fieldData.year,
       brand: fieldData.brand,
       notes: fieldData.notes,
+      created_at: fieldData.created_at,
+      submission: fieldData.submission,
     })
+    setAssetForm(JSON.stringify(EXAMPLE_COMPONENTS))
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
@@ -204,7 +205,10 @@ function PageAssetList() {
       year: fieldData.year,
       brand: fieldData.brand,
       notes: fieldData.notes,
+      created_at: fieldData.created_at,
+      submission: fieldData.submission,
     })
+    setAssetForm(JSON.stringify(EXAMPLE_COMPONENTS))
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -224,6 +228,8 @@ function PageAssetList() {
       year: fieldData.year,
       brand: fieldData.brand,
       notes: fieldData.notes,
+      created_at: fieldData.created_at,
+      submission: fieldData.submission,
     })
   }
 
@@ -240,12 +246,6 @@ function PageAssetList() {
       ...prevState,
       [fieldName]: value,
     }))
-  }
-
-  const handleChangeNumericField = (fieldName: string, value: string) => {
-    if (/^\d*$/.test(value) || value === '') {
-      handleChangeField(fieldName, value)
-    }
   }
 
   const handleClickConfirm = (type: string) => {
@@ -273,13 +273,32 @@ function PageAssetList() {
     }, 500)
   }
 
+  const handleScanCode = (text: string) => {
+    const selectedAset = ASSET_DATA.find((item) => item.code === text)
+
+    setFields((prevState) => ({
+      ...prevState,
+      code: selectedAset?.code || '',
+      name: selectedAset?.name || '',
+    }))
+
+    setTimeout(() => {
+      setScannedCode(text)
+      setAssetForm(JSON.stringify(EXAMPLE_COMPONENTS))
+    }, 500)
+  }
+
+  const handleOpenScanCode = () => {
+    setScannedCode('')
+    setAssetForm('')
+  }
+
   const tableDatas = TABLE_DATA.map((column) => ({
     id: column.id,
-    code: column.code,
-    name: column.name,
-    group_name: column.group_name,
-    location_name: column.location_name,
-    type_name: column.type_name,
+    asset_code: column.asset_code,
+    asset_name: column.asset_name,
+    created_at: dayjs(column.created_at).format('YYYY-MM-DD'),
+    created_by: column.created_by,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -307,7 +326,8 @@ function PageAssetList() {
       setTimeout(() => {
         setIsLoadingData(false)
         const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
+          (tableData) => tableData.asset_code.toLowerCase().includes(debounceSearch.toLowerCase())
+          || tableData.asset_name.toLowerCase().includes(debounceSearch.toLowerCase()),
         )
         setData(newData)
       }, 500)
@@ -328,7 +348,7 @@ function PageAssetList() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari nama, kode" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
           </div>
@@ -346,121 +366,42 @@ function PageAssetList() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
-          <Input
-            placeholder="Nama Aset"
-            label="Nama Aset"
-            name="name"
-            value={fields.name}
-            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <Autocomplete
-            placeholder="Golongan Aset"
-            label="Golongan Aset"
-            name="group_id"
-            items={GROUP_DATA.map((itemData) => ({
-              label: itemData.name,
-              value: itemData.id,
-            }))}
-            value={{
-              label: GROUP_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: GROUP_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
-            }}
-            onChange={(value) => handleChangeField('group_id', value.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <Autocomplete
-            placeholder="Lokasi Aset"
-            label="Lokasi Aset"
-            name="location_id"
-            items={LOCATION_DATA.map((itemData) => ({
-              label: itemData.name,
-              value: itemData.id,
-            }))}
-            value={{
-              label: LOCATION_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: LOCATION_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
-            }}
-            onChange={(value) => handleChangeField('location_id', value.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <Autocomplete
-            placeholder="Jenis Aset"
-            label="Jenis Aset"
-            name="type_id"
-            items={TYPE_DATA.map((itemData) => ({
-              label: itemData.name,
-              value: itemData.id,
-            }))}
-            value={{
-              label: TYPE_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: TYPE_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
-            }}
-            onChange={(value) => handleChangeField('type_id', value.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <Input
-            placeholder="Merk Aset"
-            label="Merk Aset"
-            name="brand"
-            value={fields.brand}
-            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <Input
-            placeholder="Tahun Aset"
-            label="Tahun Aset"
-            name="year"
-            type="tel"
-            value={fields.year}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <div className="sm:col-span-2">
-            <TextArea
-              placeholder="Note"
-              label="Note"
-              name="notes"
-              value={fields.notes}
-              onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-              readOnly={modalForm.readOnly}
+        <form autoComplete="off" className="flex sm:flex-row gap-4 p-6">
+          <div className="flex-1 flex flex-col gap-4">
+            {modalForm.open && !fields.id && (
+              !scannedCode ? (
+                <Scanner
+                  onResult={(text) => handleScanCode(text)}
+                  // onError={(error) => console.log(error?.message)}
+                />
+              ) : (
+                <Button variant="primary" onClick={handleOpenScanCode}>
+                  Scan Ulang
+                </Button>
+              )
+            )}
+            <Input
+              placeholder="Nama Aset"
+              label="Nama Aset"
+              name="name"
+              value={fields.name}
+              readOnly
               fullWidth
             />
+
+            {!!fields.id && (
+              <Input
+                placeholder="Tanggal Maintenance"
+                label="Tanggal Maintenance"
+                value={dayjs(fields.created_at).format('YYYY-MM-DD')}
+                readOnly
+                fullWidth
+              />
+            )}
           </div>
 
-          <Input
-            placeholder="Code Aset"
-            label="Code Aset"
-            name="code"
-            value={fields.code}
-            readOnly
-            fullWidth
-          />
-
-          <div className="">
-            <p className="text-sm text-slate-600 font-medium mb-2">QR Code</p>
-
-            <div className="w-full sm:w-[50%]">
-              <QRCode
-                style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-                size={150}
-                value={fields.code}
-                viewBox="0 0 150 150"
-              />
-            </div>
+          <div className="flex-1">
+            <Form formComponent={assetForm} onChange={(e) => handleChangeField('submission', JSON.stringify(e.data))} submission={JSON.parse(fields.submission || '[]')} />
           </div>
 
         </form>
@@ -492,4 +433,4 @@ function PageAssetList() {
   )
 }
 
-export default PageAssetList
+export default PageMaintenanceList

@@ -306,7 +306,11 @@ function PageMaintenanceForm() {
 
           <div className="sm:col-span-2">
             <p className="text-sm font-medium text-slate-600 dark:text-white mb-2">Buat Form</p>
-            <FormBuilder formComponent={fields.form} onChange={(value) => handleChangeField('form', value)} readOnly={modalForm.readOnly} />
+            <FormBuilder
+              formComponent={fields.form}
+              onChange={(value) => handleChangeField('form', JSON.stringify(value))}
+              readOnly={modalForm.readOnly}
+            />
           </div>
         </form>
         <div className="flex gap-2 justify-end p-4">

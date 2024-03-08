@@ -346,6 +346,13 @@ export const MENUS: MenuProp[] = [
     url: '/maintenance/form',
     section: 'main',
   },
+  {
+    code: 'maintenance-list',
+    parent_code: 'maintenance',
+    name: 'List Perawatan',
+    url: '/maintenance/list',
+    section: 'main',
+  },
   // App Menu
   {
     code: 'calendar',

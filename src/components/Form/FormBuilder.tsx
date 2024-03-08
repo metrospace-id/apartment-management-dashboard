@@ -1,4 +1,6 @@
-import { Formio, Templates, FormBuilder as FormioBuilder } from '@tsed/react-formio'
+import {
+  Formio, Templates, FormBuilder as FormioBuilder, Form as FormioForm,
+} from '@tsed/react-formio'
 import tailwind from '@tsed/tailwind-formio'
 
 Formio.use(tailwind)
@@ -8,18 +10,36 @@ interface FormBuilderProps {
   formComponent?: string
   readOnly?: boolean
   disabled?: boolean
-  onChange?: (value: string) => void
+  submission?: any
+  onChange?: (value: any) => void
 }
 
-function FormBuilder({
-  formComponent, onChange, readOnly, disabled,
+export function FormBuilder({
+  formComponent, onChange, readOnly, disabled, submission,
 }: FormBuilderProps) {
   return (
     <div className={`w-full ${readOnly || disabled ? 'pointer-events-none' : ''}`}>
       <FormioBuilder
         components={JSON.parse(formComponent || '[]')}
         options={{ noDefaultSubmitButton: true, template: 'tailwind', iconset: 'bx' }}
-        onChange={(value) => onChange?.(JSON.stringify(value))}
+        onChange={(value) => onChange?.(value)}
+      />
+    </div>
+  )
+}
+
+export function Form({
+  formComponent, onChange, readOnly, disabled, submission,
+}: FormBuilderProps) {
+  return (
+    <div className={`w-full ${readOnly || disabled ? 'pointer-events-none' : ''}`}>
+      <FormioForm
+        submission={{ data: submission }}
+        form={{
+          display: 'form',
+          components: JSON.parse(formComponent || '[]'),
+        }}
+        onChange={(value) => onChange?.(value)}
       />
     </div>
   )

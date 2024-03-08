@@ -36,6 +36,7 @@ import PageVendorContract from 'pages/Vendor/Contract'
 import PageItemPurchase from 'pages/Item/Purchase'
 import PageMaintenanceForm from 'pages/Maintenance/Form'
 import PageMaintenanceList from 'pages/Maintenance/List'
+import PageMaintenanceChecklist from 'pages/Maintenance/Checklist'
 
 const router = createBrowserRouter([
   {
@@ -165,6 +166,10 @@ const router = createBrowserRouter([
   {
     path: '/maintenance/list',
     Component: PageMaintenanceList,
+  },
+  {
+    path: '/maintenance/checklist',
+    Component: PageMaintenanceChecklist,
   },
   {
     path: '/calendar',

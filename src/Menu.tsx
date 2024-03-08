@@ -347,9 +347,16 @@ export const MENUS: MenuProp[] = [
     section: 'main',
   },
   {
+    code: 'maintenance-checklist',
+    parent_code: 'maintenance',
+    name: 'Checklist Aset',
+    url: '/maintenance/checklist',
+    section: 'main',
+  },
+  {
     code: 'maintenance-list',
     parent_code: 'maintenance',
-    name: 'List Perawatan',
+    name: 'Perawatan Aset',
     url: '/maintenance/list',
     section: 'main',
   },

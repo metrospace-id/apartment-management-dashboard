@@ -19,7 +19,7 @@ import { EXAMPLE_COMPONENTS, EXAMPLE_SUBMISSION } from 'constants/asset'
 
 import { Form } from 'components/Form/FormBuilder'
 
-const PAGE_NAME = 'Perawatan Aset'
+const PAGE_NAME = 'Checklist Aset'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -70,7 +70,7 @@ const ASSET_DATA = Array.from(Array(100).keys()).map((key) => ({
   notes: 'Lorem ipsum',
 }))
 
-function PageMaintenanceList() {
+function PageMaintenanceChecklist() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -347,7 +347,6 @@ function PageMaintenanceList() {
               !scannedCode ? (
                 <Scanner
                   onResult={(text) => handleScanCode(text)}
-                  // onError={(error) => console.log(error?.message)}
                 />
               ) : (
                 <Button variant="primary" onClick={handleOpenScanCode}>
@@ -373,13 +372,13 @@ function PageMaintenanceList() {
             />
 
             {!!fields.id && (
-              <Input
-                placeholder="Tanggal Maintenance"
-                label="Tanggal Maintenance"
-                value={dayjs(fields.created_at).format('YYYY-MM-DD')}
-                readOnly
-                fullWidth
-              />
+            <Input
+              placeholder="Tanggal Maintenance"
+              label="Tanggal Maintenance"
+              value={dayjs(fields.created_at).format('YYYY-MM-DD')}
+              readOnly
+              fullWidth
+            />
             )}
           </div>
 
@@ -416,4 +415,4 @@ function PageMaintenanceList() {
   )
 }
 
-export default PageMaintenanceList
+export default PageMaintenanceChecklist

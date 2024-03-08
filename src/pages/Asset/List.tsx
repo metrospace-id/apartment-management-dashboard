@@ -1,4 +1,6 @@
-import { useState, useMemo, useEffect } from 'react'
+import {
+  useState, useMemo, useEffect, useRef,
+} from 'react'
 import QRCode from 'react-qr-code'
 
 import Layout from 'components/Layout'
@@ -16,6 +18,7 @@ import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import TextArea from 'components/Form/TextArea'
+import { svgToImage } from 'utils/file'
 
 const PAGE_NAME = 'List Aset'
 
@@ -110,6 +113,7 @@ function PageAssetList() {
     open: false,
   })
   const [submitType, setSubmitType] = useState('create')
+  const qrCodeRef = useRef<any>(null)
 
   const debounceSearch = useDebounce(search, 500)
 
@@ -271,6 +275,10 @@ function PageAssetList() {
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
     }, 500)
+  }
+
+  const handleSaveQR = () => {
+    svgToImage(qrCodeRef.current, fields.name)
   }
 
   const tableDatas = TABLE_DATA.map((column) => ({
@@ -455,6 +463,7 @@ function PageAssetList() {
 
             <div className="w-full sm:w-[50%]">
               <QRCode
+                ref={qrCodeRef}
                 style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
                 size={150}
                 value={fields.code}
@@ -465,6 +474,9 @@ function PageAssetList() {
 
         </form>
         <div className="flex gap-2 justify-end p-4">
+          {modalForm.readOnly && (
+            <Button onClick={handleSaveQR}>Save QR Code</Button>
+          )}
           <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
           {!modalForm.readOnly && (
             <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>

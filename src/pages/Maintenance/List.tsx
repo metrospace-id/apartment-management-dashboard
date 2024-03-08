@@ -347,7 +347,6 @@ function PageMaintenanceList() {
               !scannedCode ? (
                 <Scanner
                   onResult={(text) => handleScanCode(text)}
-                  // onError={(error) => console.log(error?.message)}
                 />
               ) : (
                 <Button variant="primary" onClick={handleOpenScanCode}>
@@ -384,7 +383,12 @@ function PageMaintenanceList() {
           </div>
 
           <div className="flex-1">
-            <Form formComponent={assetForm} onChange={(e) => handleChangeField('submission', JSON.stringify(e.data))} submission={JSON.parse(fields.submission || '[]')} />
+            <Form
+              readOnly={modalForm.readOnly}
+              formComponent={assetForm}
+              onChange={(e) => handleChangeField('submission', JSON.stringify(e.data))}
+              submission={JSON.parse(fields.submission || '[]')}
+            />
           </div>
 
         </form>

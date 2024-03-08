@@ -383,7 +383,12 @@ function PageMaintenanceChecklist() {
           </div>
 
           <div className="flex-1">
-            <Form formComponent={assetForm} onChange={(e) => handleChangeField('submission', JSON.stringify(e.data))} submission={JSON.parse(fields.submission || '[]')} />
+            <Form
+              readOnly={modalForm.readOnly}
+              formComponent={assetForm}
+              onChange={(e) => handleChangeField('submission', JSON.stringify(e.data))}
+              submission={JSON.parse(fields.submission || '[]')}
+            />
           </div>
 
         </form>

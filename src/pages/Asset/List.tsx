@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import QRCode from 'react-qr-code'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -14,6 +15,7 @@ import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import TextArea from 'components/Form/TextArea'
 
 const PAGE_NAME = 'List Aset'
 
@@ -44,6 +46,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 
 const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
+  code: '01-01-01-2024-1',
   name: `Aset ${key + 1}`,
   group_id: key + 1,
   group_name: `Golongan ${key + 1}`,
@@ -51,6 +54,9 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   location_name: `Lokasi ${key + 1}`,
   type_id: key + 1,
   type_name: `Jenis ${key + 1}`,
+  year: '2024',
+  brand: 'Samsung',
+  notes: 'Lorem ipsum',
 }))
 
 const GROUP_DATA = Array.from(Array(100).keys()).map((key) => ({
@@ -73,10 +79,14 @@ function PageAssetList() {
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
     id: 0,
+    code: '',
     name: '',
     group_id: 0,
     location_id: 0,
     type_id: 0,
+    year: '',
+    brand: '',
+    notes: '',
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -123,10 +133,14 @@ function PageAssetList() {
     }))
     setFields({
       id: 0,
+      code: '',
       name: '',
       group_id: 0,
       location_id: 0,
       type_id: 0,
+      year: '',
+      brand: '',
+      notes: '',
     })
   }
 
@@ -159,10 +173,14 @@ function PageAssetList() {
     })
     setFields({
       id: fieldData.id,
+      code: fieldData.code,
       name: fieldData.name,
       group_id: fieldData.group_id,
       location_id: fieldData.location_id,
       type_id: fieldData.type_id,
+      year: fieldData.year,
+      brand: fieldData.brand,
+      notes: fieldData.notes,
     })
   }
 
@@ -174,10 +192,14 @@ function PageAssetList() {
     })
     setFields({
       id: fieldData.id,
+      code: fieldData.code,
       name: fieldData.name,
       group_id: fieldData.group_id,
       location_id: fieldData.location_id,
       type_id: fieldData.type_id,
+      year: fieldData.year,
+      brand: fieldData.brand,
+      notes: fieldData.notes,
     })
   }
 
@@ -190,10 +212,14 @@ function PageAssetList() {
     setSubmitType('delete')
     setFields({
       id: fieldData.id,
+      code: fieldData.code,
       name: fieldData.name,
       group_id: fieldData.group_id,
       location_id: fieldData.location_id,
       type_id: fieldData.type_id,
+      year: fieldData.year,
+      brand: fieldData.brand,
+      notes: fieldData.notes,
     })
   }
 
@@ -210,6 +236,12 @@ function PageAssetList() {
       ...prevState,
       [fieldName]: value,
     }))
+  }
+
+  const handleChangeNumericField = (fieldName: string, value: string) => {
+    if (/^\d*$/.test(value) || value === '') {
+      handleChangeField(fieldName, value)
+    }
   }
 
   const handleClickConfirm = (type: string) => {
@@ -370,6 +402,61 @@ function PageAssetList() {
             readOnly={modalForm.readOnly}
             fullWidth
           />
+
+          <Input
+            placeholder="Merk Aset"
+            label="Merk Aset"
+            name="brand"
+            value={fields.brand}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Input
+            placeholder="Tahun Aset"
+            label="Tahun Aset"
+            name="year"
+            type="tel"
+            value={fields.year}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <div className="sm:col-span-2">
+            <TextArea
+              placeholder="Note"
+              label="Note"
+              name="notes"
+              value={fields.notes}
+              onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+              readOnly={modalForm.readOnly}
+              fullWidth
+            />
+          </div>
+
+          <Input
+            placeholder="Code Aset"
+            label="Code Aset"
+            name="code"
+            value={fields.code}
+            readOnly
+            fullWidth
+          />
+
+          <div className="">
+            <p className="text-sm text-slate-600 font-medium mb-2">QR Code</p>
+
+            <div className="w-full sm:w-[50%]">
+              <QRCode
+                style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+                size={150}
+                value={fields.code}
+                viewBox="0 0 150 150"
+              />
+            </div>
+          </div>
 
         </form>
         <div className="flex gap-2 justify-end p-4">

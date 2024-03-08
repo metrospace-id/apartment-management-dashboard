@@ -77,7 +77,7 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   type: (key % 2) + 1,
   status: (key % 3),
   items: ITEM_LIST,
-  note: 'LOREM IPSUM',
+  notes: 'LOREM IPSUM',
   created_at: '2024-12-31 00:00:00',
 }))
 
@@ -110,7 +110,7 @@ function PageItemPurchase() {
     vendor_sector: '',
     type: 0,
     status: '',
-    note: '',
+    notes: '',
     items: [],
     created_at: dayjs().format('YYYY-MM-DD'),
   })
@@ -183,7 +183,7 @@ function PageItemPurchase() {
       type: 0,
       status: '',
       items: [],
-      note: '',
+      notes: '',
       created_at: dayjs().format('YYYY-MM-DD'),
     })
   }
@@ -235,7 +235,7 @@ function PageItemPurchase() {
       type: fieldData.type,
       status: fieldData.status,
       items: fieldData.items,
-      note: fieldData.note,
+      notes: fieldData.note,
       created_at: dayjs().format(fieldData.created_at),
     }))
   }
@@ -257,7 +257,7 @@ function PageItemPurchase() {
       type: fieldData.type,
       status: fieldData.status,
       items: fieldData.items,
-      note: fieldData.note,
+      notes: fieldData.note,
       created_at: dayjs().format(fieldData.created_at),
     }))
   }
@@ -280,7 +280,7 @@ function PageItemPurchase() {
       type: fieldData.type,
       status: fieldData.status,
       items: fieldData.items,
-      note: fieldData.note,
+      notes: fieldData.note,
       created_at: dayjs().format(fieldData.created_at),
     }))
   }
@@ -557,7 +557,7 @@ function PageItemPurchase() {
               placeholder="Catatan"
               label="Catatan"
               name="note"
-              value={fields.note}
+              value={fields.notes}
               readOnly={modalForm.readOnly}
               fullWidth
             />

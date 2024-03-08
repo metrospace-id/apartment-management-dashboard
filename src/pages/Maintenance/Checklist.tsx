@@ -373,8 +373,8 @@ function PageMaintenanceChecklist() {
 
             {!!fields.id && (
             <Input
-              placeholder="Tanggal Maintenance"
-              label="Tanggal Maintenance"
+              placeholder="Tanggal Checklist"
+              label="Tanggal Checklist"
               value={dayjs(fields.created_at).format('YYYY-MM-DD')}
               readOnly
               fullWidth

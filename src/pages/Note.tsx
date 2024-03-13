@@ -239,7 +239,7 @@ function PageNote() {
               <Button onClick={handleModalCreateOpen}>Tambah</Button>
             </div>
           </div>
-          <div className="flex-1 sm:px-4 grid gap-2 grid-cols-3">
+          <div className="flex-1 sm:px-4 grid gap-2 grid-cols-1 sm:grid-cols-1 md:grid-cols-3">
             {(isLoadingData) && <LoadingContent />}
             {(!isLoadingData) && data.map((todo) => (
               <div className="p-2 border-1 rounded-lg flex flex-col gap-2 text-slate-600 dark:text-white" key={todo.id}>

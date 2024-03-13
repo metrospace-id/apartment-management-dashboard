@@ -38,6 +38,7 @@ import PageMaintenanceForm from 'pages/Maintenance/Form'
 import PageMaintenanceList from 'pages/Maintenance/List'
 import PageMaintenanceChecklist from 'pages/Maintenance/Checklist'
 import PageTodoList from 'pages/TodoList'
+import PageNote from 'pages/Note'
 
 const router = createBrowserRouter([
   {
@@ -179,6 +180,10 @@ const router = createBrowserRouter([
   {
     path: '/todo-list',
     Component: PageTodoList,
+  },
+  {
+    path: '/note',
+    Component: PageNote,
   },
   {
     path: '*',

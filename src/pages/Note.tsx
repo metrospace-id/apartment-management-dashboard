@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import dayjs from 'dayjs'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -6,24 +7,24 @@ import Modal from 'components/Modal'
 import Button from 'components/Button'
 import Input from 'components/Form/Input'
 import TextArea from 'components/Form/TextArea'
-import Checkbox from 'components/Form/Checkbox'
 import useDebounce from 'hooks/useDebounce'
 import LoadingContent from 'components/Loading/LoadingContent'
 import { MODAL_CONFIRM_TYPE } from 'constants/form'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 
-const PAGE_NAME = 'To Do List'
+const PAGE_NAME = 'Catatan'
 
-const TABLE_DATA = Array.from(Array(25).keys()).map((key) => ({
+const TABLE_DATA = Array.from(Array(5).keys()).map((key) => ({
   id: key + 1,
-  title: `Nama Todo List ${key + 1}`,
-  description: `Description Todo List ${key + 1}`,
+  title: `Judul Catatan ${key + 1}`,
+  description: `Isi catatan yang panjan ${key + 1}`,
   is_done: key % 2 === 0,
   status: 1,
+  created_at: dayjs().format('YYYY-MM-DD'),
 }))
 
-function PageTodoList() {
+function PageNote() {
   const [data, setData] = useState<any[]>([])
   const [fields, setFields] = useState({
     id: 0,
@@ -138,13 +139,6 @@ function PageTodoList() {
       setIsLoadingData(true)
       setTimeout(() => {
         setIsLoadingData(false)
-        const newData = TABLE_DATA.filter((tableData) => tableData.is_done)
-        setData(newData)
-      }, 500)
-    } else if (menuIndex === 2) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
         const newData = TABLE_DATA.filter((tableData) => !tableData.status)
         setData(newData)
       }, 500)
@@ -152,7 +146,8 @@ function PageTodoList() {
       setIsLoadingData(true)
       setTimeout(() => {
         setIsLoadingData(false)
-        setData(TABLE_DATA)
+        const newData = TABLE_DATA.filter((tableData) => tableData.status)
+        setData(newData)
       }, 500)
     }
   }
@@ -235,14 +230,6 @@ function PageTodoList() {
 
               <div className={`flex gap-2 items-center ${selectedMenu === 1 ? 'bg-sky-500 text-white' : ''} hover:bg-sky-100 dark:hover:bg-sky-800 cursor-pointer p-2 text-slate-600 dark:text-white`} role="presentation" onClick={() => handleChangeMenu(1)}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-
-                <p className="font-medium text-md flex-1">Done</p>
-              </div>
-
-              <div className={`flex gap-2 items-center ${selectedMenu === 2 ? 'bg-sky-500 text-white' : ''} hover:bg-sky-100 dark:hover:bg-sky-800 cursor-pointer p-2 text-slate-600 dark:text-white`} role="presentation" onClick={() => handleChangeMenu(2)}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                 </svg>
 
@@ -252,15 +239,22 @@ function PageTodoList() {
               <Button onClick={handleModalCreateOpen}>Tambah</Button>
             </div>
           </div>
-          <div className="flex-1 sm:px-4 flex gap-2 flex-col">
+          <div className="flex-1 sm:px-4 grid gap-2 grid-cols-3">
             {(isLoadingData) && <LoadingContent />}
             {(!isLoadingData) && data.map((todo) => (
-              <div className="p-2 border-1 rounded-lg flex gap-2 items-center text-slate-600 dark:text-white" key={todo.id}>
-                <Checkbox checked={todo.is_done} onClick={() => handleCheckTodo(todo.id)} />
-                <p className={`text-sm  font-semibold ${todo.is_done ? 'line-through' : ''} flex-1`}>
-                  {todo.title}
+              <div className="p-2 border-1 rounded-lg flex flex-col gap-2 text-slate-600 dark:text-white" key={todo.id}>
+                <div>
+                  <p className="text-md font-semibold">
+                    {todo.title}
+                  </p>
+                  <p className="text-sm font-medium">
+                    {dayjs(todo.created_at).format('DD MMM YYYY')}
+                  </p>
+                </div>
+                <p className="text-sm font-medium">
+                  {todo.description}
                 </p>
-                <div role="presentation" className="cursor-pointer hover:text-red-500" onClick={() => handleModalDeleteOpen(todo)}>
+                <div role="presentation" className="cursor-pointer hover:text-red-500 ml-auto mr-0" onClick={() => handleModalDeleteOpen(todo)}>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                   </svg>
@@ -317,4 +311,4 @@ function PageTodoList() {
   )
 }
 
-export default PageTodoList
+export default PageNote

@@ -376,8 +376,8 @@ export const MENUS: MenuProp[] = [
   {
     code: 'todo',
     parent_code: '',
-    name: 'To Do',
-    url: '/todo',
+    name: 'To Do List',
+    url: '/todo-list',
     section: 'app',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">

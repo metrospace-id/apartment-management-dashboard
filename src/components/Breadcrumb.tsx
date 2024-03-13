@@ -27,7 +27,7 @@ function Breadcrumb({ title }: BreadcrumbProps) {
   return (
     <div className="p-4 bg-white flex justify-between dark:bg-black sticky top-0 left-0 right-0 z-10 shadow">
       <p className="text-md font-semibold text-slate-600 dark:text-white">{title}</p>
-      <div className="hidden gap-1 items-center sm:flex">
+      <div className="hidden gap-1 items-center sm:!flex">
         {pathnames.map((path, index) => (
           // eslint-disable-next-line react/no-array-index-key
           <React.Fragment key={index}>
@@ -35,7 +35,7 @@ function Breadcrumb({ title }: BreadcrumbProps) {
               <span className="text-sm font-normal text-slate-400 dark:text-white">/</span>
             )}
             <p
-              className={`text-sm text-slate-600 dark:text-white capitalize ${index + 1 < pathnames.length ? 'cursor-pointer' : 'font-semibold'}`}
+              className={`text-sm text-slate-600 dark:text-white ${index + 1 < pathnames.length ? 'cursor-pointer' : 'font-semibold'}`}
               onClick={() => handleClickItem(index)}
               role="presentation"
             >

@@ -37,6 +37,7 @@ import PageItemPurchase from 'pages/Item/Purchase'
 import PageMaintenanceForm from 'pages/Maintenance/Form'
 import PageMaintenanceList from 'pages/Maintenance/List'
 import PageMaintenanceChecklist from 'pages/Maintenance/Checklist'
+import PageTodoList from 'pages/TodoList'
 
 const router = createBrowserRouter([
   {
@@ -174,6 +175,10 @@ const router = createBrowserRouter([
   {
     path: '/calendar',
     Component: PageCalendar,
+  },
+  {
+    path: '/todo-list',
+    Component: PageTodoList,
   },
   {
     path: '*',

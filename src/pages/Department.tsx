@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -23,10 +24,6 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'name',
   },
   {
-    label: 'Description',
-    key: 'description',
-  },
-  {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
@@ -34,10 +31,9 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
+const TABLE_DATA = Array.from(Array(25).keys()).map((key) => ({
   id: key + 1,
-  name: `Departmen ${key + 1}`,
-  description: 'Deskripsi departemen',
+  name: faker.commerce.department(),
 }))
 
 function PageDepartment() {
@@ -207,7 +203,6 @@ function PageDepartment() {
   const tableDatas = TABLE_DATA.map((column) => ({
     id: column.id,
     name: column.name,
-    description: column.description,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">

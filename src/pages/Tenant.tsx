@@ -2,6 +2,7 @@ import {
   useState, useMemo, useEffect, useRef, useCallback,
 } from 'react'
 import Webcam from 'react-webcam'
+import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -67,15 +68,15 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
   unit_id: key + 1,
   unit_code: `A/01/${key + 1}`,
-  name: `Nama Penghuni ${key + 1}`,
-  phone: `08123${key + 1}`,
-  owner_name: `Nama Pemilik ${key + 1}`,
+  name: faker.person.fullName(),
+  phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
+  owner_name: faker.person.fullName(),
   relation: 'Penyewa',
-  address: 'Alamat Lorem Ipsum',
-  identity_no: `12345${key + 1}`,
+  address: faker.location.streetAddress(),
+  identity_no: faker.number.int(),
+  kk_no: faker.number.int(),
   start_date: '2023-12-31 00:00:00',
   end_date: key % 2 ? '2024-12-31 00:00:00' : null,
-  kk_no: `12345${key + 1}`,
   picture: 'https://via.placeholder.com/300x300',
   document: [{
     id: 1,

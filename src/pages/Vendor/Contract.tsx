@@ -1,7 +1,8 @@
 import {
-  useState, useMemo, useEffect, useRef, useCallback,
+  useState, useMemo, useEffect, useRef,
 } from 'react'
 import dayjs from 'dayjs'
+import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -54,11 +55,11 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
   contract_no: `12345${key + 1}`,
   vendor_id: key + 1,
-  vendor_name: `Nama Vendor ${key + 1}`,
-  vendor_address: 'Alamat Lorem Ipsum',
-  vendor_phone: `08123${key + 1}`,
-  vendor_fax: `12345${key + 1}`,
-  vendor_email: `email@pemilik${key + 1}.com`,
+  vendor_name: faker.company.name(),
+  vendor_address: faker.location.streetAddress(),
+  vendor_phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
+  vendor_fax: faker.helpers.fromRegExp(/081[0-9]{8}/),
+  vendor_email: faker.internet.email(),
   notes: 'Keterangan Lorem Ipsum',
   start_date: '2023-12-31 00:00:00',
   end_date: '2024-12-31 00:00:00',
@@ -70,12 +71,12 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
 
 const VENDOR_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
-  name: `Nama Vendor ${key + 1}`,
-  contact_name: `Nama Narahubung ${key + 1}`,
-  address: 'Alamat Lorem Ipsum',
-  phone: `08123${key + 1}`,
-  fax: `12345${key + 1}`,
-  email: `email@pemilik${key + 1}.com`,
+  name: faker.company.name(),
+  contact_name: faker.person.fullName(),
+  address: faker.location.streetAddress(),
+  phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
+  fax: faker.helpers.fromRegExp(/081[0-9]{8}/),
+  email: faker.internet.email(),
   sector: VENDOR_SECTORS[0],
   notes: 'Keterangan Lorem Ipsum',
   picture: 'https://via.placeholder.com/300x300',

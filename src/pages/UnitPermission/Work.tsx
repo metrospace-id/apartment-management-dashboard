@@ -1,6 +1,7 @@
 import {
   useState, useMemo, useEffect,
 } from 'react'
+import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -56,9 +57,9 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
   unit_id: key + 1,
   unit_code: `A/01/${key + 1}`,
-  requester_name: `Nama Pemilik ${key + 1}`,
-  worker_name: `Nama Pekerja ${key + 1}`,
-  worker_phone: `08123${key + 1}`,
+  requester_name: faker.person.fullName(),
+  worker_name: faker.person.fullName(),
+  worker_phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
   work_category_id: 1,
   description: `Deskripsi pekerjaan ${key + 1}`,
   start_date: '2023-12-31 00:00:00',
@@ -73,7 +74,7 @@ const WORK_CATEGORY_DATA = Array.from(Array(100).keys()).map((key) => ({
 const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
   unit_code: `A/${key + 1}/${key + 1}`,
-  owner_name: `Nama Pemilik ${key + 1}`,
+  owner_name: faker.person.fullName(),
   tower: 'A',
   unit_no: `${key + 1}`,
   floor_no: `${key + 1}`,

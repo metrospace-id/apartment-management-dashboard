@@ -1,7 +1,7 @@
 import {
-  useState, useMemo, useEffect, useRef, useCallback,
+  useState, useMemo, useEffect, useRef,
 } from 'react'
-// import Webcam from 'react-webcam'
+import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -51,12 +51,12 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 
 const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
-  name: `Nama Vendor ${key + 1}`,
-  contact_name: `Nama Narahubung ${key + 1}`,
-  address: 'Alamat Lorem Ipsum',
-  phone: `08123${key + 1}`,
-  fax: `12345${key + 1}`,
-  email: `email@pemilik${key + 1}.com`,
+  name: faker.company.name(),
+  contact_name: faker.person.fullName(),
+  address: faker.location.streetAddress(),
+  phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
+  fax: faker.helpers.fromRegExp(/081[0-9]{8}/),
+  email: faker.internet.email(),
   sector: VENDOR_SECTORS[0],
   notes: 'Keterangan Lorem Ipsum',
   picture: 'https://via.placeholder.com/300x300',

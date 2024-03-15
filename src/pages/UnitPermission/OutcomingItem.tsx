@@ -1,6 +1,7 @@
 import {
   useState, useMemo, useEffect,
 } from 'react'
+import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -56,11 +57,11 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
   unit_id: key + 1,
   unit_code: `A/01/${key + 1}`,
-  name: `Nama Penghuni ${key + 1}`,
-  phone_no: `08123${key + 1}`,
-  requester_name: `Nama Pemohon ${key + 1}`,
-  requester_phone_no: `08123${key + 1}`,
-  requester_address: `Alamat lengkap pemohon ${key + 1}`,
+  name: faker.person.fullName(),
+  phone_no: faker.helpers.fromRegExp(/081[0-9]{8}/),
+  requester_name: faker.person.fullName(),
+  requester_phone_no: faker.helpers.fromRegExp(/081[0-9]{8}/),
+  requester_address: faker.location.streetAddress(),
   item_category_id: 1,
   item_desc: `Keterangan barang ${key + 1}`,
   start_date: '2023-12-31 00:00:00',
@@ -75,8 +76,8 @@ const ITEM_CATEGORY_DATA = Array.from(Array(100).keys()).map((key) => ({
 const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
   unit_code: `A/${key + 1}/${key + 1}`,
-  owner_name: `Nama Penghuni ${key + 1}`,
-  phone_no: `08123${key + 1}`,
+  owner_name: faker.person.fullName(),
+  phone_no: faker.helpers.fromRegExp(/081[0-9]{8}/),
   tower: 'A',
   unit_no: `${key + 1}`,
   floor_no: `${key + 1}`,

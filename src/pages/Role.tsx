@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -30,9 +31,9 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
+const TABLE_DATA = Array.from(Array(25).keys()).map((key) => ({
   id: key + 1,
-  name: `Role Lorem Ipsum ${key + 1}`,
+  name: faker.person.jobTitle(),
   permissions: [1, 2, 3, 4, 5],
 }))
 

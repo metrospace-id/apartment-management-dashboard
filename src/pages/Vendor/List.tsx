@@ -349,7 +349,7 @@ function PageVendorList() {
       // console.log(file)
       if ((file.type.includes('image') || file.type.includes('pdf')) && file.size < 500000) {
         toBase64(file).then((result) => {
-          uploadRef.current.value = null
+          pictureRef.current.value = null
           setFields((prevState) => ({
             ...prevState,
             picture: result as string,

@@ -39,6 +39,7 @@ import PageMaintenanceList from 'pages/Maintenance/List'
 import PageMaintenanceChecklist from 'pages/Maintenance/Checklist'
 import PageTodoList from 'pages/TodoList'
 import PageNote from 'pages/Note'
+import PageProfile from 'pages/Profile'
 
 const router = createBrowserRouter([
   {
@@ -184,6 +185,10 @@ const router = createBrowserRouter([
   {
     path: '/note',
     Component: PageNote,
+  },
+  {
+    path: '/profile',
+    Component: PageProfile,
   },
   {
     path: '*',

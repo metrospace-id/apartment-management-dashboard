@@ -347,19 +347,20 @@ export const MENUS: MenuProp[] = [
     section: 'main',
   },
   {
-    code: 'maintenance-checklist',
-    parent_code: 'maintenance',
-    name: 'Checklist Aset',
-    url: '/maintenance/checklist',
-    section: 'main',
-  },
-  {
     code: 'maintenance-list',
     parent_code: 'maintenance',
-    name: 'Perawatan Aset',
+    name: 'Perawatan',
     url: '/maintenance/list',
     section: 'main',
   },
+  {
+    code: 'maintenance-checklist',
+    parent_code: 'maintenance',
+    name: 'Checklist',
+    url: '/maintenance/checklist',
+    section: 'main',
+  },
+
   // App Menu
   {
     code: 'calendar',

@@ -14,9 +14,14 @@ import {
 import {
   Doughnut, Pie, Bar, Line, Radar,
 } from 'react-chartjs-2'
+import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
+import dayjs from 'dayjs'
+import Button from 'components/Button'
+import { useNavigate } from 'react-router-dom'
+import Badge from 'components/Badge'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Filler, RadialLinearScale)
 
@@ -72,8 +77,42 @@ const CHART_LINE_DATA = {
   ],
 }
 
+const TENANT_DATA = Array.from(Array(10).keys()).map((key) => ({
+  id: key + 1,
+  unit_id: key + 1,
+  unit_code: `A/01/${key + 1}`,
+  name: faker.person.fullName(),
+  phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
+  start_date: '2023-12-31 00:00:00',
+  end_date: key % 2 ? '2024-12-31 00:00:00' : null,
+}))
+
+const ACCESS_CARD_DATA = Array.from(Array(10).keys()).map((key) => ({
+  id: key + 1,
+  unit_id: key + 1,
+  unit_code: `A/01/${key + 1}`,
+  card_no: `000${key + 1}`,
+  rfid_no: `000000${key + 1}`,
+  request_date: '2023-12-31 00:00:00',
+  active_date: '2023-12-31 00:00:00',
+  expired_date: '2024-12-31 00:00:00',
+}))
+
+const INCOMING_ITEM_DATA = Array.from(Array(10).keys()).map((key) => ({
+  id: key + 1,
+  unit_id: key + 1,
+  unit_code: `A/01/${key + 1}`,
+  name: faker.person.fullName(),
+  requester_name: faker.person.fullName(),
+  item_category_id: 1,
+  item_category_name: `Kategori Barang ${key + 1}`,
+  start_date: '2023-12-31 00:00:00',
+  end_date: '2024-12-31 00:00:00',
+}))
+
 function Home() {
   const PAGE_NAME = 'Dashboard'
+  const navigate = useNavigate()
   return (
     <Layout>
       <Breadcrumb title={PAGE_NAME} />
@@ -145,6 +184,171 @@ function Home() {
           <div className="p-4 flex flex-col gap-4 bg-white rounded-lg dark:bg-slate-950">
             <p className="text-md text-slate-600 dark:text-white font-semibold">Chart Line</p>
             <Line data={CHART_LINE_DATA} options={chartOptions} />
+          </div>
+        </div>
+
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+          <div className="flex flex-col gap-4 bg-white rounded-lg dark:bg-slate-950">
+            <div className="px-4 pt-4 flex items-center justify-between">
+              <p className="text-md text-slate-600 dark:text-white font-semibold">Penyewa Terbaru</p>
+              <Button size="sm" onClick={() => navigate('/tenant')}>Selengkapnya</Button>
+            </div>
+
+            <div className="w-full overflow-scroll">
+              <table className="border-collapse min-w-full w-max">
+                <thead className="font-semibold bg-sky-50">
+                  <tr>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      No. Unit
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Nama
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      No. Telepon
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Tanggal Masuk
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Tanggal Keluar
+                    </td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {TENANT_DATA.map((data) => (
+                    <tr key={data.id} className="border-slate-200 border-b-1 last:border-b-0">
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.unit_code}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.name}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.phone}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{dayjs(data.start_date).format('YYYY-MM-DD')}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.end_date ? dayjs(data.end_date).format('YYYY-MM-DD') : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 bg-white rounded-lg dark:bg-slate-950">
+            <div className="px-4 pt-4 flex items-center justify-between">
+              <p className="text-md text-slate-600 dark:text-white font-semibold">Kartu Akses Parkir</p>
+              <Button size="sm" onClick={() => navigate('/access-card/park')}>Selengkapnya</Button>
+            </div>
+
+            <div className="w-full overflow-scroll">
+              <table className="border-collapse min-w-full w-max">
+                <thead className="font-semibold bg-sky-50">
+                  <tr>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      No. Unit
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      No. Kartu
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      No. RFID
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Tanggal Permintaan
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Status
+                    </td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ACCESS_CARD_DATA.map((data) => (
+                    <tr key={data.id} className="border-slate-200 border-b-1 last:border-b-0">
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.unit_code}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.card_no}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.rfid_no}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{dayjs(data.request_date).format('YYYY-MM-DD')}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">
+                        <Badge>Permintaan Baru</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 bg-white rounded-lg dark:bg-slate-950">
+            <div className="px-4 pt-4 flex items-center justify-between">
+              <p className="text-md text-slate-600 dark:text-white font-semibold">Izin Barang Masuk</p>
+              <Button size="sm" onClick={() => navigate('/unit-permission/incoming-item')}>Selengkapnya</Button>
+            </div>
+
+            <div className="w-full overflow-scroll">
+              <table className="border-collapse min-w-full w-max">
+                <thead className="font-semibold bg-sky-50">
+                  <tr>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      No. Unit
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Nama Pemohon
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Jenis Barang
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Tanggal Masuk
+                    </td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {INCOMING_ITEM_DATA.map((data) => (
+                    <tr key={data.id} className="border-slate-200 border-b-1 last:border-b-0">
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.unit_code}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.requester_name}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.item_category_name}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{dayjs(data.start_date).format('YYYY-MM-DD')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 bg-white rounded-lg dark:bg-slate-950">
+            <div className="px-4 pt-4 flex items-center justify-between">
+              <p className="text-md text-slate-600 dark:text-white font-semibold">Izin Barang Keluar</p>
+              <Button size="sm" onClick={() => navigate('/unit-permission/outcoming-item')}>Selengkapnya</Button>
+            </div>
+
+            <div className="w-full overflow-scroll">
+              <table className="border-collapse min-w-full w-max">
+                <thead className="font-semibold bg-sky-50">
+                  <tr>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      No. Unit
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Nama Pemohon
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Jenis Barang
+                    </td>
+                    <td className="text-sm text-slate-600 dark:text-white p-4">
+                      Tanggal Keluar
+                    </td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {INCOMING_ITEM_DATA.map((data) => (
+                    <tr key={data.id} className="border-slate-200 border-b-1 last:border-b-0">
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.unit_code}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.requester_name}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{data.item_category_name}</td>
+                      <td className="text-sm text-slate-500 dark:text-white px-4 py-2">{dayjs(data.start_date).format('YYYY-MM-DD')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

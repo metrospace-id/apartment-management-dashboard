@@ -582,10 +582,10 @@ function PageVendorList() {
             )}
             <div className="flex gap-2">
               {fields.picture ? (
-                <div className="border border-slate-200 rounded hover:border-sky-700 relative [&_span]:hover:block">
+                <div className="border border-slate-200 rounded hover:border-sky-700 relative">
                   {!modalForm.readOnly && (
                   <span
-                    className="rounded-full bg-red-500 absolute right-0 top-0 cursor-pointer hidden p-2"
+                    className="rounded-full bg-red-500 absolute right-0 top-0 cursor-pointer p-2"
                     onClick={handleModalDeletePictureOpen}
                     role="presentation"
                   >
@@ -616,10 +616,10 @@ function PageVendorList() {
               {fields.documents.length ? fields.documents.map((document: any) => {
                 if (document.id) {
                   return (
-                    <div key={document.id} className="border border-slate-200 rounded hover:border-sky-700 relative [&_span]:hover:block">
+                    <div key={document.id} className="border border-slate-200 rounded hover:border-sky-700 relative">
                       {!modalForm.readOnly && (
                         <span
-                          className="rounded-full bg-red-500 absolute right-0 top-0 cursor-pointer hidden p-2"
+                          className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
                           onClick={() => handleModalDeleteDocumentOpen(document)}
                           role="presentation"
                         >

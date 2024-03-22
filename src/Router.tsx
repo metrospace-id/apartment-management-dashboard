@@ -41,6 +41,8 @@ import PageTodoList from 'pages/TodoList'
 import PageNote from 'pages/Note'
 import PageProfile from 'pages/Profile'
 import PageCategoryInquiry from 'pages/Category/Inquiry'
+import PageInquiryTenant from 'pages/Inquiry/Tenant'
+import PageInquiryTechnician from 'pages/Inquiry/Technician'
 
 const router = createBrowserRouter([
   {
@@ -178,6 +180,14 @@ const router = createBrowserRouter([
   {
     path: '/maintenance/checklist',
     Component: PageMaintenanceChecklist,
+  },
+  {
+    path: '/inquiry/tenant',
+    Component: PageInquiryTenant,
+  },
+  {
+    path: '/inquiry/technician',
+    Component: PageInquiryTechnician,
   },
   {
     path: '/calendar',

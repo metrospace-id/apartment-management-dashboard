@@ -40,6 +40,7 @@ import PageMaintenanceChecklist from 'pages/Maintenance/Checklist'
 import PageTodoList from 'pages/TodoList'
 import PageNote from 'pages/Note'
 import PageProfile from 'pages/Profile'
+import PageCategoryInquiry from 'pages/Category/Inquiry'
 
 const router = createBrowserRouter([
   {
@@ -85,6 +86,10 @@ const router = createBrowserRouter([
   {
     path: '/category/item',
     Component: PageCategoryItem,
+  },
+  {
+    path: '/category/inquiry',
+    Component: PageCategoryInquiry,
   },
   {
     path: '/asset/group',

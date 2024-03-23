@@ -63,7 +63,7 @@ function Layout({ children }: LayoutProps) {
 
   const handleClickLogout = () => {
     localStorage.removeItem('token')
-    window.location.href = '/login'
+    navigation('/login')
   }
 
   useEffect(() => {

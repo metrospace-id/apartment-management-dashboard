@@ -23,7 +23,7 @@ const options: IOptions = {
   theme: {
     background:
       'bg-white dark:bg-slate-900 border border-neutral-100 shadow-low dark:border-slate-600',
-    todayBtn: '!bg-sky-700 !w-full focus:ring-1',
+    todayBtn: '!bg-primary !w-full focus:ring-1',
     clearBtn: '!w-full bg-base-white dark:bg-base-white focus:ring-1',
     icons:
       'text-base-white text-neutral-500 rounded-full bg-base-white hover:bg-primary-50 hover:text-neutral-500 dark:text-base-white dark:bg-base-white dark:text-neutral-500 dark:hover:bg-primary-50 dark:hover:text-neutral-500',
@@ -33,7 +33,7 @@ const options: IOptions = {
     input: '',
     inputIcon: '',
     selected:
-      'text-white bg-sky-700 dark:text-base-white dark:bg-sky-700',
+      'text-white bg-primary dark:text-base-white dark:bg-primary',
   },
   icons: {
     prev: () => <IconArrowLeft />,

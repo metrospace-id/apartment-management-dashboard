@@ -38,7 +38,7 @@ function Checkbox({
 }: CheckboxProps) {
   const [isCheckced, setIsChecked] = useState(false)
 
-  const checkedClass = disabled ? 'bg-neutral-200 hover:bg-neutral-200' : 'bg-sky-700 border-sky-700 hover:bg-sky-500'
+  const checkedClass = disabled ? 'bg-neutral-200 hover:bg-neutral-200' : 'bg-primary border-primary hover:bg-sky-500'
   const disabledClass = 'bg-neutral-100 border-neutral-200 hover:border-neutral-200 hover:bg-neutral-100 cursor-not-allowed'
 
   const handleClickCheck = () => {

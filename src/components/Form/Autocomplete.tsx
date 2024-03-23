@@ -122,7 +122,7 @@ export default function Autocomplete({
             {filteredItems.length ? filteredItems.map((menu) => (
               <li
                 className="px-4 py-[6px]
-                text-md text-slate-600 hover:bg-sky-100 rounded-xl mb-1 cursor-pointer dark:text-white dark:hover:bg-sky-700"
+                text-md text-slate-600 hover:bg-sky-100 rounded-xl mb-1 cursor-pointer dark:text-white dark:hover:bg-primary"
                 onClick={() => handleClickMenu(menu)}
                 role="presentation"
                 key={menu.value}

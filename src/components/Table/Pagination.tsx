@@ -106,7 +106,7 @@ export default function Pagination({
           <button
             // eslint-disable-next-line react/no-array-index-key
             key={index}
-            className={`w-8 h-8 rounded-full font-normal ${pageNumber === page ? 'bg-sky-700 text-white hover:bg-sky-700' : 'bg-transparent text-slate-600'} hover:bg-sky-100 text-sm dark:text-white dark:hover:bg-slate-700`}
+            className={`w-8 h-8 rounded-full font-normal ${pageNumber === page ? 'bg-primary text-white hover:bg-primary' : 'bg-transparent text-slate-600'} hover:bg-sky-100 text-sm dark:text-white dark:hover:bg-slate-700`}
             type="button"
             aria-label="page"
             disabled={typeof pageNumber !== 'number'}

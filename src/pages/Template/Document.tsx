@@ -370,7 +370,7 @@ function PageTemplateDocument() {
               )}
               <div className="flex gap-2">
                 {fields.picture && (
-                  <div className="border border-slate-200 rounded hover:border-sky-700 relative">
+                  <div className="border border-slate-200 rounded hover:border-primary relative">
                     {!modalForm.readOnly && (
                     <span
                       className="rounded-full bg-red-500 absolute right-0 top-0 cursor-pointer p-2"
@@ -419,7 +419,7 @@ function PageTemplateDocument() {
             <p className="font-medium text-sm text-slate-600">Preview</p>
 
             <div className="bg-slate-100 rounded-md p-4 overflow-scroll h-full">
-              <div className="bg-white p-4 text-slate-600 min-w-[800px]">
+              <div className="bg-white p-4 text-slate-600 min-w-[800px] text-pr">
                 <div className="whitespace-pre-line border-b-2 border-black flex items-center gap-4">
                   <div className="w-[80px]">
                     {fields.picture ? (

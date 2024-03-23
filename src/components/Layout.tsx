@@ -135,7 +135,7 @@ function Layout({ children }: LayoutProps) {
 
               <div className="absolute shadow-lg z-20 top-12 right-[-104px] w-screen overflow-hidden sm:right-0 sm:w-[320px] sm:rounded-md">
                 <div className={`transition-all bg-white ${isNotificationOpen ? 'mt-0' : 'mt-[-200%]'}`}>
-                  <div className="bg-sky-700 p-4 dark:bg-black">
+                  <div className="bg-primary p-4 dark:bg-black">
                     <p className="text-md text-white font-medium">Notifikasi</p>
                   </div>
                   <div className="bg-white max-h-[250px] overflow-scroll dark:bg-slate-900">

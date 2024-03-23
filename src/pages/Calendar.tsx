@@ -172,8 +172,8 @@ function Calendar() {
             select={handleSelectDate}
             eventClick={handleClickEvent}
             locale={idLocale}
-            dayCellClassNames="bg-white cursor-pointer text-slate-600 [&.fc-day-today]:!bg-sky-200 hover:bg-sky-50 dark:bg-slate-900 dark:text-white dark:[&.fc-day-today]:!bg-sky-700 dark:border-slate-600"
-            dayHeaderClassNames="bg-sky-700 text-white"
+            dayCellClassNames="bg-white cursor-pointer text-slate-600 [&.fc-day-today]:!bg-sky-200 hover:bg-sky-50 dark:bg-slate-900 dark:text-white dark:[&.fc-day-today]:!bg-primary dark:border-slate-600"
+            dayHeaderClassNames="bg-primary text-white"
             expandRows
             selectable
           />

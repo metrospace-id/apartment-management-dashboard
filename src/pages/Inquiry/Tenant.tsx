@@ -701,7 +701,7 @@ function PageInquiryTenant() {
                 {fields.images.length ? fields.images.map((document: any) => {
                   if (document.id) {
                     return (
-                      <div key={document.id} className="border border-slate-200 rounded hover:border-sky-700 relative">
+                      <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
                         {!modalForm.readOnly && (
                         <span
                           className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
@@ -799,7 +799,7 @@ function PageInquiryTenant() {
                 {fields.progress_images.length ? fields.progress_images.map((document: any) => {
                   if (document.id) {
                     return (
-                      <div key={document.id} className="border border-slate-200 rounded hover:border-sky-700 relative">
+                      <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
                         {!modalForm.readOnly && (
                         <span
                           className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"

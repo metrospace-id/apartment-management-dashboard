@@ -7,9 +7,9 @@ export interface BadgeProps extends React.InputHTMLAttributes<HTMLSpanElement> {
 function Badge({
   variant = 'default', children, className, ...props
 }: BadgeProps) {
-  let backgroundColorClass = 'bg-sky-700 text-white disabled:hover:opacity-50'
+  let backgroundColorClass = 'bg-primary text-white disabled:hover:opacity-50'
   if (variant === 'secondary') {
-    backgroundColorClass = 'bg-transparent border text-sky-700 disabled:hover:opacity-50'
+    backgroundColorClass = 'bg-transparent border text-primary disabled:hover:opacity-50'
   } else if (variant === 'success') {
     backgroundColorClass = 'bg-green-500 text-white disabled:hover:opacity-50'
   } else if (variant === 'info') {

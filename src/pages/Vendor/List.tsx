@@ -582,7 +582,7 @@ function PageVendorList() {
             )}
             <div className="flex gap-2">
               {fields.picture ? (
-                <div className="border border-slate-200 rounded hover:border-sky-700 relative">
+                <div className="border border-slate-200 rounded hover:border-primary relative">
                   {!modalForm.readOnly && (
                   <span
                     className="rounded-full bg-red-500 absolute right-0 top-0 cursor-pointer p-2"
@@ -616,7 +616,7 @@ function PageVendorList() {
               {fields.documents.length ? fields.documents.map((document: any) => {
                 if (document.id) {
                   return (
-                    <div key={document.id} className="border border-slate-200 rounded hover:border-sky-700 relative">
+                    <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
                       {!modalForm.readOnly && (
                         <span
                           className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"

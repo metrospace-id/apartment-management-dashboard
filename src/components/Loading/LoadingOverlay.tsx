@@ -27,7 +27,7 @@ export default function LoadingOverlay() {
       contentLabel="Example Modal"
     >
       <div className="flex justify-center items-center h-full pointer-events-none">
-        <IconSpinner className="animate-spin text-sky-700" />
+        <IconSpinner className="animate-spin text-primary" />
       </div>
     </Modal>
   )

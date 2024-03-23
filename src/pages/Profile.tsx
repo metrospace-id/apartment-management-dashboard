@@ -215,7 +215,7 @@ function PageProfile() {
               )}
               <div className="flex gap-2">
                 {field.picture ? (
-                  <div className="border border-slate-200 rounded hover:border-sky-700 relative overflow-hidden">
+                  <div className="border border-slate-200 rounded hover:border-primary relative overflow-hidden">
 
                     <span
                       className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"

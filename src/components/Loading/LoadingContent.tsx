@@ -7,7 +7,7 @@ interface LoadingContentProps {
 export default function LoadingContent({ className = '' }: LoadingContentProps) {
   return (
     <div className={`flex justify-center items-center py-10 w-full pointer-events-none ${className}`}>
-      <IconSpinner className="animate-spin text-sky-700" />
+      <IconSpinner className="animate-spin text-primary" />
     </div>
   )
 }

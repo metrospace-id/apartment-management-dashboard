@@ -54,7 +54,7 @@ function SideBar({ open }: SideBarProps) {
         <h1 className="text-xs text-white">Apartment Management Dashboard</h1>
       </div>
 
-      <div className="h-[calc(100vh-100px)] py-4 overflow-scroll no-scrollbar">
+      <div className="h-[calc(100vh-120px)] py-4 overflow-scroll no-scrollbar">
         <ul>
           <li className="">
             <span

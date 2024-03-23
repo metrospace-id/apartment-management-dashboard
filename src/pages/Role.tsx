@@ -15,6 +15,7 @@ import Toggle from 'components/Form/Toggle'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import Select from 'components/Form/Select'
 
 const PAGE_NAME = 'Role'
 
@@ -22,6 +23,10 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Nama',
     key: 'name',
+  },
+  {
+    label: 'Level',
+    key: 'level',
   },
   {
     label: 'Aksi',
@@ -34,6 +39,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 const TABLE_DATA = Array.from(Array(25).keys()).map((key) => ({
   id: key + 1,
   name: faker.person.jobTitle(),
+  level: key % 2 ? 'admin' : 'employee',
   permissions: [1, 2, 3, 4, 5],
 }))
 
@@ -50,6 +56,7 @@ function PageRole() {
   const [fields, setFields] = useState({
     id: 0,
     name: '',
+    level: '',
     permissions: [0],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
@@ -98,6 +105,7 @@ function PageRole() {
     setFields({
       id: 0,
       name: '',
+      level: '',
       permissions: [0],
     })
   }
@@ -132,6 +140,7 @@ function PageRole() {
     setFields({
       id: selectedData.id,
       name: selectedData.name,
+      level: selectedData.level,
       permissions: selectedData.permissions,
     })
   }
@@ -145,6 +154,7 @@ function PageRole() {
     setFields({
       id: selectedData.id,
       name: selectedData.name,
+      level: selectedData.level,
       permissions: selectedData.permissions,
     })
   }
@@ -159,6 +169,7 @@ function PageRole() {
     setFields({
       id: selectedData.id,
       name: selectedData.name,
+      level: selectedData.level,
       permissions: selectedData.permissions,
     })
   }
@@ -298,6 +309,28 @@ function PageRole() {
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
+          />
+          <Select
+            placeholder="Level"
+            label="Level"
+            name="level"
+            value={fields.level}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+            options={[{
+              label: 'Pilih Level',
+              value: '',
+              disabled: true,
+            },
+            {
+              label: 'Admin',
+              value: 'admin',
+            },
+            {
+              label: 'Karyawan',
+              value: 'employee',
+            }]}
           />
           <div>
             <p className="text-sm text-slate-600 font-medium">Pilih Permission</p>

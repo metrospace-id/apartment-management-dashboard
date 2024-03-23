@@ -419,7 +419,7 @@ function PageTemplateDocument() {
             <p className="font-medium text-sm text-slate-600">Preview</p>
 
             <div className="bg-slate-100 rounded-md p-4 overflow-scroll h-full">
-              <div className="bg-white p-4 text-slate-600">
+              <div className="bg-white p-4 text-slate-600 min-w-[800px]">
                 <div className="whitespace-pre-line border-b-2 border-black flex items-center gap-4">
                   <div className="w-[80px]">
                     {fields.picture ? (

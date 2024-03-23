@@ -690,7 +690,7 @@ function PageTenant() {
                           onClick={() => handleModalDeleteDocumentOpen(document)}
                           role="presentation"
                         >
-                          <IconTrash className="text-white" />
+                          <IconTrash className="text-white" width={16} height={16} />
                         </span>
                       )}
                       <img src={document.picture.includes('pdf') ? '/images/pdf.png' : document.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />

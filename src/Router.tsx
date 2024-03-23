@@ -34,7 +34,6 @@ import PageItemRequest from 'pages/Item/Request'
 import PageVendorList from 'pages/Vendor/List'
 import PageVendorContract from 'pages/Vendor/Contract'
 import PageItemPurchase from 'pages/Item/Purchase'
-import PageMaintenanceForm from 'pages/Maintenance/Form'
 import PageMaintenanceList from 'pages/Maintenance/List'
 import PageMaintenanceChecklist from 'pages/Maintenance/Checklist'
 import PageTodoList from 'pages/TodoList'
@@ -43,6 +42,8 @@ import PageProfile from 'pages/Profile'
 import PageCategoryInquiry from 'pages/Category/Inquiry'
 import PageInquiryTenant from 'pages/Inquiry/Tenant'
 import PageInquiryTechnician from 'pages/Inquiry/Technician'
+import PageTemplateForm from 'pages/Template/Form'
+import PageTemplateDocument from 'pages/Template/Document'
 
 const router = createBrowserRouter([
   {
@@ -110,6 +111,14 @@ const router = createBrowserRouter([
     Component: PageAssetList,
   },
   {
+    path: '/template/form',
+    Component: PageTemplateForm,
+  },
+  {
+    path: '/template/document',
+    Component: PageTemplateDocument,
+  },
+  {
     path: '/owner',
     Component: PageOwner,
   },
@@ -168,10 +177,6 @@ const router = createBrowserRouter([
   {
     path: '/item/purchase',
     Component: PageItemPurchase,
-  },
-  {
-    path: '/maintenance/form',
-    Component: PageMaintenanceForm,
   },
   {
     path: '/maintenance/list',

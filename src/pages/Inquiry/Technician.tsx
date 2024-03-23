@@ -622,7 +622,7 @@ function PageInquiryTechnician() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="flex gap-4 p-6">
+        <form autoComplete="off" className="flex gap-4 p-6 flex-col lg:flex-row">
           <div className="flex flex-col gap-4 flex-1">
             <Input
               placeholder="Nama Pemohon"

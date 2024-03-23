@@ -17,7 +17,7 @@ import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { FORM_ASSET_TYPE, EXAMPLE_COMPONENTS } from 'constants/asset'
 import FormBuilder from 'components/Form/FormBuilder'
 
-const PAGE_NAME = 'Form Perawatan'
+const PAGE_NAME = 'Template Form'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -43,7 +43,7 @@ const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   form: JSON.stringify(EXAMPLE_COMPONENTS),
 }))
 
-function PageMaintenanceForm() {
+function PageTemplateForm() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -341,4 +341,4 @@ function PageMaintenanceForm() {
   )
 }
 
-export default PageMaintenanceForm
+export default PageTemplateForm

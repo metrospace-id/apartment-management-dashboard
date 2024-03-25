@@ -234,6 +234,7 @@ function PageRole() {
   const tableDatas = TABLE_DATA.map((column) => ({
     id: column.id,
     name: column.name,
+    level: column.level,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">

@@ -25,7 +25,7 @@ import Badge from 'components/Badge'
 import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
 
-const PAGE_NAME = 'Inquiry Teknisi'
+const PAGE_NAME = 'Workorder Teknisi'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {

@@ -23,6 +23,7 @@ import { exportToExcel } from 'utils/export'
 import { ITEM_PURCHASE_TYPE, ITEM_UNITS, ITEM_PURCHASE_STATUS } from 'constants/item'
 import { VENDOR_SECTORS } from 'constants/vendor'
 import Select from 'components/Form/Select'
+import useQuery from 'utils/url'
 
 const PAGE_NAME = 'Pembelian Barang'
 
@@ -99,6 +100,7 @@ const VENDOR_DATA = Array.from(Array(100).keys()).map((key) => ({
 }))
 
 function PageItemPurchase() {
+  const query = useQuery()
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -471,6 +473,12 @@ function PageItemPurchase() {
       }, 500)
     }
   }, [debounceSearch])
+
+  useEffect(() => {
+    if (query.get('request_id')) {
+      handleModalCreateOpen()
+    }
+  }, [query])
 
   return (
     <Layout>

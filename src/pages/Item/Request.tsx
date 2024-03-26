@@ -2,6 +2,7 @@ import {
   useState, useMemo, useEffect,
 } from 'react'
 import dayjs from 'dayjs'
+import { useNavigate } from 'react-router-dom'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -10,7 +11,9 @@ import Button from 'components/Button'
 import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
 import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
+import {
+  Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile, Cart as IconCart,
+} from 'components/Icons'
 import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
@@ -84,6 +87,7 @@ const DEPARTMENT_DATA = Array.from(Array(100).keys()).map((key) => ({
 }))
 
 function PageItemRequest() {
+  const navigate = useNavigate()
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -247,6 +251,24 @@ function PageItemRequest() {
     }))
   }
 
+  const handleModalPurchaseOpen = (fieldData: any) => {
+    setModalConfirm({
+      title: 'Belanja barang pesanan',
+      description: 'Barang pesanan akan dibuat menjadi pembelian',
+      open: true,
+    })
+    setSubmitType('purchase')
+    setFields((prevState) => ({
+      ...prevState,
+      id: fieldData.id,
+      type: fieldData.type,
+      department_id: fieldData.department_id,
+      approved_by: fieldData.approved_by,
+      issued_by: fieldData.issued_by,
+      items: fieldData.items,
+    }))
+  }
+
   const handleModalDeleteItemOpen = (fieldData: any) => {
     setIsModalDeleteItemOpen(true)
     setSelectedItem(fieldData)
@@ -358,10 +380,14 @@ function PageItemRequest() {
     setTimeout(() => {
       setIsLoadingSubmit(false)
       handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
-      })
+      if (submitType !== 'purchase') {
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message,
+        })
+      } else {
+        navigate(`/item/purchase?request_id=${fields.id}`)
+      }
     }, 500)
   }
 
@@ -391,6 +417,11 @@ function PageItemRequest() {
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
+          </Button>
+        </Popover>
+        <Popover content="Beli">
+          <Button variant="primary" size="sm" icon onClick={() => handleModalPurchaseOpen(column)}>
+            <IconCart className="w-4 h-4" />
           </Button>
         </Popover>
         <Popover content="Hapus">

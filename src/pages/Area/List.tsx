@@ -20,7 +20,7 @@ import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import TextArea from 'components/Form/TextArea'
 import { svgToImage } from 'utils/file'
 
-const PAGE_NAME = 'List Aset'
+const PAGE_NAME = 'List Area'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -30,18 +30,6 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Nama',
     key: 'name',
-  },
-  {
-    label: 'Golongan',
-    key: 'group_name',
-  },
-  {
-    label: 'Lokasi',
-    key: 'location_name',
-  },
-  {
-    label: 'Jenis',
-    key: 'type_name',
   },
   {
     label: 'Aksi',
@@ -54,45 +42,17 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   id: key + 1,
   code: '01.01.01.2024.1',
-  name: `Aset ${key + 1}`,
-  group_id: key + 1,
-  group_name: `Golongan ${key + 1}`,
-  location_id: key + 1,
-  location_name: `Lokasi ${key + 1}`,
-  type_id: key + 1,
-  type_name: `Jenis ${key + 1}`,
-  year: '2024',
-  brand: 'Samsung',
+  name: `Area ${key + 1}`,
   notes: 'Lorem ipsum',
 }))
 
-const GROUP_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Golongan Aset ${key + 1}`,
-}))
-
-const LOCATION_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Lokasi Aset ${key + 1}`,
-}))
-
-const TYPE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Jenis Aset ${key + 1}`,
-}))
-
-function PageAssetList() {
+function PageAreaList() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
     id: 0,
     code: '',
     name: '',
-    group_id: 0,
-    location_id: 0,
-    type_id: 0,
-    year: '',
-    brand: '',
     notes: '',
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
@@ -143,11 +103,6 @@ function PageAssetList() {
       id: 0,
       code: '',
       name: '',
-      group_id: 0,
-      location_id: 0,
-      type_id: 0,
-      year: '',
-      brand: '',
       notes: '',
     })
   }
@@ -183,11 +138,6 @@ function PageAssetList() {
       id: fieldData.id,
       code: fieldData.code,
       name: fieldData.name,
-      group_id: fieldData.group_id,
-      location_id: fieldData.location_id,
-      type_id: fieldData.type_id,
-      year: fieldData.year,
-      brand: fieldData.brand,
       notes: fieldData.notes,
     })
   }
@@ -202,11 +152,6 @@ function PageAssetList() {
       id: fieldData.id,
       code: fieldData.code,
       name: fieldData.name,
-      group_id: fieldData.group_id,
-      location_id: fieldData.location_id,
-      type_id: fieldData.type_id,
-      year: fieldData.year,
-      brand: fieldData.brand,
       notes: fieldData.notes,
     })
   }
@@ -222,11 +167,6 @@ function PageAssetList() {
       id: fieldData.id,
       code: fieldData.code,
       name: fieldData.name,
-      group_id: fieldData.group_id,
-      location_id: fieldData.location_id,
-      type_id: fieldData.type_id,
-      year: fieldData.year,
-      brand: fieldData.brand,
       notes: fieldData.notes,
     })
   }
@@ -285,9 +225,6 @@ function PageAssetList() {
     id: column.id,
     code: column.code,
     name: column.name,
-    group_name: column.group_name,
-    location_name: column.location_name,
-    type_name: column.type_name,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -365,78 +302,6 @@ function PageAssetList() {
             fullWidth
           />
 
-          <Autocomplete
-            placeholder="Golongan Aset"
-            label="Golongan Aset"
-            name="group_id"
-            items={GROUP_DATA.map((itemData) => ({
-              label: itemData.name,
-              value: itemData.id,
-            }))}
-            value={{
-              label: GROUP_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: GROUP_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
-            }}
-            onChange={(value) => handleChangeField('group_id', value.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <Autocomplete
-            placeholder="Lokasi Aset"
-            label="Lokasi Aset"
-            name="location_id"
-            items={LOCATION_DATA.map((itemData) => ({
-              label: itemData.name,
-              value: itemData.id,
-            }))}
-            value={{
-              label: LOCATION_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: LOCATION_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
-            }}
-            onChange={(value) => handleChangeField('location_id', value.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <Autocomplete
-            placeholder="Jenis Aset"
-            label="Jenis Aset"
-            name="type_id"
-            items={TYPE_DATA.map((itemData) => ({
-              label: itemData.name,
-              value: itemData.id,
-            }))}
-            value={{
-              label: TYPE_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: TYPE_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
-            }}
-            onChange={(value) => handleChangeField('type_id', value.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <Input
-            placeholder="Merk Aset"
-            label="Merk Aset"
-            name="brand"
-            value={fields.brand}
-            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
-          <Input
-            placeholder="Tahun Aset"
-            label="Tahun Aset"
-            name="year"
-            type="tel"
-            value={fields.year}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-
           <div className="sm:col-span-2">
             <TextArea
               placeholder="Note"
@@ -451,8 +316,8 @@ function PageAssetList() {
 
           {fields.id && (
             <Input
-              placeholder="Code Aset"
-              label="Code Aset"
+              placeholder="Code Area"
+              label="Code Area"
               name="code"
               value={fields.code}
               readOnly
@@ -506,4 +371,4 @@ function PageAssetList() {
   )
 }
 
-export default PageAssetList
+export default PageAreaList

@@ -44,6 +44,8 @@ import PageInquiryTenant from 'pages/Inquiry/Tenant'
 import PageInquiryTechnician from 'pages/Inquiry/Technician'
 import PageTemplateForm from 'pages/Template/Form'
 import PageTemplateDocument from 'pages/Template/Document'
+import PageUnitFacility from 'pages/Unit/Facility'
+import PageAreaList from 'pages/Area/List'
 
 const router = createBrowserRouter([
   {
@@ -79,6 +81,10 @@ const router = createBrowserRouter([
     Component: PageUnitCafe,
   },
   {
+    path: '/unit/facility',
+    Component: PageUnitFacility,
+  },
+  {
     path: '/category/work',
     Component: PageCategoryWork,
   },
@@ -109,6 +115,10 @@ const router = createBrowserRouter([
   {
     path: '/asset/list',
     Component: PageAssetList,
+  },
+  {
+    path: '/area/list',
+    Component: PageAreaList,
   },
   {
     path: '/template/form',

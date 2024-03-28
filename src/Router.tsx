@@ -46,6 +46,7 @@ import PageTemplateForm from 'pages/Template/Form'
 import PageTemplateDocument from 'pages/Template/Document'
 import PageUnitFacility from 'pages/Unit/Facility'
 import PageAreaList from 'pages/Area/List'
+import PageNews from 'pages/News'
 
 const router = createBrowserRouter([
   {
@@ -211,6 +212,10 @@ const router = createBrowserRouter([
   {
     path: '/todo-list',
     Component: PageTodoList,
+  },
+  {
+    path: '/news',
+    Component: PageNews,
   },
   {
     path: '/note',

@@ -47,6 +47,7 @@ import PageTemplateDocument from 'pages/Template/Document'
 import PageUnitFacility from 'pages/Unit/Facility'
 import PageAreaList from 'pages/Area/List'
 import PageNews from 'pages/News'
+import PageUnitPermissionFacility from 'pages/UnitPermission/Facility'
 
 const router = createBrowserRouter([
   {
@@ -164,6 +165,10 @@ const router = createBrowserRouter([
   {
     path: '/unit-permission/outcoming-item',
     Component: PageOutcomingItem,
+  },
+  {
+    path: '/unit-permission/facility',
+    Component: PageUnitPermissionFacility,
   },
   {
     path: '/vendor/list',

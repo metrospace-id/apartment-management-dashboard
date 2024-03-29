@@ -16,8 +16,16 @@ import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import Select from 'components/Form/Select'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Role'
+
+const LEVELS = [
+  { level: '0', label: 'Super Admin' },
+  { level: '1', label: 'Admin Department' },
+  { level: '2', label: 'Supervisor' },
+  { level: '3', label: 'Karyawan' },
+]
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -36,28 +44,27 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(25).keys()).map((key) => ({
-  id: key + 1,
-  name: faker.person.jobTitle(),
-  level: key % 2 ? 'admin' : 'employee',
-  permissions: [1, 2, 3, 4, 5],
-}))
-
-const PERMISSIONS = Array.from(Array(50).keys()).map((key) => ({
-  id: key + 1,
-  name: `dashboard-permission-${key + 1}`,
-  description: `Deskripsi permission ${key + 1}`,
-  parent: `parent-permission-${key + 1}`,
-}))
+interface FieldProps {
+  id: number
+  name: string
+  level: string
+  permission_ids: number[]
+}
 
 function PageRole() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataPermissions, setDataPermissions] = useState<Record<string, any>[]>([])
+  const [page, setPage] = useState(1)
+  const [fields, setFields] = useState<FieldProps>({
     id: 0,
     name: '',
     level: '',
-    permissions: [0],
+    permission_ids: [],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -80,11 +87,6 @@ function PageRole() {
 
   const debounceSearch = useDebounce(search, 500)
 
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
-
   const handleCloseToast = () => {
     setToast({
       open: false,
@@ -106,7 +108,7 @@ function PageRole() {
       id: 0,
       name: '',
       level: '',
-      permissions: [0],
+      permission_ids: [],
     })
   }
 
@@ -132,31 +134,61 @@ function PageRole() {
   }
 
   const handleModalDetailOpen = (selectedData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-    setFields({
-      id: selectedData.id,
-      name: selectedData.name,
-      level: selectedData.level,
-      permissions: selectedData.permissions,
+    api({
+      url: `/v1/role/${selectedData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      const mapData = {
+        id: responseData.data.id,
+        name: responseData.data.name,
+        level: responseData.data.level,
+        permission_ids: responseData.data.permissions.map((permission: any) => permission.id),
+      }
+      setFields(mapData)
     })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (selectedData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields({
-      id: selectedData.id,
-      name: selectedData.name,
-      level: selectedData.level,
-      permissions: selectedData.permissions,
+    api({
+      url: `/v1/role/${selectedData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      const mapData = {
+        id: responseData.data.id,
+        name: responseData.data.name,
+        level: responseData.data.level,
+        permission_ids: responseData.data.permissions.map((permission: any) => permission.id),
+      }
+      setFields(mapData)
     })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (selectedData: any) => {
@@ -166,37 +198,27 @@ function PageRole() {
       open: true,
     })
     setSubmitType('delete')
-    setFields({
+    setFields((prevState) => ({
+      ...prevState,
       id: selectedData.id,
-      name: selectedData.name,
-      level: selectedData.level,
-      permissions: selectedData.permissions,
-    })
+    }))
   }
 
   const handleSelectPermission = (permissionId: number) => {
     if (!modalForm.readOnly) {
-      if (fields.permissions.includes(permissionId)) {
-        const newPermissions = [...fields.permissions].filter((permission) => permission !== permissionId)
+      if (fields.permission_ids.includes(permissionId)) {
+        const newPermissions = [...fields.permission_ids].filter((permission) => permission !== permissionId)
         setFields((prevState) => ({
           ...prevState,
-          permissions: newPermissions,
+          permission_ids: newPermissions,
         }))
       } else {
         setFields((prevState) => ({
           ...prevState,
-          permissions: [...prevState.permissions, permissionId],
+          permission_ids: [...prevState.permission_ids, permissionId],
         }))
       }
     }
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -219,22 +241,106 @@ function PageRole() {
     setSubmitType(type)
   }
 
+  const handleGetRoles = () => {
+    api({
+      url: '/v1/role',
+      withAuth: true,
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    }).then(({ data: responseData }) => {
+      setData(responseData.data)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllPermissions = () => {
+    api({
+      url: '/v1/permission',
+      withAuth: true,
+      params: {
+        limit: 9999,
+      },
+    }).then(({ data: responseData }) => {
+      setDataPermissions(responseData.data.data)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCrate = () => api({
+    url: '/v1/role/create',
+    withAuth: true,
+    method: 'POST',
+    data: {
+      name: fields.name,
+      level: fields.level,
+      permission_ids: fields.permission_ids,
+    },
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/role/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: {
+      name: fields.name,
+      level: fields.level,
+      permission_ids: fields.permission_ids,
+    },
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/role/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
-      handleModalFormClose()
+
+    let apiSubmit = apiSubmitCrate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetRoles()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+        handleModalFormClose()
+      })
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     name: column.name,
-    level: column.level,
+    level: LEVELS.find((level) => level.level === column.level)?.label,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -242,38 +348,31 @@ function PageRole() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+        {column.id !== 1 && (
+          <>
+            <Popover content="Ubah">
+              <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+                <IconEdit className="w-4 h-4" />
+              </Button>
+            </Popover>
+            <Popover content="Hapus">
+              <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
+                <IconTrash className="w-4 h-4" />
+              </Button>
+            </Popover>
+          </>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetRoles()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    handleGetAllPermissions()
+  }, [])
 
   return (
     <Layout>
@@ -290,11 +389,11 @@ function PageRole() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -324,23 +423,20 @@ function PageRole() {
               value: '',
               disabled: true,
             },
-            {
-              label: 'Admin',
-              value: 'admin',
-            },
-            {
-              label: 'Karyawan',
-              value: 'employee',
-            }]}
+            ...LEVELS.map((level) => ({
+              label: level.label,
+              value: level.level,
+            })),
+            ]}
           />
           <div>
             <p className="text-sm text-slate-600 font-medium">Pilih Permission</p>
             <div className="grid grid-cols-2 mt-2 xl:grid-cols-4 md:grid-cols-3 gap-4">
-              {PERMISSIONS.map((permission) => (
+              {dataPermissions.map((permission) => (
                 <Toggle
                   key={permission.id}
                   label={permission.description}
-                  checked={fields.permissions.includes(permission.id)}
+                  checked={fields.permission_ids.includes(permission.id)}
                   onChange={() => handleSelectPermission(permission.id)}
                 />
               ))}

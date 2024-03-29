@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -7,16 +7,14 @@ import Button from 'components/Button'
 import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
 import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
+import { Edit as IconEdit, FileText as IconFile } from 'components/Icons'
 import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import TextArea from 'components/Form/TextArea'
-import Autocomplete from 'components/Form/Autocomplete'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import api from 'utils/api'
-import { da } from '@faker-js/faker'
 
 const PAGE_NAME = 'Permission'
 
@@ -114,14 +112,6 @@ function PagePermission() {
     }))
   }
 
-  const handleModalCreateOpen = () => {
-    setModalForm({
-      title: `Tambah ${PAGE_NAME} Baru`,
-      open: true,
-      readOnly: false,
-    })
-  }
-
   const handleModalDetailOpen = (fieldData: any) => {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
@@ -190,7 +180,10 @@ function PagePermission() {
         setData(responseData.data)
       })
       .catch((error) => {
-        console.error(error)
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
       }).finally(() => {
         setIsLoadingData(false)
       })
@@ -213,7 +206,10 @@ function PagePermission() {
         })
       })
       .catch((error) => {
-        console.error(error)
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
       })
       .finally(() => {
         setIsLoadingSubmit(false)
@@ -263,7 +259,6 @@ function PagePermission() {
             <div className="w-full sm:w-[30%]">
               <Input placeholder="Cari nama" onChange={(e) => handleSearch(e.target.value)} fullWidth />
             </div>
-            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
           </div>
 
           <Table

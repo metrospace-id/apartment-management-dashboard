@@ -189,7 +189,7 @@ export default function Table({
               <tbody>
                 <tr>
                   <td colSpan={99} className="text-center py-6">
-                    <p className="text-md font-medium">
+                    <p className="text-md font-medium text-slate-600">
                       Belum ada data
                     </p>
                   </td>

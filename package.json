@@ -2,6 +2,7 @@
   "name": "apartment-management-dashboard",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://amd.metrospace.id",
   "dependencies": {
     "@faker-js/faker": "^8.4.1",
     "@fullcalendar/core": "^6.1.10",

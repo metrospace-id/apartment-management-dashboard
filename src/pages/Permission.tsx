@@ -15,6 +15,8 @@ import Toast from 'components/Toast'
 import TextArea from 'components/Form/TextArea'
 import Autocomplete from 'components/Form/Autocomplete'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import api from 'utils/api'
+import { da } from '@faker-js/faker'
 
 const PAGE_NAME = 'Permission'
 
@@ -39,16 +41,14 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `dashboard-permission-${key + 1}`,
-  description: 'Deskripsi permission',
-  parent: `parent-permission-${key + 1}`,
-}))
-
 function PagePermission() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     name: '',
@@ -74,12 +74,7 @@ function PagePermission() {
   })
   const [submitType, setSubmitType] = useState('create')
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleCloseToast = () => {
     setToast({
@@ -155,27 +150,8 @@ function PagePermission() {
     })
   }
 
-  const handleModalDeleteOpen = (fieldData: any) => {
-    setModalConfirm({
-      title: MODAL_CONFIRM_TYPE.delete.title,
-      description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
-    })
-    setSubmitType('delete')
-    setFields({
-      id: fieldData.id,
-      name: fieldData.name,
-      description: fieldData.description,
-      parent: fieldData.parent,
-    })
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
+  const handleSearch = (value: string) => {
+    setSearch(value)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -198,23 +174,65 @@ function PagePermission() {
     setSubmitType(type)
   }
 
-  const handleClickSubmit = () => {
-    setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+  const handleGetPermissions = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/permission',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
       })
-    }, 500)
+      .catch((error) => {
+        console.error(error)
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const handleSubmitUpdate = () => {
+    api({
+      url: `/v1/permission/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: {
+        description: fields.description,
+      },
+    })
+      .then(() => {
+        handleGetPermissions()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message,
+        })
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+      .finally(() => {
+        setIsLoadingSubmit(false)
+        handleModalFormClose()
+      })
+  }
+
+  const handleClickSubmit = () => {
+    setIsLoadingSubmit(true)
+    if (submitType === 'update') {
+      handleSubmitUpdate()
+    }
+  }
+
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     name: column.name,
     description: column.description,
-    parent: column.parent,
+    parent: column.parent || '-',
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -227,33 +245,13 @@ function PagePermission() {
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetPermissions()
+  }, [debounceSearch, page])
 
   return (
     <Layout>
@@ -263,18 +261,18 @@ function PagePermission() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari nama" onChange={(e) => handleSearch(e.target.value)} fullWidth />
             </div>
             <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
           </div>
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -287,8 +285,15 @@ function PagePermission() {
             label="Nama Permission"
             name="name"
             value={fields.name}
-            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
+            readOnly
+            fullWidth
+          />
+          <Input
+            placeholder="Parent Permission"
+            label="Parent Permission"
+            name="parent"
+            value={fields.parent || '-'}
+            readOnly
             fullWidth
           />
           <TextArea
@@ -297,22 +302,6 @@ function PagePermission() {
             name="description"
             value={fields.description}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
-          <Autocomplete
-            placeholder="Parent Permission"
-            label="Parent Permission"
-            name="parent"
-            items={TABLE_DATA.map((tableData) => ({
-              label: tableData.name,
-              value: tableData.name,
-            }))}
-            value={{
-              label: TABLE_DATA.find((tableData) => tableData.name === fields.parent)?.name || '',
-              value: TABLE_DATA.find((tableData) => tableData.name === fields.parent)?.name || '',
-            }}
-            onChange={(value) => handleChangeField('parent', value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />

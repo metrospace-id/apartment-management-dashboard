@@ -7,10 +7,11 @@ interface ApiProps {
   url: string
   data?: Record<string, any>
   headers?: Record<string, any>
+  params?: Record<string, any>
 }
 
 const api = ({
-  withAuth, method, url, data, headers,
+  withAuth, method, url, data, headers, params,
 }: ApiProps) => {
   const token = new Cookies().get('token')
   const newHeaders: Record<string, any> = {
@@ -29,6 +30,7 @@ const api = ({
     method: method || 'GET',
     withCredentials: false,
     headers: newHeaders,
+    params,
     data,
   })
 }

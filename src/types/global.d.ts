@@ -1,1 +1,11 @@
 declare module 'react-qr-scanner'
+
+export { }
+declare global {
+  interface DataTableProps {
+    data: Record<string, any>[]
+    page: number
+    limit: number
+    total: number
+  }
+}

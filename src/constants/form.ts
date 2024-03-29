@@ -14,6 +14,16 @@ export const MODAL_CONFIRM_TYPE: Record<string, { title: string, description: st
     description: 'Data akan dihapus, apakah anda yakin?',
     message: 'Berhasil menghapus data',
   },
+  profile: {
+    title: 'Simpan perubahan profile',
+    description: 'Data profile baru akan disimpan, apakah anda yakin?',
+    message: 'Berhasil merubah profile',
+  },
+  password: {
+    title: 'Simpan perubahan password',
+    description: 'Data password baru akan disimpan, apakah anda yakin?',
+    message: 'Berhasil merubah password',
+  },
 }
 
 export const PAGE_SIZE = 25

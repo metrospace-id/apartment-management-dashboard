@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 import Breadcrumb from 'components/Breadcrumb'
 import Input from 'components/Form/Input'
@@ -11,16 +11,19 @@ import { TrashAlt as IconTrash } from 'components/Icons'
 import { toBase64 } from 'utils/file'
 import { MODAL_CONFIRM_TYPE } from 'constants/form'
 import InputPassword from 'components/Form/InputPassword'
+import api from 'utils/api'
 
 function PageProfile() {
   const [field, setField] = useState({
-    name: 'Uje',
-    email: 'uje@email.com',
-    picture: 'https://via.placeholder.com/300x300',
+    id: 0,
+    name: '',
+    email: '',
+    picture: '',
   })
   const [passwordField, setPasswordField] = useState({
     password: '',
-    password_confirmation: '',
+    new_password: '',
+    new_password_confirmation: '',
   })
 
   const [isModalDeletePictureOpen, setIsModalDeletePictureOpen] = useState(false)
@@ -39,7 +42,7 @@ function PageProfile() {
     open: false,
     readOnly: false,
   })
-  const [submitType, setSubmitType] = useState('create')
+  const [submitType, setSubmitType] = useState('profile')
   const [error, setError] = useState<any>({})
 
   const pictureRef = useRef<any>(null)
@@ -61,6 +64,11 @@ function PageProfile() {
       ...prevState,
       open: false,
     }))
+    setPasswordField({
+      password: '',
+      new_password: '',
+      new_password_confirmation: '',
+    })
   }
 
   const handleModalDeletePictureOpen = () => {
@@ -121,7 +129,7 @@ function PageProfile() {
   }
 
   const handleModalConfirmClose = () => {
-    if (submitType !== 'delete') {
+    if (passwordField.password) {
       setModalForm((prevState) => ({
         ...prevState,
         open: true,
@@ -166,32 +174,101 @@ function PageProfile() {
   }
 
   const handleConfirmPassword = () => {
-    if (!passwordField.password_confirmation) {
+    if (!passwordField.new_password_confirmation) {
       setError((prevState: any) => ({
         ...prevState,
-        password_confirmation: 'Konfirmasi password tidak boleh kosong.',
+        new_password_confirmation: 'Konfirmasi password tidak boleh kosong.',
       }))
-    } else if (passwordField.password !== passwordField.password_confirmation) {
+    } else if (passwordField.new_password !== passwordField.new_password_confirmation) {
       setError((prevState: any) => ({
         ...prevState,
-        password_confirmation: 'Konfirmasi password tidak sesuai.',
+        new_password_confirmation: 'Konfirmasi password tidak sesuai.',
       }))
     } else {
-      handleClickConfirm('update')
+      handleClickConfirm('password')
     }
+  }
+
+  const handleSubmitProfile = () => {
+    api({
+      withAuth: true,
+      method: 'PUT',
+      url: `/v1/user/${field.id}`,
+      data: {
+        name: field.name,
+        password: passwordField.password,
+        picture: field.picture,
+      },
+    }).then(() => {
+      setToast({
+        open: true,
+        message: 'Berhasil menyimpan data.',
+      })
+      handleModalFormClose()
+    }).catch((e) => {
+      setToast({
+        open: true,
+        message: e?.response?.data?.message || 'Terjadi kesalahan',
+      })
+    }).finally(() => {
+      setIsLoadingSubmit(false)
+    })
+  }
+
+  const handleSubmitPassword = () => {
+    api({
+      withAuth: true,
+      method: 'PUT',
+      url: `/v1/user/${field.id}/password`,
+      data: {
+        password: passwordField.password,
+        new_password: passwordField.new_password,
+      },
+    }).then(() => {
+      setToast({
+        open: true,
+        message: 'Berhasil menyimpan data.',
+      })
+      handleModalFormClose()
+    }).catch((e) => {
+      setToast({
+        open: true,
+        message: e?.response?.data?.message || 'Terjadi kesalahan',
+      })
+      setError((prevState: any) => ({
+        ...prevState,
+        password: e?.response?.data?.message || 'Terjadi kesalahan',
+      }))
+      handleModalConfirmClose()
+    }).finally(() => {
+      setIsLoadingSubmit(false)
+    })
   }
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
-      })
-    }, 500)
+
+    if (submitType === 'profile') {
+      handleSubmitProfile()
+    } else {
+      handleSubmitPassword()
+    }
   }
+
+  useEffect(() => {
+    setIsLoadingSubmit(true)
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      setField((prevState) => ({
+        ...prevState,
+        id: localStorageUser.id,
+        name: localStorageUser.name,
+        email: localStorageUser.email,
+        picture: localStorageUser.picture || 'https://via.placeholder.com/300x300',
+      }))
+      setIsLoadingSubmit(false)
+    }, 500)
+  }, [])
 
   return (
     <Layout>
@@ -239,7 +316,7 @@ function PageProfile() {
                 Ubah Password
               </Button>
 
-              <Button onClick={() => handleClickConfirm('update')} size="sm">
+              <Button onClick={() => handleClickConfirm('profile')} size="sm">
                 Simpan
               </Button>
             </div>
@@ -252,15 +329,19 @@ function PageProfile() {
           <InputPassword
             placeholder="Password Lama"
             label="Password Lama"
-            name="old_Password"
+            value={passwordField.password}
+            name="password"
+            onChange={(e) => handleChangePasswordField(e.target.name, e.target.value)}
             className="col-span-2"
+            error={!!error.password}
+            helperText={error.password}
           />
 
           <InputPassword
             placeholder="Password Baru"
             label="Password Baru"
-            value={passwordField.password}
-            name="password"
+            value={passwordField.new_password}
+            name="new_password"
             onChange={(e) => handleChangePasswordField(e.target.name, e.target.value)}
             className="col-span-2"
           />
@@ -268,12 +349,12 @@ function PageProfile() {
           <InputPassword
             placeholder="Konfirmasi Password Baru"
             label="Konfirmasi Password Baru"
-            value={passwordField.password_confirmation}
-            name="password_confirmation"
+            value={passwordField.new_password_confirmation}
+            name="new_password_confirmation"
             onChange={(e) => handleChangePasswordField(e.target.name, e.target.value)}
             className="col-span-2"
-            error={!!error.password_confirmation}
-            helperText={error.password_confirmation}
+            error={!!error.new_password_confirmation}
+            helperText={error.new_password_confirmation}
           />
 
         </form>

@@ -5,8 +5,10 @@ import {
   useState,
 } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useCookies } from 'react-cookie'
 
 import useOutsideClick from 'hooks/useOutsideClick'
+import api from 'utils/api'
 import SideBar from './SideBar'
 
 const NOTIFICATIONS = Array.from(Array(10).keys()).map((key) => ({
@@ -19,11 +21,16 @@ interface LayoutProps {
 }
 
 function Layout({ children }: LayoutProps) {
+  const [cookies, setCookie, removeCookie] = useCookies(['token'])
   const location = useLocation()
   const navigation = useNavigate()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isSidebarOpen, setIsSideBarOpen] = useState(true)
+  const [profile, setProfile] = useState({
+    name: '',
+    email: '',
+  })
   const [theme, setTheme] = useState(localStorage.theme)
 
   const notificationElRef = useRef<HTMLDivElement | null>(null)
@@ -62,8 +69,24 @@ function Layout({ children }: LayoutProps) {
   }
 
   const handleClickLogout = () => {
-    localStorage.removeItem('token')
+    removeCookie('token')
     navigation('/login')
+  }
+
+  const handleGetProfile = () => {
+    api({
+      withAuth: true,
+      url: '/v1/user/profile',
+    }).then(({ data }) => {
+      setProfile({
+        name: data.data.name,
+        email: data.data.email,
+      })
+      localStorage.setItem('user', JSON.stringify(data.data))
+    }).catch(() => {
+      removeCookie('token')
+      navigation('/login')
+    })
   }
 
   useEffect(() => {
@@ -75,14 +98,18 @@ function Layout({ children }: LayoutProps) {
   }, [theme])
 
   useEffect(() => {
-    if (!localStorage.token && location.pathname !== '/login') {
+    if (!cookies.token && location.pathname !== '/login') {
       navigation('/login')
+    }
+
+    if (cookies.token) {
+      handleGetProfile()
     }
 
     if (window.innerWidth < 640) {
       setIsSideBarOpen(false)
     }
-  }, [])
+  }, [cookies])
 
   return (
 
@@ -190,7 +217,8 @@ function Layout({ children }: LayoutProps) {
               <div className="absolute shadow-lg z-20 top-12 right-[-16px] w-screen overflow-hidden sm:right-0 sm:w-[200px] sm:rounded-md">
                 <div className={`transition-all bg-white ${isProfileOpen ? 'mt-0' : 'mt-[-200%]'} dark:bg-slate-900`}>
                   <div className="p-4">
-                    <p className="text-xs text-slate-600 font-medium dark:text-white">Halo, Uje</p>
+                    <p className="text-xs text-slate-600 font-medium dark:text-white">{`Halo, ${profile.name}`}</p>
+                    <p className="text-xxs text-slate-500 font-regular dark:text-white">{profile.email}</p>
                   </div>
                   <div className="border-b border-slate-200 py-2">
                     <ul>

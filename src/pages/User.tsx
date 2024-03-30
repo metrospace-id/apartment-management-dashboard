@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from 'react'
-import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -16,6 +15,7 @@ import Toggle from 'components/Form/Toggle'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import api from 'utils/api'
 
 const PAGE_NAME = 'User'
 
@@ -40,34 +40,27 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: faker.person.fullName(),
-  email: faker.internet.email(),
-  roles: [1, 2],
-}))
-
-const ROLES = [
-  {
-    label: 'Admin',
-    value: 1,
-  },
-  {
-    label: 'Pegawai',
-    value: 2,
-  },
-  {
-    label: 'TRO',
-    value: 3,
-  }]
+interface FieldProps {
+  id: number
+  name: string
+  email: string
+  role_ids: number[]
+}
 
 function PageUser() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataRoles, setDataRoles] = useState<Record<string, any>[]>([])
+  const [page, setPage] = useState(1)
+  const [fields, setFields] = useState<FieldProps>({
     id: 0,
+    name: '',
     email: '',
-    roles: [0],
+    role_ids: [],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -88,12 +81,7 @@ function PageUser() {
   })
   const [submitType, setSubmitType] = useState('create')
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleCloseToast = () => {
     setToast({
@@ -114,8 +102,9 @@ function PageUser() {
     }))
     setFields({
       id: 0,
+      name: '',
       email: '',
-      roles: [0],
+      role_ids: [0],
     })
   }
 
@@ -140,69 +129,91 @@ function PageUser() {
     })
   }
 
-  const handleModalDetailOpen = (userData: any) => {
+  const handleModalDetailOpen = (selectedData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-    setFields({
-      id: userData.id,
-      email: userData.email,
-      roles: userData.roles,
+    api({
+      url: `/v1/user/${selectedData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      const mapData = {
+        id: responseData.data.id,
+        name: responseData.data.name,
+        email: responseData.data.email,
+        role_ids: responseData.data.roles.map((role: any) => role.id),
+      }
+      setFields(mapData)
     })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
-  const handleModalUpdateOpen = (userData: any) => {
+  const handleModalUpdateOpen = (selectedData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields({
-      id: userData.id,
-      email: userData.email,
-      roles: userData.roles,
+    api({
+      url: `/v1/user/${selectedData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      const mapData = {
+        id: responseData.data.id,
+        name: responseData.data.name,
+        email: responseData.data.email,
+        role_ids: responseData.data.roles.map((role: any) => role.id),
+      }
+      setFields(mapData)
     })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
-  const handleModalDeleteOpen = (userData: any) => {
+  const handleModalDeleteOpen = (selectedData: any) => {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
       open: true,
     })
     setSubmitType('delete')
-    setFields({
-      id: userData.id,
-      email: userData.email,
-      roles: userData.roles,
-    })
+    setFields((prevState) => ({
+      ...prevState,
+      id: selectedData.id,
+    }))
   }
 
   const handleSelectRoles = (roleId: number) => {
     if (!modalForm.readOnly) {
-      if (fields.roles.includes(roleId)) {
-        const newRoles = [...fields.roles].filter((role) => role !== roleId)
+      if (fields.role_ids.includes(roleId)) {
         setFields((prevState) => ({
           ...prevState,
-          roles: newRoles,
+          role_ids: prevState.role_ids.filter((role) => role !== roleId),
         }))
       } else {
         setFields((prevState) => ({
           ...prevState,
-          roles: [...prevState.roles, roleId],
+          role_ids: [...prevState.role_ids, roleId],
         }))
       }
     }
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -225,26 +236,115 @@ function PageUser() {
     setSubmitType(type)
   }
 
-  const handleClickSubmit = () => {
-    setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+  const handleGetUsers = () => {
+    api({
+      url: '/v1/user',
+      withAuth: true,
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    }).then(({ data: responseData }) => {
+      setData(responseData.data)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
       })
-    }, 500)
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const handleGetAllRoles = () => {
+    api({
+      url: '/v1/role',
+      withAuth: true,
+      params: {
+        limit: 9999,
+      },
+    }).then(({ data: responseData }) => {
+      if (responseData.data?.data?.length) {
+        setDataRoles(responseData.data.data)
+      }
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/user/create',
+    withAuth: true,
+    method: 'POST',
+    data: {
+      name: fields.name,
+      email: fields.email,
+      role_ids: fields.role_ids,
+    },
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/user/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: {
+      name: fields.name,
+      role_ids: fields.role_ids,
+    },
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/user/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
+  const handleClickSubmit = () => {
+    setIsLoadingSubmit(true)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit()
+      .then(() => {
+        handleGetUsers()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message,
+        })
+      })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+      .finally(() => {
+        setIsLoadingSubmit(false)
+      })
+  }
+
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     name: column.name,
     email: column.email,
     role: (
       <div className="">
-        {column.roles.map((role) => (
-          <Badge className="mx-1" key={role}>{`Role ${role}`}</Badge>
+        {column.roles.map((role: any) => (
+          <Badge className="mx-1" key={role.id}>
+            {role.name}
+          </Badge>
         ))}
       </div>
     ),
@@ -255,39 +355,31 @@ function PageUser() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+        {column.id !== 1 && (
+          <>
+            <Popover content="Ubah">
+              <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+                <IconEdit className="w-4 h-4" />
+              </Button>
+            </Popover>
+            <Popover content="Hapus">
+              <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
+                <IconTrash className="w-4 h-4" />
+              </Button>
+            </Popover>
+          </>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.email.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetUsers()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    handleGetAllRoles()
+  }, [])
 
   return (
     <Layout>
@@ -304,11 +396,11 @@ function PageUser() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -321,6 +413,16 @@ function PageUser() {
             label="Email"
             name="email"
             value={fields.email}
+            disabled={fields.id !== 0}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+          <Input
+            placeholder="Nama"
+            label="Nama"
+            name="name"
+            value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -328,12 +430,12 @@ function PageUser() {
           <div>
             <p className="text-sm text-slate-600 font-medium">Pilih Role</p>
             <div className="grid grid-cols-2 mt-2 sm:grid-cols-4 gap-4">
-              {ROLES.map((role) => (
+              {dataRoles.map((role) => (
                 <Toggle
                   key={role.value}
-                  label={role.label}
-                  checked={fields.roles.includes(role.value)}
-                  onChange={() => handleSelectRoles(role.value)}
+                  label={role.name}
+                  checked={fields.role_ids.includes(role.id)}
+                  onChange={() => handleSelectRoles(role.id)}
                 />
               ))}
             </div>

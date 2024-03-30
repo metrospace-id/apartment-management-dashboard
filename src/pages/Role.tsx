@@ -348,19 +348,20 @@ function PageRole() {
 
     apiSubmit().then(() => {
       handleGetRoles()
+      handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
     })
       .catch((error) => {
+        handleModalConfirmClose()
         setToast({
           open: true,
           message: error.response?.data?.message,
         })
       }).finally(() => {
         setIsLoadingSubmit(false)
-        handleModalFormClose()
       })
   }
 

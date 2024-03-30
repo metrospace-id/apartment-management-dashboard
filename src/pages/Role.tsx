@@ -1,5 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
-import { fakerID_ID as faker } from '@faker-js/faker'
+import { useState, useEffect } from 'react'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -85,7 +84,7 @@ function PageRole() {
   })
   const [submitType, setSubmitType] = useState('create')
 
-  const debounceSearch = useDebounce(search, 500)
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleCloseToast = () => {
     setToast({
@@ -204,20 +203,30 @@ function PageRole() {
     }))
   }
 
-  const handleSelectPermission = (permissionId: number) => {
+  const handleSelectPermission = (permission: any) => {
     if (!modalForm.readOnly) {
-      if (fields.permission_ids.includes(permissionId)) {
-        const newPermissions = [...fields.permission_ids].filter((permission) => permission !== permissionId)
-        setFields((prevState) => ({
-          ...prevState,
-          permission_ids: newPermissions,
-        }))
+      const newPermissions = [...fields.permission_ids]
+      const permissionId = permission.id
+      const permissionChildren = permission.children || []
+      const permissionChildrenIds = permissionChildren.map((child: any) => child.id)
+      const permissionSubChildren = permissionChildren.flatMap((child: any) => child.children || [])
+      const permissionSubChildrenIds = permissionSubChildren.map((subChild: any) => subChild.id)
+
+      if (newPermissions.includes(permissionId)) {
+        const filteredPermissions = newPermissions.filter((id) => id !== permissionId)
+        const filteredChildren = filteredPermissions.filter((id) => !permissionChildrenIds.includes(id))
+        const filteredSubChildren = filteredChildren.filter((id) => !permissionSubChildrenIds.includes(id))
+        newPermissions.splice(0, newPermissions.length, ...filteredSubChildren)
       } else {
-        setFields((prevState) => ({
-          ...prevState,
-          permission_ids: [...prevState.permission_ids, permissionId],
-        }))
+        newPermissions.push(permissionId)
+        newPermissions.push(...permissionChildrenIds)
+        newPermissions.push(...permissionSubChildrenIds)
       }
+
+      setFields((prevState) => ({
+        ...prevState,
+        permission_ids: newPermissions,
+      }))
     }
   }
 
@@ -271,7 +280,25 @@ function PageRole() {
         limit: 9999,
       },
     }).then(({ data: responseData }) => {
-      setDataPermissions(responseData.data.data)
+      const permissions: any[] = []
+
+      if (responseData.data?.data?.length) {
+        const idMapping = responseData.data.data.reduce((acc: any, el: any, i: any) => {
+          acc[el.name] = i
+          return acc
+        }, {})
+
+        responseData.data.data.forEach((el: any) => {
+          if (!el.parent) {
+            permissions.push(el)
+            return
+          }
+          const parentEl: any = responseData.data?.data[idMapping[el.parent]]
+          parentEl.children = [...(parentEl.children || []), el]
+        })
+      }
+
+      setDataPermissions(permissions)
     })
       .catch((error) => {
         setToast({
@@ -281,7 +308,7 @@ function PageRole() {
       })
   }
 
-  const apiSubmitCrate = () => api({
+  const apiSubmitCreate = () => api({
     url: '/v1/role/create',
     withAuth: true,
     method: 'POST',
@@ -312,7 +339,7 @@ function PageRole() {
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
 
-    let apiSubmit = apiSubmitCrate
+    let apiSubmit = apiSubmitCreate
     if (submitType === 'update') {
       apiSubmit = apiSubmitUpdate
     } else if (submitType === 'delete') {
@@ -431,14 +458,39 @@ function PageRole() {
           />
           <div>
             <p className="text-sm text-slate-600 font-medium">Pilih Permission</p>
-            <div className="grid grid-cols-2 mt-2 xl:grid-cols-4 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 mt-2 md:grid-cols-2 gap-4">
               {dataPermissions.map((permission) => (
-                <Toggle
-                  key={permission.id}
-                  label={permission.description}
-                  checked={fields.permission_ids.includes(permission.id)}
-                  onChange={() => handleSelectPermission(permission.id)}
-                />
+                <div key={permission.id} className="bg-slate-100 rounded-lg p-4">
+                  <Toggle
+                    label={permission.description}
+                    checked={fields.permission_ids.includes(permission.id)}
+                    onChange={() => handleSelectPermission(permission)}
+                  />
+
+                  <div className="pl-4 flex flex-col gap-2">
+                    {permission.children && permission.children.map((child: any) => (
+                      <div key={child.id}>
+                        <Toggle
+                          label={child.description}
+                          checked={fields.permission_ids.includes(child.id)}
+                          onChange={() => handleSelectPermission(child)}
+                        />
+                        {child.children && (
+                          <div className="pl-4 flex flex-col gap-2">
+                            {child.children && child.children.map((subChild: any) => (
+                              <Toggle
+                                key={subChild.id}
+                                label={subChild.description}
+                                checked={fields.permission_ids.includes(subChild.id)}
+                                onChange={() => handleSelectPermission(subChild)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>

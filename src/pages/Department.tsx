@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect } from 'react'
-import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -15,6 +14,7 @@ import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import TextArea from 'components/Form/TextArea'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Departmen'
 
@@ -31,19 +31,18 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(25).keys()).map((key) => ({
-  id: key + 1,
-  name: faker.commerce.department(),
-}))
-
 function PageDepartment() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     name: '',
     description: '',
-    parent: '',
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -64,12 +63,7 @@ function PageDepartment() {
   })
   const [submitType, setSubmitType] = useState('create')
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleCloseToast = () => {
     setToast({
@@ -92,7 +86,6 @@ function PageDepartment() {
       id: 0,
       name: '',
       description: '',
-      parent: '',
     })
   }
 
@@ -118,31 +111,59 @@ function PageDepartment() {
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-    setFields({
-      id: fieldData.id,
-      name: fieldData.name,
-      description: fieldData.description,
-      parent: fieldData.parent,
+    api({
+      url: `/v1/department/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields({
+        id: responseData.data.id,
+        name: responseData.data.name,
+        description: responseData.data.description,
+      })
+      setIsLoadingData(false)
     })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields({
-      id: fieldData.id,
-      name: fieldData.name,
-      description: fieldData.description,
-      parent: fieldData.parent,
+    api({
+      url: `/v1/department/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields({
+        id: responseData.data.id,
+        name: responseData.data.name,
+        description: responseData.data.description,
+      })
+      setIsLoadingData(false)
     })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -152,20 +173,10 @@ function PageDepartment() {
       open: true,
     })
     setSubmitType('delete')
-    setFields({
+    setFields((prevState) => ({
+      ...prevState,
       id: fieldData.id,
-      name: fieldData.name,
-      description: fieldData.description,
-      parent: fieldData.parent,
-    })
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
+    }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -188,19 +199,79 @@ function PageDepartment() {
     setSubmitType(type)
   }
 
+  const handleGetDepartments = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/department',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/department/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/department/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/department/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
-      handleModalFormClose()
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetDepartments()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+        handleModalFormClose()
+      })
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     name: column.name,
     action: (
@@ -225,23 +296,8 @@ function PageDepartment() {
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetDepartments()
+  }, [debounceSearch, page])
 
   return (
     <Layout>
@@ -258,11 +314,11 @@ function PageDepartment() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -271,8 +327,8 @@ function PageDepartment() {
       <Modal open={modalForm.open} title={modalForm.title}>
         <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
           <Input
-            placeholder="Nama Permission"
-            label="Nama Permission"
+            placeholder="Nama Departemen"
+            label="Nama Departemen"
             name="name"
             value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
@@ -280,8 +336,8 @@ function PageDepartment() {
             fullWidth
           />
           <TextArea
-            placeholder="Deskripsi Permission"
-            label="Deskripsi Permission"
+            placeholder="Deskripsi Departemen"
+            label="Deskripsi Departemen"
             name="description"
             value={fields.description}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}

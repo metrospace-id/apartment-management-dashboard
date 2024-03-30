@@ -104,7 +104,7 @@ function PageUser() {
       id: 0,
       name: '',
       email: '',
-      role_ids: [0],
+      role_ids: [],
     })
   }
 

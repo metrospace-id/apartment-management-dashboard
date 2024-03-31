@@ -83,6 +83,9 @@ function Layout({ children }: LayoutProps) {
         email: data.data.email,
       })
       localStorage.setItem('user', JSON.stringify(data.data))
+      if (data.data.email_verified_at === null) {
+        navigation('/profile')
+      }
     }).catch(() => {
       removeCookie('token')
       navigation('/login')

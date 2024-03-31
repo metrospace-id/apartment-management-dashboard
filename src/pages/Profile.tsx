@@ -18,6 +18,7 @@ function PageProfile() {
     id: 0,
     name: '',
     email: '',
+    email_verified_at: '',
     picture: '',
   })
   const [passwordField, setPasswordField] = useState({
@@ -230,6 +231,7 @@ function PageProfile() {
         message: 'Berhasil menyimpan data.',
       })
       handleModalFormClose()
+      window.location.reload()
     }).catch((e) => {
       setToast({
         open: true,
@@ -264,6 +266,7 @@ function PageProfile() {
         id: localStorageUser.id,
         name: localStorageUser.name,
         email: localStorageUser.email,
+        email_verified_at: localStorageUser.email_verified_at,
         picture: localStorageUser.picture || 'https://via.placeholder.com/300x300',
       }))
       setIsLoadingSubmit(false)
@@ -274,10 +277,17 @@ function PageProfile() {
     <Layout>
       <Breadcrumb title="Profil" />
       <div className="p-4 dark:bg-slate-900 w-[100vw] sm:w-full">
+
+        {!field.email_verified_at && (
+          <div className="p-4 rounded-lg bg-tertiary-50 mb-4">
+            <p className="text-slate-600 text-sm font-semibold">Silakan ubah password terlebih dahulu</p>
+          </div>
+        )}
+
         <div className="w-full p-4 bg-white rounded-lg flex flex-col justify-center items-center">
           <form className="w-full flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold text-slate-600">
+              <p className="text-sm font-semibold text-slate-600 ">
                 Foto Profil
               </p>
 

@@ -120,7 +120,7 @@ const INQUIRY_CATEGORY_DATA = Array.from(Array(100).keys()).map((key) => ({
   name: `Kategori Inquiry ${key + 1}`,
 }))
 
-function PageInquiryTechnician() {
+function PageInquiryWorkOrder() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -947,4 +947,4 @@ function PageInquiryTechnician() {
   )
 }
 
-export default PageInquiryTechnician
+export default PageInquiryWorkOrder

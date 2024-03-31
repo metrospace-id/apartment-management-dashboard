@@ -70,7 +70,7 @@ const ASSET_DATA = Array.from(Array(100).keys()).map((key) => ({
   notes: 'Lorem ipsum',
 }))
 
-function PageMaintenanceList() {
+function PageMaintenanceAsset() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -420,4 +420,4 @@ function PageMaintenanceList() {
   )
 }
 
-export default PageMaintenanceList
+export default PageMaintenanceAsset

@@ -268,10 +268,10 @@ export const MENUS: MenuProp[] = [
     section: 'main',
   },
   {
-    code: 'access-card-vehicle',
+    code: 'access-card-parking',
     parent_code: 'access-card',
     name: 'Akses Parkir',
-    url: '/access-card/park',
+    url: '/access-card/parking',
     section: 'main',
   },
   {
@@ -397,7 +397,7 @@ export const MENUS: MenuProp[] = [
   {
     code: 'maintenance',
     parent_code: '',
-    name: 'Perawatan Aset',
+    name: 'Perawatan',
     url: '/maintenance',
     section: 'main',
     icon: (
@@ -407,14 +407,14 @@ export const MENUS: MenuProp[] = [
     ),
   },
   {
-    code: 'maintenance-list',
+    code: 'maintenance-asset',
     parent_code: 'maintenance',
-    name: 'Perawatan',
-    url: '/maintenance/list',
+    name: 'Perawatan Aset',
+    url: '/maintenance/asset',
     section: 'main',
   },
   {
-    code: 'maintenance-checklist',
+    code: 'checklist-list',
     parent_code: 'maintenance',
     name: 'Checklist',
     url: '/maintenance/checklist',
@@ -440,10 +440,10 @@ export const MENUS: MenuProp[] = [
     section: 'main',
   },
   {
-    code: 'inquiry-technician',
+    code: 'workorder',
     parent_code: 'inquiry',
-    name: 'Teknisi',
-    url: '/inquiry/technician',
+    name: 'Work Order',
+    url: '/inquiry/workorder',
     section: 'main',
   },
   {
@@ -461,7 +461,7 @@ export const MENUS: MenuProp[] = [
 
   // App Menu
   {
-    code: 'calendar',
+    code: 'app-calendar',
     parent_code: '',
     name: 'Kalender',
     url: '/calendar',
@@ -473,7 +473,7 @@ export const MENUS: MenuProp[] = [
     ),
   },
   {
-    code: 'todo',
+    code: 'app-todo',
     parent_code: '',
     name: 'To Do List',
     url: '/todo-list',
@@ -485,7 +485,7 @@ export const MENUS: MenuProp[] = [
     ),
   },
   {
-    code: 'note',
+    code: 'app-note',
     parent_code: '',
     name: 'Catatan',
     url: '/note',

@@ -20,7 +20,7 @@ import PageAssetList from 'pages/Asset/List'
 import PageOwner from 'pages/Owner'
 import PageTenant from 'pages/Tenant'
 import PageAccessCardUnit from 'pages/AccessCard/Unit'
-import PageAccessCardPark from 'pages/AccessCard/Park'
+import PageAccessCardParking from 'pages/AccessCard/Park'
 import PageAccessCardVehicleList from 'pages/AccessCard/VehicleList'
 import PageError404 from 'pages/Error/404'
 import PageWork from 'pages/UnitPermission/Work'
@@ -34,14 +34,14 @@ import PageItemRequest from 'pages/Item/Request'
 import PageVendorList from 'pages/Vendor/List'
 import PageVendorContract from 'pages/Vendor/Contract'
 import PageItemPurchase from 'pages/Item/Purchase'
-import PageMaintenanceList from 'pages/Maintenance/List'
+import PageMaintenanceAsset from 'pages/Maintenance/List'
 import PageMaintenanceChecklist from 'pages/Maintenance/Checklist'
 import PageTodoList from 'pages/TodoList'
 import PageNote from 'pages/Note'
 import PageProfile from 'pages/Profile'
 import PageCategoryInquiry from 'pages/Category/Inquiry'
 import PageInquiryTenant from 'pages/Inquiry/Tenant'
-import PageInquiryTechnician from 'pages/Inquiry/Technician'
+import PageInquiryWorkOrder from 'pages/Inquiry/Technician'
 import PageTemplateForm from 'pages/Template/Form'
 import PageTemplateDocument from 'pages/Template/Document'
 import PageUnitFacility from 'pages/Unit/Facility'
@@ -143,8 +143,8 @@ const router = createBrowserRouter([
     Component: PageAccessCardUnit,
   },
   {
-    path: '/access-card/park',
-    Component: PageAccessCardPark,
+    path: '/access-card/parking',
+    Component: PageAccessCardParking,
   },
   {
     path: '/access-card/vehicle-list',
@@ -195,8 +195,8 @@ const router = createBrowserRouter([
     Component: PageItemPurchase,
   },
   {
-    path: '/maintenance/list',
-    Component: PageMaintenanceList,
+    path: '/maintenance/asset',
+    Component: PageMaintenanceAsset,
   },
   {
     path: '/maintenance/checklist',
@@ -207,8 +207,8 @@ const router = createBrowserRouter([
     Component: PageInquiryTenant,
   },
   {
-    path: '/inquiry/technician',
-    Component: PageInquiryTechnician,
+    path: '/inquiry/workorder',
+    Component: PageInquiryWorkOrder,
   },
   {
     path: '/calendar',

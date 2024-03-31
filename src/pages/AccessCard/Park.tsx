@@ -112,7 +112,7 @@ const VEHICLE_DATA = Array.from(Array(100).keys()).map((key) => ({
   licence_no: `B${key + 1}AN`,
 }))
 
-function PageAccessCardPark() {
+function PageAccessCardParking() {
   const [data, setData] = useState<Record<string, any>[]>([])
   const [page, setPage] = useState(0)
   const [fields, setFields] = useState({
@@ -838,4 +838,4 @@ function PageAccessCardPark() {
   )
 }
 
-export default PageAccessCardPark
+export default PageAccessCardParking

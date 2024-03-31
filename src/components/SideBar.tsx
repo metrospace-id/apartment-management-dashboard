@@ -28,6 +28,7 @@ function SideBar({ open }: SideBarProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState('')
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
 
   const currentParentPath = location.pathname.split('/')[1]
 
@@ -46,6 +47,15 @@ function SideBar({ open }: SideBarProps) {
   useEffect(() => {
     setMenuOpen(currentParentPath)
   }, [currentParentPath])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <aside className={`${open ? 'ml-0' : '-ml-[250px]'} transition-all absolute z-30 w-[250px] p-4 bg-sky-900 border-r border-slate-100 shadow-sm dark:bg-black dark:border-slate-900 md:relative`}>
@@ -70,152 +80,192 @@ function SideBar({ open }: SideBarProps) {
           </li>
 
           <li className="text-slate-300 text-xs my-6">SETTING</li>
-          {menus.filter((menu) => menu.section === 'setting').map((menu) => (
-            <li className="" key={menu.code}>
-              <span
-                className={`flex gap-2 items-center ${menuOpen === menu.code ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
-                role="presentation"
-                onClick={() => handleSelectMenu(menu)}
-              >
-                {menu.icon}
-                <span className="flex-1">{menu.name}</span>
-                {menu.children && (
+          {menus.filter((menu) => menu.section === 'setting').map((menu) => {
+            if (!userPermissions.includes(menu.code)) {
+              return null
+            }
+            return (
+              <li className="" key={menu.code}>
+                <span
+                  className={`flex gap-2 items-center ${menuOpen === menu.code ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
+                  role="presentation"
+                  onClick={() => handleSelectMenu(menu)}
+                >
+                  {menu.icon}
+                  <span className="flex-1">{menu.name}</span>
+                  {menu.children && (
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-4 h-4 ${menuOpen === menu.code ? 'rotate-90' : ''}`}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                   </svg>
-                )}
-              </span>
-              {menu.children && menuOpen === menu.code && (
+                  )}
+                </span>
+                {menu.children && menuOpen === menu.code && (
                 <ul className="ps-2">
-                  {menu.children.map((childMenu) => (
-                    <li className="my-6" key={childMenu.code}>
-                      <span
-                        className={`flex gap-2 items-center ${location.pathname === childMenu.url ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
-                        role="presentation"
-                        onClick={() => handleSelectMenu(childMenu)}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                        </svg>
-                        <span className="flex-1">{childMenu.name}</span>
-                      </span>
-                    </li>
-                  ))}
+                  {menu.children.map((childMenu) => {
+                    if (!userPermissions.includes(childMenu.code)) {
+                      return null
+                    }
+                    return (
+                      <li className="my-6" key={childMenu.code}>
+                        <span
+                          className={`flex gap-2 items-center ${location.pathname === childMenu.url ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
+                          role="presentation"
+                          onClick={() => handleSelectMenu(childMenu)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                          </svg>
+                          <span className="flex-1">{childMenu.name}</span>
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ul>
-              )}
-            </li>
-          ))}
+                )}
+              </li>
+            )
+          })}
 
           <li className="text-slate-300 text-xs my-6">MASTER</li>
-          {menus.filter((menu) => menu.section === 'master').map((menu) => (
-            <li className="" key={menu.code}>
-              <span
-                className={`flex gap-2 items-center ${menuOpen === menu.code ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
-                role="presentation"
-                onClick={() => handleSelectMenu(menu)}
-              >
-                {menu.icon}
-                <span className="flex-1">{menu.name}</span>
-                {menu.children && (
+          {menus.filter((menu) => menu.section === 'master').map((menu) => {
+            if (!userPermissions.includes(menu.code)) {
+              return null
+            }
+            return (
+              <li className="" key={menu.code}>
+                <span
+                  className={`flex gap-2 items-center ${menuOpen === menu.code ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
+                  role="presentation"
+                  onClick={() => handleSelectMenu(menu)}
+                >
+                  {menu.icon}
+                  <span className="flex-1">{menu.name}</span>
+                  {menu.children && (
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-4 h-4 ${menuOpen === menu.code ? 'rotate-90' : ''}`}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                   </svg>
-                )}
-              </span>
-              {menu.children && menuOpen === menu.code && (
+                  )}
+                </span>
+                {menu.children && menuOpen === menu.code && (
                 <ul className="ps-2">
-                  {menu.children.map((childMenu) => (
-                    <li className="my-6" key={childMenu.code}>
-                      <span
-                        className={`flex gap-2 items-center ${location.pathname === childMenu.url ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
-                        role="presentation"
-                        onClick={() => handleSelectMenu(childMenu)}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                        </svg>
-                        <span className="flex-1">{childMenu.name}</span>
-                      </span>
-                    </li>
-                  ))}
+                  {menu.children.map((childMenu) => {
+                    if (!userPermissions.includes(childMenu.code)) {
+                      return null
+                    }
+                    return (
+                      <li className="my-6" key={childMenu.code}>
+                        <span
+                          className={`flex gap-2 items-center ${location.pathname === childMenu.url ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
+                          role="presentation"
+                          onClick={() => handleSelectMenu(childMenu)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                          </svg>
+                          <span className="flex-1">{childMenu.name}</span>
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ul>
-              )}
-            </li>
-          ))}
+                )}
+              </li>
+            )
+          })}
 
           <li className="text-slate-300 text-xs my-6">MENU</li>
-          {menus.filter((menu) => menu.section === 'main').map((menu) => (
-            <li className="" key={menu.code}>
-              <span
-                className={`flex gap-2 items-center ${menuOpen === menu.code ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
-                role="presentation"
-                onClick={() => handleSelectMenu(menu)}
-              >
-                {menu.icon}
-                <span className="flex-1">{menu.name}</span>
-                {menu.children && (
+          {menus.filter((menu) => menu.section === 'main').map((menu) => {
+            if (!userPermissions.includes(menu.code)) {
+              return null
+            }
+            return (
+              <li className="" key={menu.code}>
+                <span
+                  className={`flex gap-2 items-center ${menuOpen === menu.code ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
+                  role="presentation"
+                  onClick={() => handleSelectMenu(menu)}
+                >
+                  {menu.icon}
+                  <span className="flex-1">{menu.name}</span>
+                  {menu.children && (
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-4 h-4 ${menuOpen === menu.code ? 'rotate-90' : ''}`}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                   </svg>
-                )}
-              </span>
-              {menu.children && menuOpen === menu.code && (
+                  )}
+                </span>
+                {menu.children && menuOpen === menu.code && (
                 <ul className="ps-2">
-                  {menu.children.map((childMenu) => (
-                    <li className="my-6" key={childMenu.code}>
-                      <span
-                        className={`flex gap-2 items-center ${location.pathname === childMenu.url ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
-                        role="presentation"
-                        onClick={() => handleSelectMenu(childMenu)}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                        </svg>
-                        <span className="flex-1">{childMenu.name}</span>
-                      </span>
-                    </li>
-                  ))}
+                  {menu.children.map((childMenu) => {
+                    if (!userPermissions.includes(childMenu.code)) {
+                      return null
+                    }
+                    return (
+                      <li className="my-6" key={childMenu.code}>
+                        <span
+                          className={`flex gap-2 items-center ${location.pathname === childMenu.url ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
+                          role="presentation"
+                          onClick={() => handleSelectMenu(childMenu)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                          </svg>
+                          <span className="flex-1">{childMenu.name}</span>
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ul>
-              )}
-            </li>
-          ))}
+                )}
+              </li>
+            )
+          })}
 
           <li className="text-slate-300 text-xs my-6">APLICATION</li>
-          {menus.filter((menu) => menu.section === 'app').map((menu) => (
-            <li className="" key={menu.code}>
-              <span
-                className={`flex gap-2 items-center ${menuOpen === menu.code ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
-                role="presentation"
-                onClick={() => handleSelectMenu(menu)}
-              >
-                {menu.icon}
-                <span className="flex-1">{menu.name}</span>
-                {menu.children && (
+          {menus.filter((menu) => menu.section === 'app').map((menu) => {
+            if (!userPermissions.includes(menu.code)) {
+              return null
+            }
+            return (
+              <li className="" key={menu.code}>
+                <span
+                  className={`flex gap-2 items-center ${menuOpen === menu.code ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
+                  role="presentation"
+                  onClick={() => handleSelectMenu(menu)}
+                >
+                  {menu.icon}
+                  <span className="flex-1">{menu.name}</span>
+                  {menu.children && (
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-4 h-4 ${menuOpen === menu.code ? 'rotate-90' : ''}`}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                   </svg>
-                )}
-              </span>
-              {menu.children && menuOpen === menu.code && (
+                  )}
+                </span>
+                {menu.children && menuOpen === menu.code && (
                 <ul className="ps-2">
-                  {menu.children.map((childMenu) => (
-                    <li className="my-6" key={childMenu.code}>
-                      <span
-                        className={`flex gap-2 items-center ${location.pathname === childMenu.url ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
-                        role="presentation"
-                        onClick={() => handleSelectMenu(childMenu)}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                        </svg>
-                        <span className="flex-1">{childMenu.name}</span>
-                      </span>
-                    </li>
-                  ))}
+                  {menu.children.map((childMenu) => {
+                    if (!userPermissions.includes(childMenu.code)) {
+                      return null
+                    }
+                    return (
+                      <li className="my-6" key={childMenu.code}>
+                        <span
+                          className={`flex gap-2 items-center ${location.pathname === childMenu.url ? 'text-white' : 'text-slate-400'} text-md my-6 cursor-pointer hover:text-white`}
+                          role="presentation"
+                          onClick={() => handleSelectMenu(childMenu)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                          </svg>
+                          <span className="flex-1">{childMenu.name}</span>
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ul>
-              )}
-            </li>
-          ))}
+                )}
+              </li>
+            )
+          })}
         </ul>
       </div>
     </aside>

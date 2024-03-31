@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -14,6 +14,7 @@ import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import Select from 'components/Form/Select'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Unit Cafe'
 
@@ -28,7 +29,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'Nomor',
-    key: 'unit_no',
+    key: 'room_no',
   },
   {
     label: 'Lantai',
@@ -42,23 +43,22 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_code: `A/R${key + 1}/${key + 1}`,
-  tower: 'A',
-  unit_no: `${key + 1}`,
-  floor_no: `${key + 1}`,
-}))
-
 function PageUnitCafe() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
-    unit_no: '',
+    room_no: '',
     floor_no: '',
     tower: '',
     unit_code: '',
+    type: 2,
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -72,6 +72,7 @@ function PageUnitCafe() {
     open: false,
     readOnly: false,
   })
+  const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false)
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
@@ -80,11 +81,6 @@ function PageUnitCafe() {
   const [submitType, setSubmitType] = useState('create')
 
   const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
 
   const handleCloseToast = () => {
     setToast({
@@ -105,11 +101,28 @@ function PageUnitCafe() {
     }))
     setFields({
       id: 0,
-      unit_no: '',
+      room_no: '',
       floor_no: '',
       tower: '',
       unit_code: '',
+      type: 2,
     })
+  }
+
+  const handleModalHistoryOpen = () => {
+    setIsModalHistoryOpen(true)
+    setModalForm((prevState) => ({
+      ...prevState,
+      open: false,
+    }))
+  }
+
+  const handleModalHistoryClose = () => {
+    setIsModalHistoryOpen(false)
+    setModalForm((prevState) => ({
+      ...prevState,
+      open: true,
+    }))
   }
 
   const handleModalConfirmClose = () => {
@@ -141,10 +154,11 @@ function PageUnitCafe() {
     })
     setFields({
       id: fieldData.id,
-      unit_no: fieldData.unit_no,
+      room_no: fieldData.room_no,
       tower: fieldData.tower,
       floor_no: fieldData.floor_no,
       unit_code: fieldData.unit_code,
+      type: 2,
     })
   }
 
@@ -156,10 +170,11 @@ function PageUnitCafe() {
     })
     setFields({
       id: fieldData.id,
-      unit_no: fieldData.unit_no,
+      room_no: fieldData.room_no,
       tower: fieldData.tower,
       floor_no: fieldData.floor_no,
       unit_code: fieldData.unit_code,
+      type: 2,
     })
   }
 
@@ -170,21 +185,10 @@ function PageUnitCafe() {
       open: true,
     })
     setSubmitType('delete')
-    setFields({
+    setFields((prevState) => ({
+      ...prevState,
       id: fieldData.id,
-      unit_no: fieldData.unit_no,
-      tower: fieldData.tower,
-      floor_no: fieldData.floor_no,
-      unit_code: fieldData.unit_code,
-    })
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
+    }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -207,23 +211,85 @@ function PageUnitCafe() {
     setSubmitType(type)
   }
 
+  const handleGetUnitApartment = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/unit',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+        type: 2,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/unit/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/unit/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/unit/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetUnitApartment()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     unit_code: column.unit_code,
     tower: column.tower,
-    unit_no: column.unit_no,
+    room_no: column.room_no,
     floor_no: column.floor_no,
     action: (
       <div className="flex items-center gap-1">
@@ -232,38 +298,36 @@ function PageUnitCafe() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+        {userPermissions.includes('unit-apartment-edit') && (
+          <Popover content="Ubah">
+            <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
+        )}
+        {userPermissions.includes('unit-apartment-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetUnitApartment()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>
@@ -280,11 +344,11 @@ function PageUnitCafe() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -292,11 +356,17 @@ function PageUnitCafe() {
 
       <Modal open={modalForm.open} title={modalForm.title}>
         <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
-          <Input
-            placeholder="Nomor Unit"
-            label="Nomor Unit"
-            name="unit_no"
-            value={fields.unit_no}
+          <Select
+            options={[
+              { label: 'Pilih Tower', value: '', disabled: true },
+              { label: 'A', value: 'A' },
+              { label: 'B', value: 'B' },
+              { label: 'C', value: 'C' },
+            ]}
+            placeholder="Tower"
+            label="Tower"
+            name="tower"
+            value={fields.tower}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -312,17 +382,11 @@ function PageUnitCafe() {
             fullWidth
           />
 
-          <Select
-            options={[
-              { label: 'Pilih Lantai', value: '', disabled: true },
-              { label: 'A', value: 'A' },
-              { label: 'B', value: 'B' },
-              { label: 'C', value: 'C' },
-            ]}
-            placeholder="Tower"
-            label="Tower"
-            name="tower"
-            value={fields.tower}
+          <Input
+            placeholder="Nomor Ruangan"
+            label="Nomor Ruangan"
+            name="room_no"
+            value={fields.room_no}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -330,10 +394,91 @@ function PageUnitCafe() {
 
         </form>
         <div className="flex gap-2 justify-end p-4">
+          {modalForm.readOnly && (
+            <div className="ml-0 mr-auto">
+              <Button onClick={handleModalHistoryOpen} variant="secondary">Histori</Button>
+            </div>
+          )}
           <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
           {!modalForm.readOnly && (
             <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
           )}
+        </div>
+      </Modal>
+
+      <Modal open={isModalHistoryOpen} title={`Histori ${PAGE_NAME}`}>
+        <div className="p-6 flex gap-2 flex-col sm:flex-row overflow-scroll">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-slate-600 dark:text-white">Histori Pemilik</p>
+            <div className="border border-slate-200 dark:border-slate-700 rounded-md w-max max-h-[50vh] overflow-scroll mt-2">
+              <table className="border-collapse min-w-full w-max relative">
+                <thead>
+                  <tr className="text-center font-semibold text-slate-600 dark:text-white">
+                    <td className="p-2">Nama</td>
+                    <td className="p-2">No. Telepon</td>
+                    <td className="p-2">Tgl Masuk</td>
+                    <td className="p-2">Tgl Keluar</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* {OWNER_DATA.map((owner) => (
+                    <tr key={owner.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
+                      <td className="p-2">
+                        {owner.name}
+                      </td>
+                      <td className="p-2">
+                        {owner.phone}
+                      </td>
+                      <td className="p-2">
+                        {dayjs(owner.start_date).format('YYYY-MM-DD')}
+                      </td>
+                      <td className="p-2">
+                        {owner.end_date ? dayjs(owner.end_date).format('YYYY-MM-DD') : '-'}
+                      </td>
+                    </tr>
+                  ))} */}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex-1 ">
+            <p className="text-sm font-semibold text-slate-600 dark:text-white">Histori Penyewa</p>
+            <div className="border border-slate-200 dark:border-slate-700 rounded-md w-max max-h-[50vh] overflow-scroll mt-2">
+              <table className="border-collapse min-w-full w-max relative">
+                <thead>
+                  <tr className="text-center font-semibold text-slate-600 dark:text-white">
+                    <td className="p-2">Nama</td>
+                    <td className="p-2">No. Telepon</td>
+                    <td className="p-2">Tgl Masuk</td>
+                    <td className="p-2">Tgl Keluar</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* {TENANT_DATA.map((owner) => (
+                    <tr key={owner.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
+                      <td className="p-2">
+                        {owner.name}
+                      </td>
+                      <td className="p-2">
+                        {owner.phone}
+                      </td>
+                      <td className="p-2">
+                        {dayjs(owner.start_date).format('YYYY-MM-DD')}
+                      </td>
+                      <td className="p-2">
+                        {owner.end_date ? dayjs(owner.end_date).format('YYYY-MM-DD') : '-'}
+                      </td>
+                    </tr>
+                  ))} */}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+        <div className="flex gap-2 justify-start p-4">
+          <Button onClick={handleModalHistoryClose} variant="secondary">Kembali</Button>
         </div>
       </Modal>
 

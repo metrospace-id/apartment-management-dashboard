@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -14,7 +14,7 @@ import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import Select from 'components/Form/Select'
-import dayjs from 'dayjs'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Unit Apartment'
 
@@ -29,7 +29,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'Nomor',
-    key: 'unit_no',
+    key: 'room_no',
   },
   {
     label: 'Lantai',
@@ -43,39 +43,22 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_code: `A/${key + 1}/${key + 1}`,
-  tower: 'A',
-  unit_no: `${key + 1}`,
-  floor_no: `${key + 1}`,
-}))
-
-const OWNER_DATA = Array.from(Array(25).keys()).map((key) => ({
-  id: key + 1,
-  name: `Nama Pemilik ${key + 1}`,
-  phone: `08123${key + 1}`,
-  start_date: '2023-12-31 00:00:00',
-  end_date: key % 2 ? '2024-12-31 00:00:00' : null,
-}))
-
-const TENANT_DATA = Array.from(Array(25).keys()).map((key) => ({
-  id: key + 1,
-  name: `Nama Penyewa ${key + 1}`,
-  phone: `08123${key + 1}`,
-  start_date: '2023-12-31 00:00:00',
-  end_date: key % 2 ? '2024-12-31 00:00:00' : null,
-}))
-
 function PageUnitApartment() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
-    unit_no: '',
+    room_no: '',
     floor_no: '',
     tower: '',
     unit_code: '',
+    type: 1,
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -99,11 +82,6 @@ function PageUnitApartment() {
 
   const debounceSearch = useDebounce(search, 500)
 
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
-
   const handleCloseToast = () => {
     setToast({
       open: false,
@@ -123,10 +101,11 @@ function PageUnitApartment() {
     }))
     setFields({
       id: 0,
-      unit_no: '',
+      room_no: '',
       floor_no: '',
       tower: '',
       unit_code: '',
+      type: 1,
     })
   }
 
@@ -175,10 +154,11 @@ function PageUnitApartment() {
     })
     setFields({
       id: fieldData.id,
-      unit_no: fieldData.unit_no,
+      room_no: fieldData.room_no,
       tower: fieldData.tower,
       floor_no: fieldData.floor_no,
       unit_code: fieldData.unit_code,
+      type: 1,
     })
   }
 
@@ -190,10 +170,11 @@ function PageUnitApartment() {
     })
     setFields({
       id: fieldData.id,
-      unit_no: fieldData.unit_no,
+      room_no: fieldData.room_no,
       tower: fieldData.tower,
       floor_no: fieldData.floor_no,
       unit_code: fieldData.unit_code,
+      type: 1,
     })
   }
 
@@ -204,21 +185,10 @@ function PageUnitApartment() {
       open: true,
     })
     setSubmitType('delete')
-    setFields({
+    setFields((prevState) => ({
+      ...prevState,
       id: fieldData.id,
-      unit_no: fieldData.unit_no,
-      tower: fieldData.tower,
-      floor_no: fieldData.floor_no,
-      unit_code: fieldData.unit_code,
-    })
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
+    }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -241,23 +211,85 @@ function PageUnitApartment() {
     setSubmitType(type)
   }
 
+  const handleGetUnitApartment = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/unit',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+        type: 1,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/unit/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/unit/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/unit/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetUnitApartment()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     unit_code: column.unit_code,
     tower: column.tower,
-    unit_no: column.unit_no,
+    room_no: column.room_no,
     floor_no: column.floor_no,
     action: (
       <div className="flex items-center gap-1">
@@ -266,38 +298,36 @@ function PageUnitApartment() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+        {userPermissions.includes('unit-apartment-edit') && (
+          <Popover content="Ubah">
+            <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
+        )}
+        {userPermissions.includes('unit-apartment-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetUnitApartment()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>
@@ -314,11 +344,11 @@ function PageUnitApartment() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -326,11 +356,17 @@ function PageUnitApartment() {
 
       <Modal open={modalForm.open} title={modalForm.title}>
         <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
-          <Input
-            placeholder="Nomor Unit"
-            label="Nomor Unit"
-            name="unit_no"
-            value={fields.unit_no}
+          <Select
+            options={[
+              { label: 'Pilih Tower', value: '', disabled: true },
+              { label: 'A', value: 'A' },
+              { label: 'B', value: 'B' },
+              { label: 'C', value: 'C' },
+            ]}
+            placeholder="Tower"
+            label="Tower"
+            name="tower"
+            value={fields.tower}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -346,17 +382,11 @@ function PageUnitApartment() {
             fullWidth
           />
 
-          <Select
-            options={[
-              { label: 'Pilih Lantai', value: '', disabled: true },
-              { label: 'A', value: 'A' },
-              { label: 'B', value: 'B' },
-              { label: 'C', value: 'C' },
-            ]}
-            placeholder="Tower"
-            label="Tower"
-            name="tower"
-            value={fields.tower}
+          <Input
+            placeholder="Nomor Ruangan"
+            label="Nomor Ruangan"
+            name="room_no"
+            value={fields.room_no}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -391,7 +421,7 @@ function PageUnitApartment() {
                   </tr>
                 </thead>
                 <tbody>
-                  {OWNER_DATA.map((owner) => (
+                  {/* {OWNER_DATA.map((owner) => (
                     <tr key={owner.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
                       <td className="p-2">
                         {owner.name}
@@ -406,7 +436,7 @@ function PageUnitApartment() {
                         {owner.end_date ? dayjs(owner.end_date).format('YYYY-MM-DD') : '-'}
                       </td>
                     </tr>
-                  ))}
+                  ))} */}
                 </tbody>
               </table>
             </div>
@@ -425,7 +455,7 @@ function PageUnitApartment() {
                   </tr>
                 </thead>
                 <tbody>
-                  {TENANT_DATA.map((owner) => (
+                  {/* {TENANT_DATA.map((owner) => (
                     <tr key={owner.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
                       <td className="p-2">
                         {owner.name}
@@ -440,7 +470,7 @@ function PageUnitApartment() {
                         {owner.end_date ? dayjs(owner.end_date).format('YYYY-MM-DD') : '-'}
                       </td>
                     </tr>
-                  ))}
+                  ))} */}
                 </tbody>
               </table>
             </div>

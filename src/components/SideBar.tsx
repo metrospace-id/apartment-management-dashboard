@@ -54,7 +54,7 @@ function SideBar({ open }: SideBarProps) {
       if (localStorageUser.permissions) {
         setUserPermissions(localStorageUser.permissions)
       }
-    }, 500)
+    }, 100)
   }, [])
 
   return (

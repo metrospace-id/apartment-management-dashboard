@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -14,7 +14,7 @@ import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { FORM_ASSET_TYPE, EXAMPLE_COMPONENTS } from 'constants/asset'
+import { FORM_ASSET_TYPE } from 'constants/asset'
 import FormBuilder from 'components/Form/FormBuilder'
 import api from 'utils/api'
 

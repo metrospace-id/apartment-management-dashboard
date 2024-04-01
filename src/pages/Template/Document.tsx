@@ -19,6 +19,7 @@ import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Template Dokumen'
 
@@ -35,60 +36,15 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = [
-  {
-    id: 1,
-    name: 'Surat Izin Kerja',
-    header: 'Apartmen MetroSpace',
-    subheader: 'Jl. Indonesia Raya no. 1',
-    content: faker.lorem.paragraphs(),
-    picture: 'https://via.placeholder.com/300x300',
-  },
-  {
-    id: 2,
-    name: 'Surat Izin Renovasi',
-    header: 'Apartmen MetroSpace',
-    subheader: 'Jl. Indonesia Raya no. 1',
-    content: faker.lorem.paragraphs(),
-    picture: '',
-  },
-  {
-    id: 3,
-    name: 'Surat Izin Barang Masuk',
-    header: 'Apartmen MetroSpace',
-    subheader: 'Jl. Indonesia Raya no. 1',
-    content: faker.lorem.paragraphs(),
-    picture: '',
-  },
-  {
-    id: 4,
-    name: 'Surat Izin Barang Keluar',
-    header: 'Apartmen MetroSpace',
-    subheader: 'Jl. Indonesia Raya no. 1',
-    content: faker.lorem.paragraphs(),
-    picture: '',
-  },
-  {
-    id: 5,
-    name: 'Surat Permintaan Barang',
-    header: 'Apartmen MetroSpace',
-    subheader: 'Jl. Indonesia Raya no. 1',
-    content: faker.lorem.paragraphs(),
-    picture: '',
-  },
-  {
-    id: 6,
-    name: 'Surat Pembelian Barang',
-    header: 'Apartmen MetroSpace',
-    subheader: 'Jl. Indonesia Raya no. 1',
-    content: faker.lorem.paragraphs(),
-    picture: '',
-  },
-]
-
 function PageTemplateDocument() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     name: '',
@@ -117,13 +73,8 @@ function PageTemplateDocument() {
   const [submitType, setSubmitType] = useState('create')
   const [isModalDeletePictureOpen, setIsModalDeletePictureOpen] = useState(false)
 
-  const debounceSearch = useDebounce(search, 500)
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
   const pictureRef = useRef<any>(null)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
 
   const handleCloseToast = () => {
     setToast({
@@ -199,14 +150,6 @@ function PageTemplateDocument() {
     }))
   }
 
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
-  }
-
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
@@ -227,16 +170,59 @@ function PageTemplateDocument() {
     setSubmitType(type)
   }
 
+  const handleGetDocuments = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/document',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/document/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    const apiSubmit = apiSubmitUpdate
+
+    apiSubmit().then(() => {
+      handleGetDocuments()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleModalDeletePictureOpen = () => {
@@ -289,7 +275,7 @@ function PageTemplateDocument() {
     }
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     name: column.name,
     action: (
@@ -299,33 +285,29 @@ function PageTemplateDocument() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('template-document-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetDocuments()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>
@@ -341,11 +323,11 @@ function PageTemplateDocument() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>

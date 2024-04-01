@@ -31,6 +31,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 ]
 
 function PageCategoryWork() {
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
@@ -247,16 +248,21 @@ function PageCategoryWork() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+        {userPermissions.includes('category-item-edit') && (
+          <Popover content="Ubah">
+            <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
+        )}
+
+        {userPermissions.includes('category-item-delete') && (
+          <Popover content="Hapus">
+            <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
+              <IconTrash className="w-4 h-4" />
+            </Button>
+          </Popover>
+        )}
       </div>
     ),
   }))
@@ -264,6 +270,15 @@ function PageCategoryWork() {
   useEffect(() => {
     handleGetItemCategories()
   }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>

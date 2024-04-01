@@ -54,6 +54,7 @@ export default function Autocomplete({
     },
     content: {
       left: autocompleteFieldRef.current?.getBoundingClientRect()?.left,
+      width: autocompleteFieldRef.current?.clientWidth,
     },
   }
 
@@ -115,8 +116,8 @@ export default function Autocomplete({
           shouldCloseOnEsc
           shouldCloseOnOverlayClick
           onRequestClose={() => setIsSuggestionBoxShow(false)}
-          className="mt-1 max-h-[calc(36px*5)] overflow-scroll border border-slate-200 focus-visible:outline-none
-          shadow-sm p-2 rounded-xl absolute z-50 bg-white dark:bg-slate-900 dark:border-slate-600"
+          className={`mt-1 max-h-[calc(36px*5)] overflow-scroll border border-slate-200 focus-visible:outline-none
+          shadow-sm p-2 rounded-xl absolute z-50 bg-white dark:bg-slate-900 dark:border-slate-600`}
         >
           <ol>
             {filteredItems.length ? filteredItems.map((menu) => (

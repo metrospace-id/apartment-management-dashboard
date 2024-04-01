@@ -19,6 +19,7 @@ import Autocomplete from 'components/Form/Autocomplete'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import TextArea from 'components/Form/TextArea'
 import { svgToImage } from 'utils/file'
+import api from 'utils/api'
 
 const PAGE_NAME = 'List Aset'
 
@@ -33,15 +34,15 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'Golongan',
-    key: 'group_name',
+    key: 'asset_group_name',
   },
   {
     label: 'Lokasi',
-    key: 'location_name',
+    key: 'asset_location_name',
   },
   {
     label: 'Jenis',
-    key: 'type_name',
+    key: 'asset_type_name',
   },
   {
     label: 'Aksi',
@@ -51,50 +52,29 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  code: '01.01.01.2024.1',
-  name: `Aset ${key + 1}`,
-  group_id: key + 1,
-  group_name: `Golongan ${key + 1}`,
-  location_id: key + 1,
-  location_name: `Lokasi ${key + 1}`,
-  type_id: key + 1,
-  type_name: `Jenis ${key + 1}`,
-  year: '2024',
-  brand: 'Samsung',
-  notes: 'Lorem ipsum',
-}))
-
-const GROUP_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Golongan Aset ${key + 1}`,
-}))
-
-const LOCATION_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Lokasi Aset ${key + 1}`,
-}))
-
-const TYPE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Jenis Aset ${key + 1}`,
-}))
-
 function PageAssetList() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     code: '',
     name: '',
-    group_id: 0,
-    location_id: 0,
-    type_id: 0,
+    asset_group_id: 0,
+    asset_location_id: 0,
+    asset_type_id: 0,
     year: '',
     brand: '',
     notes: '',
   })
+  const [dataAssetGroup, setDataAssetGroup] = useState<{ id: number, name: string }[]>([])
+  const [dataAssetLocation, setDataAssetLocation] = useState<{ id: number, name: string }[]>([])
+  const [dataAssetType, setDataAssetType] = useState<{ id: number, name: string }[]>([])
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
@@ -115,12 +95,7 @@ function PageAssetList() {
   const [submitType, setSubmitType] = useState('create')
   const qrCodeRef = useRef<any>(null)
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleCloseToast = () => {
     setToast({
@@ -143,9 +118,9 @@ function PageAssetList() {
       id: 0,
       code: '',
       name: '',
-      group_id: 0,
-      location_id: 0,
-      type_id: 0,
+      asset_group_id: 0,
+      asset_location_id: 0,
+      asset_type_id: 0,
       year: '',
       brand: '',
       notes: '',
@@ -183,9 +158,9 @@ function PageAssetList() {
       id: fieldData.id,
       code: fieldData.code,
       name: fieldData.name,
-      group_id: fieldData.group_id,
-      location_id: fieldData.location_id,
-      type_id: fieldData.type_id,
+      asset_group_id: fieldData.asset_group_id,
+      asset_location_id: fieldData.asset_location_id,
+      asset_type_id: fieldData.asset_type_id,
       year: fieldData.year,
       brand: fieldData.brand,
       notes: fieldData.notes,
@@ -202,9 +177,9 @@ function PageAssetList() {
       id: fieldData.id,
       code: fieldData.code,
       name: fieldData.name,
-      group_id: fieldData.group_id,
-      location_id: fieldData.location_id,
-      type_id: fieldData.type_id,
+      asset_group_id: fieldData.asset_group_id,
+      asset_location_id: fieldData.asset_location_id,
+      asset_type_id: fieldData.asset_type_id,
       year: fieldData.year,
       brand: fieldData.brand,
       notes: fieldData.notes,
@@ -218,25 +193,10 @@ function PageAssetList() {
       open: true,
     })
     setSubmitType('delete')
-    setFields({
+    setFields((prevState) => ({
+      ...prevState,
       id: fieldData.id,
-      code: fieldData.code,
-      name: fieldData.name,
-      group_id: fieldData.group_id,
-      location_id: fieldData.location_id,
-      type_id: fieldData.type_id,
-      year: fieldData.year,
-      brand: fieldData.brand,
-      notes: fieldData.notes,
-    })
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
+    }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -265,29 +225,165 @@ function PageAssetList() {
     setSubmitType(type)
   }
 
+  const handleGetAssets = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/asset',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllAssetLocations = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/asset-location',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataAssetLocation(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllAssetGroups = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/asset-group',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataAssetGroup(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllAssetTypes = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/asset-type',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataAssetType(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/asset/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/asset/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/asset/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetAssets()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleSaveQR = () => {
     svgToImage(qrCodeRef.current, fields.name)
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     code: column.code,
     name: column.name,
-    group_name: column.group_name,
-    location_name: column.location_name,
-    type_name: column.type_name,
+    asset_group_name: column.asset_group_name,
+    asset_location_name: column.asset_location_name,
+    asset_type_name: column.asset_type_name,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -295,38 +391,40 @@ function PageAssetList() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('asset-list-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('asset-list-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetAssets()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllAssetGroups()
+    handleGetAllAssetLocations()
+    handleGetAllAssetTypes()
+  }, [])
 
   return (
     <Layout>
@@ -343,11 +441,11 @@ function PageAssetList() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -368,16 +466,16 @@ function PageAssetList() {
           <Autocomplete
             placeholder="Golongan Aset"
             label="Golongan Aset"
-            name="group_id"
-            items={GROUP_DATA.map((itemData) => ({
+            name="asset_group_id"
+            items={dataAssetGroup.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: GROUP_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: GROUP_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
+              label: dataAssetGroup.find((itemData) => itemData.id === fields.asset_group_id)?.name || '',
+              value: dataAssetGroup.find((itemData) => itemData.id === fields.asset_group_id)?.id || '',
             }}
-            onChange={(value) => handleChangeField('group_id', value.value)}
+            onChange={(value) => handleChangeField('asset_group_id', value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -385,16 +483,16 @@ function PageAssetList() {
           <Autocomplete
             placeholder="Lokasi Aset"
             label="Lokasi Aset"
-            name="location_id"
-            items={LOCATION_DATA.map((itemData) => ({
+            name="asset_location_id"
+            items={dataAssetLocation.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: LOCATION_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: LOCATION_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
+              label: dataAssetLocation.find((itemData) => itemData.id === fields.asset_location_id)?.name || '',
+              value: dataAssetLocation.find((itemData) => itemData.id === fields.asset_location_id)?.id || '',
             }}
-            onChange={(value) => handleChangeField('location_id', value.value)}
+            onChange={(value) => handleChangeField('asset_location_id', value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -402,16 +500,16 @@ function PageAssetList() {
           <Autocomplete
             placeholder="Jenis Aset"
             label="Jenis Aset"
-            name="type_id"
-            items={TYPE_DATA.map((itemData) => ({
+            name="asset_type_id"
+            items={dataAssetType.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: TYPE_DATA.find((itemData) => itemData.id === fields.group_id)?.name || '',
-              value: TYPE_DATA.find((itemData) => itemData.id === fields.group_id)?.id || '',
+              label: dataAssetType.find((itemData) => itemData.id === fields.asset_type_id)?.name || '',
+              value: dataAssetType.find((itemData) => itemData.id === fields.asset_type_id)?.id || '',
             }}
-            onChange={(value) => handleChangeField('type_id', value.value)}
+            onChange={(value) => handleChangeField('asset_type_id', value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -449,7 +547,7 @@ function PageAssetList() {
             />
           </div>
 
-          {fields.id && (
+          {!!fields.id && (
             <Input
               placeholder="Code Aset"
               label="Code Aset"
@@ -460,19 +558,21 @@ function PageAssetList() {
             />
           )}
 
-          <div className="">
-            <p className="text-sm text-slate-600 font-medium mb-2">QR Code</p>
+          {!!fields.id && (
+            <div className="">
+              <p className="text-sm text-slate-600 font-medium mb-2">QR Code</p>
 
-            <div className="w-full sm:w-[50%]">
-              <QRCode
-                ref={qrCodeRef}
-                style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-                size={150}
-                value={fields.code}
-                viewBox="0 0 150 150"
-              />
+              <div className="w-full sm:w-[50%]">
+                <QRCode
+                  ref={qrCodeRef}
+                  style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+                  size={150}
+                  value={fields.code}
+                  viewBox="0 0 150 150"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
         </form>
         <div className="flex gap-2 justify-end p-4">

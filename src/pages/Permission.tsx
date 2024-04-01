@@ -40,6 +40,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 ]
 
 function PagePermission() {
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
@@ -236,11 +237,13 @@ function PagePermission() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+        {userPermissions.includes('permission-edit') && (
+          <Popover content="Ubah">
+            <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
+        )}
       </div>
     ),
   }))
@@ -248,6 +251,15 @@ function PagePermission() {
   useEffect(() => {
     handleGetPermissions()
   }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>

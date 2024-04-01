@@ -48,6 +48,7 @@ interface FieldProps {
 }
 
 function PageUser() {
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
@@ -357,16 +358,20 @@ function PageUser() {
         </Popover>
         {column.id !== 1 && (
           <>
-            <Popover content="Ubah">
-              <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-                <IconEdit className="w-4 h-4" />
-              </Button>
-            </Popover>
-            <Popover content="Hapus">
-              <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-                <IconTrash className="w-4 h-4" />
-              </Button>
-            </Popover>
+            {userPermissions.includes('user-edit') && (
+              <Popover content="Ubah">
+                <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+                  <IconEdit className="w-4 h-4" />
+                </Button>
+              </Popover>
+            )}
+            {userPermissions.includes('user-delete') && (
+              <Popover content="Hapus">
+                <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
+                  <IconTrash className="w-4 h-4" />
+                </Button>
+              </Popover>
+            )}
           </>
         )}
       </div>
@@ -379,6 +384,15 @@ function PageUser() {
 
   useEffect(() => {
     handleGetAllRoles()
+  }, [])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
   }, [])
 
   return (

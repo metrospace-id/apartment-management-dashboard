@@ -1,5 +1,5 @@
 import {
-  useState, useMemo, useEffect, useRef,
+  useState, useEffect, useRef,
 } from 'react'
 import QRCode from 'react-qr-code'
 

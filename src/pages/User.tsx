@@ -407,7 +407,7 @@ function PageUser() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="flex flex-col gap-4 p-6">
+        <form autoComplete="off" className="flex flex-col gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
           <Input
             placeholder="email@domain.com"
             label="Email"

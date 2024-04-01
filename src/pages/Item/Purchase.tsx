@@ -510,7 +510,7 @@ function PageItemPurchase() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
+        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
           <Select
             placeholder="Jenis Permintaan"
             label="Jenis Permintaan"

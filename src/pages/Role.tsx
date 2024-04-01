@@ -428,7 +428,7 @@ function PageRole() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title} size="lg">
-        <form autoComplete="off" className="flex flex-col gap-4 p-6">
+        <form autoComplete="off" className="flex flex-col gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
           <Input
             placeholder="Nama Role"
             label="Nama Role"

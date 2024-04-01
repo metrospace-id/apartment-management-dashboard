@@ -330,8 +330,8 @@ function PageAreaList() {
       <Modal open={modalForm.open} title={modalForm.title}>
         <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
           <Input
-            placeholder="Nama Aset"
-            label="Nama Aset"
+            placeholder="Nama Area"
+            label="Nama Area"
             name="name"
             value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}

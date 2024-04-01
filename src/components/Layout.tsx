@@ -88,7 +88,7 @@ function Layout({ children }: LayoutProps) {
       }
     }).catch(() => {
       removeCookie('token')
-      navigation('/login')
+      window.location.href = '/login'
     })
   }
 

@@ -16,6 +16,7 @@ import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { FORM_ASSET_TYPE, EXAMPLE_COMPONENTS } from 'constants/asset'
 import FormBuilder from 'components/Form/FormBuilder'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Template Form'
 
@@ -36,16 +37,15 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Form ${key + 1}`,
-  type: key % 2,
-  form: JSON.stringify(EXAMPLE_COMPONENTS),
-}))
-
 function PageTemplateForm() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     name: '',
@@ -71,12 +71,7 @@ function PageTemplateForm() {
   })
   const [submitType, setSubmitType] = useState('create')
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleCloseToast = () => {
     setToast({
@@ -159,20 +154,10 @@ function PageTemplateForm() {
       open: true,
     })
     setSubmitType('delete')
-    setFields({
+    setFields((prevState) => ({
+      ...prevState,
       id: fieldData.id,
-      name: fieldData.name,
-      type: fieldData.type,
-      form: fieldData.form,
-    })
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
+    }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -195,22 +180,83 @@ function PageTemplateForm() {
     setSubmitType(type)
   }
 
+  const handleGetForms = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/form',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/form/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/form/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/form/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetForms()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     name: column.name,
-    type: FORM_ASSET_TYPE[column.type].label,
+    type: FORM_ASSET_TYPE.find((type) => type.id === +column.type)?.label || '-',
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -218,38 +264,36 @@ function PageTemplateForm() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('template-form-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('template-form-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetForms()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>
@@ -266,11 +310,11 @@ function PageTemplateForm() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -297,7 +341,7 @@ function PageTemplateForm() {
             readOnly={modalForm.readOnly}
             fullWidth
             options={[{
-              label: 'Pilih Jenis Permintaan',
+              label: 'Pilih Jenis Form',
               value: '',
               disabled: true,
             },

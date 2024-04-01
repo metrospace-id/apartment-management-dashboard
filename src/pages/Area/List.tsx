@@ -209,21 +209,21 @@ function PageAreaList() {
   }
 
   const apiSubmitCreate = () => api({
-    url: '/v1/asset/create',
+    url: '/v1/area/create',
     withAuth: true,
     method: 'POST',
     data: fields,
   })
 
   const apiSubmitUpdate = () => api({
-    url: `/v1/asset/${fields.id}`,
+    url: `/v1/area/${fields.id}`,
     withAuth: true,
     method: 'PUT',
     data: fields,
   })
 
   const apiSubmitDelete = () => api({
-    url: `/v1/asset/${fields.id}`,
+    url: `/v1/area/${fields.id}`,
     withAuth: true,
     method: 'DELETE',
   })

@@ -328,6 +328,9 @@ function PageTenant() {
         page,
         limit: PAGE_SIZE,
         search,
+        relation: filter.relation,
+        start_date: filter.start_date,
+        end_date: filter.end_date,
       },
     })
       .then(({ data: responseData }) => {
@@ -414,11 +417,8 @@ function PageTenant() {
   }
 
   const handleSubmitFilter = () => {
-    setIsLoadingData(true)
     handleModalFilterClose()
-    setTimeout(() => {
-      setIsLoadingData(false)
-    }, 500)
+    handleGetTenants()
   }
 
   const handleClickCancelDeleteDocument = () => {

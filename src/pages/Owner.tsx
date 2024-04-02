@@ -1,5 +1,5 @@
 import {
-  useState, useMemo, useEffect, useRef, useCallback,
+  useState, useEffect, useRef, useCallback,
 } from 'react'
 import Webcam from 'react-webcam'
 
@@ -111,7 +111,7 @@ function PageOwner() {
   const cameraRef = useRef<any>(null)
   const uploadRef = useRef<any>(null)
 
-  const debounceSearch = useDebounce(search, 500)
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
@@ -459,8 +459,6 @@ function PageOwner() {
       </div>
     ),
   }))
-
-  console.log(fields)
 
   useEffect(() => {
     handleGetOwners()

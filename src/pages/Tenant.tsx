@@ -1,8 +1,7 @@
 import {
-  useState, useMemo, useEffect, useRef, useCallback,
+  useState, useEffect, useRef, useCallback,
 } from 'react'
 import Webcam from 'react-webcam'
-import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -24,8 +23,11 @@ import { toBase64 } from 'utils/file'
 import dayjs from 'dayjs'
 import Select from 'components/Form/Select'
 import DatePicker from 'components/Form/DatePicker'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Penghuni'
+
+const RELATION = ['Penyewa', 'Saudara', 'Orang Tua', 'Anak', 'Kerabat']
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -64,38 +66,36 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_id: key + 1,
-  unit_code: `A/01/${key + 1}`,
-  name: faker.person.fullName(),
-  phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  owner_name: faker.person.fullName(),
-  relation: 'Penyewa',
-  address: faker.location.streetAddress(),
-  identity_no: faker.number.int(),
-  kk_no: faker.number.int(),
-  start_date: '2023-12-31 00:00:00',
-  end_date: key % 2 ? '2024-12-31 00:00:00' : null,
-  picture: 'https://via.placeholder.com/300x300',
-  document: [{
-    id: 1,
-    picture: 'https://via.placeholder.com/300x300',
-  }],
-}))
-
-const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_code: `A/${key + 1}/${key + 1}`,
-  tower: 'A',
-  unit_no: `${key + 1}`,
-  floor_no: `${key + 1}`,
-}))
+interface FieldProps {
+  id?: number
+  unit_id: number
+  name: string
+  address: string
+  phone: string
+  email: string
+  identity_no: string
+  kk_no: string
+  start_date: string
+  end_date: string
+  picture: string
+  relation: string
+  documents: {
+    id: number | string
+    url: string
+  }[]
+}
 
 function PageTenant() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataUnits, setDataUnits] = useState<{ id: number, unit_code: string }[]>([])
+  const [page, setPage] = useState(1)
+  const [fields, setFields] = useState<FieldProps>({
     id: 0,
     unit_id: 0,
     name: '',
@@ -108,7 +108,7 @@ function PageTenant() {
     relation: '',
     start_date: '',
     end_date: '',
-    documents: [{}],
+    documents: [],
   })
   const [filter, setFilter] = useState({
     relation: '',
@@ -140,18 +140,13 @@ function PageTenant() {
   const cameraRef = useRef<any>(null)
   const uploadRef = useRef<any>(null)
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
@@ -182,7 +177,7 @@ function PageTenant() {
       identity_no: '',
       kk_no: '',
       picture: '',
-      documents: [''],
+      documents: [],
       relation: '',
       start_date: '',
       end_date: '',
@@ -219,51 +214,57 @@ function PageTenant() {
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      name: fieldData.name,
-      address: fieldData.address,
-      phone: fieldData.phone,
-      email: fieldData.email,
-      identity_no: fieldData.identity_no,
-      kk_no: fieldData.kk_no,
-      picture: fieldData.picture,
-      documents: fieldData.document,
-      relation: fieldData.relation,
-      start_date: fieldData.start_date,
-      end_date: fieldData.end_date,
-    }))
+    api({
+      url: `/v1/tenant/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      name: fieldData.name,
-      address: fieldData.address,
-      phone: fieldData.phone,
-      email: fieldData.email,
-      identity_no: fieldData.identity_no,
-      kk_no: fieldData.kk_no,
-      picture: fieldData.picture,
-      documents: fieldData.document,
-      relation: fieldData.relation,
-      start_date: fieldData.start_date,
-      end_date: fieldData.end_date,
-    }))
+    api({
+      url: `/v1/tenant/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -276,32 +277,12 @@ function PageTenant() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      name: fieldData.name,
-      address: fieldData.address,
-      phone: fieldData.phone,
-      email: fieldData.email,
-      identity_no: fieldData.identity_no,
-      kk_no: fieldData.kk_no,
-      picture: fieldData.picture,
-      documents: fieldData.document,
-      relation: fieldData.relation,
-      start_date: fieldData.start_date,
-      end_date: fieldData.end_date,
     }))
   }
 
   const handleModalDeleteDocumentOpen = (fieldData: any) => {
     setIsModalDeleteDocumentOpen(true)
     setSelectedDocument(fieldData)
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -337,16 +318,99 @@ function PageTenant() {
     setSubmitType(type)
   }
 
+  const handleGetTenants = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/tenant/unit',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllUnits = () => {
+    api({
+      url: '/v1/unit',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataUnits(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/tenant/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/tenant/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/tenant/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetTenants()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleSubmitFilter = () => {
@@ -405,8 +469,8 @@ function PageTenant() {
           setFields((prevState) => ({
             ...prevState,
             documents: [...prevState.documents, {
-              id: prevState.documents.length,
-              picture: result,
+              id: `temp-${prevState.documents.length}`,
+              url: result as string,
             }],
           }))
         })
@@ -420,55 +484,56 @@ function PageTenant() {
     }
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     unit_code: column.unit_code,
-    name: column.name,
-    phone: column.phone,
-    owner_name: column.owner_name,
-    relation: column.relation,
-    start_date: dayjs(column.start_date).format('YYYY-MM-DD'),
+    name: column.id ? column.name : column.owner_name,
+    phone: column.id ? column.phone : column.owner_phone,
+    owner_name: column.id ? column.owner_name : '-',
+    relation: column.relation || 'Pemilik',
+    start_date: column.start_date ? dayjs(column.start_date).format('YYYY-MM-DD') : '-',
     end_date: column.end_date ? dayjs(column.end_date).format('YYYY-MM-DD') : '-',
     action: (
       <div className="flex items-center gap-1">
+        {column.id && (
         <Popover content="Detail">
           <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('tenant-edit') && column.id && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('tenant-delete') && column.id && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetTenants()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllUnits()
+  }, [])
 
   return (
     <Layout>
@@ -489,11 +554,11 @@ function PageTenant() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -505,13 +570,13 @@ function PageTenant() {
             placeholder="Nomor Unit"
             label="Nomor Unit"
             name="unit_id"
-            items={UNIT_DATA.map((itemData) => ({
+            items={dataUnits.map((itemData) => ({
               label: itemData.unit_code,
               value: itemData.id,
             }))}
             value={{
-              label: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
-              value: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.id || '',
+              label: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
+              value: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.id || '',
             }}
             onChange={(value) => handleChangeField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
@@ -529,8 +594,8 @@ function PageTenant() {
           />
 
           <DatePicker
-            label="Tanggal Mulai"
-            placeholder="Tanggal Mulai"
+            label="Tanggal Masuk"
+            placeholder="Tanggal Masuk"
             name="start_date"
             value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
             onChange={(selectedDate) => handleChangeField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
@@ -539,8 +604,8 @@ function PageTenant() {
           />
 
           <DatePicker
-            label="Tanggal Selesai"
-            placeholder="Tanggal Selesai"
+            label="Tanggal Keluar"
+            placeholder="Tanggal Keluar"
             name="end_date"
             value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
             onChange={(selectedDate) => handleChangeField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
@@ -553,7 +618,7 @@ function PageTenant() {
             label="Hubungan Dengan Pemilik"
             name="relation"
             value={fields.relation}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
             options={[{
@@ -561,20 +626,16 @@ function PageTenant() {
               value: '',
               disabled: true,
             },
-            {
-              label: 'Penyewa',
-              value: 'Penyewa',
-            },
-            {
-              label: 'Keluarga',
-              value: 'Keluarga',
-            }]}
+            ...RELATION.map((item) => ({
+              label: item,
+              value: item,
+            }))]}
           />
 
           <TextArea
             placeholder="Alamat"
             label="Alamat"
-            name="alamat"
+            name="address"
             value={fields.address}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
@@ -597,8 +658,8 @@ function PageTenant() {
             label="Email"
             name="email"
             type="email"
-            value={fields.phone}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            value={fields.email}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -680,25 +741,20 @@ function PageTenant() {
               </div>
             )}
             <div className="flex gap-2">
-              {fields.documents.length ? fields.documents.map((document: any) => {
-                if (document.id) {
-                  return (
-                    <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
-                      {!modalForm.readOnly && (
-                        <span
-                          className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
-                          onClick={() => handleModalDeleteDocumentOpen(document)}
-                          role="presentation"
-                        >
-                          <IconTrash className="text-white" width={16} height={16} />
-                        </span>
-                      )}
-                      <img src={document.picture.includes('pdf') ? '/images/pdf.png' : document.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
-                    </div>
-                  )
-                }
-                return null
-              }) : (
+              {fields.documents.length ? fields.documents.map((document: any) => (
+                <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
+                  {!modalForm.readOnly && (
+                  <span
+                    className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
+                    onClick={() => handleModalDeleteDocumentOpen(document)}
+                    role="presentation"
+                  >
+                    <IconTrash className="text-white" width={16} height={16} />
+                  </span>
+                  )}
+                  <img src={document.url.includes('pdf') ? '/images/pdf.png' : document.url} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                </div>
+              )) : (
                 <p className="text-sm text-slate-600">Belum ada dokumen</p>
               )}
             </div>
@@ -717,8 +773,8 @@ function PageTenant() {
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
 
           <DatePicker
-            label="Tanggal Mulai"
-            placeholder="Tanggal Mulai"
+            label="Tanggal Masuk"
+            placeholder="Tanggal Masuk"
             name="start_date"
             value={filter.start_date ? dayjs(filter.start_date).toDate() : undefined}
             onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
@@ -727,8 +783,8 @@ function PageTenant() {
           />
 
           <DatePicker
-            label="Tanggal Selesai"
-            placeholder="Tanggal Selesai"
+            label="Tanggal Keluar"
+            placeholder="Tanggal Keluar"
             name="end_date"
             value={filter.end_date ? dayjs(filter.end_date).toDate() : undefined}
             onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
@@ -749,14 +805,10 @@ function PageTenant() {
               value: '',
               disabled: true,
             },
-            {
-              label: 'Penyewa',
-              value: 'Penyewa',
-            },
-            {
-              label: 'Keluarga',
-              value: 'Keluarga',
-            }]}
+            ...RELATION.map((item) => ({
+              label: item,
+              value: item,
+            }))]}
           />
         </form>
         <div className="flex gap-2 justify-end p-4">

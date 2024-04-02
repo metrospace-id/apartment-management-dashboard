@@ -2,7 +2,6 @@ import {
   useState, useMemo, useEffect, useRef, useCallback,
 } from 'react'
 import Webcam from 'react-webcam'
-import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -21,6 +20,7 @@ import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { exportToExcel } from 'utils/export'
 import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Pemilik'
 
@@ -49,35 +49,33 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_id: key + 1,
-  unit_code: `A/01/${key + 1}`,
-  name: faker.person.fullName(),
-  address: faker.location.streetAddress(),
-  phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  email: faker.internet.email(),
-  identity_no: faker.number.int(),
-  kk_no: faker.number.int(),
-  picture: 'https://via.placeholder.com/300x300',
-  document: [{
-    id: 1,
-    picture: 'https://via.placeholder.com/300x300',
-  }],
-}))
-
-const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_code: `A/${key + 1}/${key + 1}`,
-  tower: 'A',
-  unit_no: `${key + 1}`,
-  floor_no: `${key + 1}`,
-}))
+interface FieldProps {
+  id?: number
+  unit_id: number
+  name: string
+  address: string
+  phone: string
+  email: string
+  identity_no: string
+  kk_no: string
+  picture: string
+  documents: {
+    id: number | string
+    url: string
+  }[]
+}
 
 function PageOwner() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataUnits, setDataUnits] = useState<{ id: number, unit_code: string }[]>([])
+  const [page, setPage] = useState(1)
+  const [fields, setFields] = useState<FieldProps>({
     id: 0,
     unit_id: 0,
     name: '',
@@ -87,7 +85,7 @@ function PageOwner() {
     identity_no: '',
     kk_no: '',
     picture: '',
-    documents: [{}],
+    documents: [],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -115,16 +113,11 @@ function PageOwner() {
 
   const debounceSearch = useDebounce(search, 500)
 
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
-
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
@@ -155,7 +148,7 @@ function PageOwner() {
       identity_no: '',
       kk_no: '',
       picture: '',
-      documents: [''],
+      documents: [],
     })
   }
 
@@ -181,45 +174,57 @@ function PageOwner() {
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      name: fieldData.name,
-      address: fieldData.address,
-      phone: fieldData.phone,
-      email: fieldData.email,
-      identity_no: fieldData.identity_no,
-      kk_no: fieldData.kk_no,
-      picture: fieldData.picture,
-      documents: fieldData.document,
-    }))
+    api({
+      url: `/v1/owner/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      name: fieldData.name,
-      address: fieldData.address,
-      phone: fieldData.phone,
-      email: fieldData.email,
-      identity_no: fieldData.identity_no,
-      kk_no: fieldData.kk_no,
-      picture: fieldData.picture,
-      documents: fieldData.document,
-    }))
+    api({
+      url: `/v1/owner/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -232,29 +237,12 @@ function PageOwner() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      name: fieldData.name,
-      address: fieldData.address,
-      phone: fieldData.phone,
-      email: fieldData.email,
-      identity_no: fieldData.identity_no,
-      kk_no: fieldData.kk_no,
-      picture: fieldData.picture,
-      documents: fieldData.document,
     }))
   }
 
   const handleModalDeleteDocumentOpen = (fieldData: any) => {
     setIsModalDeleteDocumentOpen(true)
     setSelectedDocument(fieldData)
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -283,16 +271,99 @@ function PageOwner() {
     setSubmitType(type)
   }
 
+  const handleGetOwners = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/owner',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllUnits = () => {
+    api({
+      url: '/v1/unit',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataUnits(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/owner/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/owner/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/owner/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetOwners()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleClickCancelDeleteDocument = () => {
@@ -343,8 +414,8 @@ function PageOwner() {
           setFields((prevState) => ({
             ...prevState,
             documents: [...prevState.documents, {
-              id: prevState.documents.length,
-              picture: result,
+              id: `temp-${prevState.documents.length}`,
+              url: result as string,
             }],
           }))
         })
@@ -358,7 +429,7 @@ function PageOwner() {
     }
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     unit_code: column.unit_code,
     name: column.name,
@@ -371,39 +442,40 @@ function PageOwner() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('owner-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('owner-edit') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
+  console.log(fields)
+
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetOwners()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllUnits()
+  }, [])
 
   return (
     <Layout>
@@ -423,11 +495,11 @@ function PageOwner() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -439,13 +511,13 @@ function PageOwner() {
             placeholder="Nomor Unit"
             label="Nomor Unit"
             name="unit_id"
-            items={UNIT_DATA.map((itemData) => ({
+            items={dataUnits.map((itemData) => ({
               label: itemData.unit_code,
               value: itemData.id,
             }))}
             value={{
-              label: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
-              value: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.id || '',
+              label: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
+              value: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.id || '',
             }}
             onChange={(value) => handleChangeField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
@@ -466,7 +538,7 @@ function PageOwner() {
             <TextArea
               placeholder="Alamat"
               label="Alamat"
-              name="alamat"
+              name="address"
               value={fields.address}
               onChange={(e) => handleChangeField(e.target.name, e.target.value)}
               readOnly={modalForm.readOnly}
@@ -490,8 +562,8 @@ function PageOwner() {
             label="Email"
             name="email"
             type="email"
-            value={fields.phone}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            value={fields.email}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -573,25 +645,20 @@ function PageOwner() {
               </div>
             )}
             <div className="flex gap-2">
-              {fields.documents.length ? fields.documents.map((document: any) => {
-                if (document.id) {
-                  return (
-                    <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
-                      {!modalForm.readOnly && (
-                        <span
-                          className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
-                          onClick={() => handleModalDeleteDocumentOpen(document)}
-                          role="presentation"
-                        >
-                          <IconTrash className="text-white" width={16} height={16} />
-                        </span>
-                      )}
-                      <img src={document.picture.includes('pdf') ? '/images/pdf.png' : document.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
-                    </div>
-                  )
-                }
-                return null
-              }) : (
+              {fields.documents.length ? fields.documents.map((document: any) => (
+                <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
+                  {!modalForm.readOnly && (
+                  <span
+                    className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
+                    onClick={() => handleModalDeleteDocumentOpen(document)}
+                    role="presentation"
+                  >
+                    <IconTrash className="text-white" width={16} height={16} />
+                  </span>
+                  )}
+                  <img src={document.url.includes('pdf') ? '/images/pdf.png' : document.url} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                </div>
+              )) : (
                 <p className="text-sm text-slate-600">Belum ada dokumen</p>
               )}
             </div>

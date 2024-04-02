@@ -30,6 +30,7 @@ function Layout({ children }: LayoutProps) {
   const [profile, setProfile] = useState({
     name: '',
     email: '',
+    picture: '',
   })
   const [theme, setTheme] = useState(localStorage.theme)
 
@@ -81,6 +82,7 @@ function Layout({ children }: LayoutProps) {
       setProfile({
         name: data.data.name,
         email: data.data.email,
+        picture: data.data.picture,
       })
       localStorage.setItem('user', JSON.stringify(data.data))
       if (data.data.email_verified_at === null) {
@@ -214,7 +216,7 @@ function Layout({ children }: LayoutProps) {
                 role="presentation"
                 onClick={handleClickProfile}
               >
-                <img src="https://via.placeholder.com/200x200" className="rounded-full w-8 h-8" alt="avatar" />
+                <img src={profile.picture || 'https://via.placeholder.com/300x300'} className="rounded-full w-8 h-8" alt="avatar" />
               </div>
 
               <div className="absolute shadow-lg z-20 top-12 right-[-16px] w-screen overflow-hidden sm:right-0 sm:w-[200px] sm:rounded-md">

@@ -26,7 +26,7 @@ import DatePicker from 'components/Form/DatePicker'
 import api from 'utils/api'
 import Badge from 'components/Badge'
 
-const PAGE_NAME = 'Penghuni'
+const PAGE_NAME = 'Penghuni Apartemen'
 
 const RELATION = ['Penyewa', 'Saudara', 'Orang Tua', 'Anak', 'Kerabat']
 
@@ -86,7 +86,7 @@ interface FieldProps {
   }[]
 }
 
-function PageTenant() {
+function PageTenantApartment() {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
@@ -503,14 +503,14 @@ function PageTenant() {
           </Button>
         </Popover>
         )}
-        {userPermissions.includes('tenant-edit') && column.id && (
+        {userPermissions.includes('tenant-unit-edit') && column.id && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
         )}
-        {userPermissions.includes('tenant-delete') && column.id && (
+        {userPermissions.includes('tenant-unit-delete') && column.id && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
@@ -848,4 +848,4 @@ function PageTenant() {
   )
 }
 
-export default PageTenant
+export default PageTenantApartment

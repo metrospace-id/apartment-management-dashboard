@@ -231,7 +231,10 @@ function PageProfile() {
         message: 'Berhasil menyimpan data.',
       })
       handleModalFormClose()
-      window.location.reload()
+      setTimeout(() => {
+        window.location.reload()
+        setIsLoadingSubmit(false)
+      }, 1000)
     }).catch((e) => {
       setToast({
         open: true,
@@ -242,8 +245,6 @@ function PageProfile() {
         password: e?.response?.data?.message || 'Terjadi kesalahan',
       }))
       handleModalConfirmClose()
-    }).finally(() => {
-      setIsLoadingSubmit(false)
     })
   }
 

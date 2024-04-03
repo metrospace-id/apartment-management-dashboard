@@ -249,6 +249,20 @@ export const MENUS: MenuProp[] = [
     ),
   },
   {
+    code: 'tenant-unit',
+    parent_code: 'tenant',
+    name: 'Penghuni Apartmen',
+    url: '/tenant-apartment',
+    section: 'main',
+  },
+  {
+    code: 'tenant-cafe',
+    parent_code: 'tenant',
+    name: 'Penghuni Cafe',
+    url: '/tenant-cafe',
+    section: 'main',
+  },
+  {
     code: 'access-card',
     parent_code: '',
     name: 'Kartu Akses',

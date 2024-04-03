@@ -18,7 +18,7 @@ import PageAssetLocation from 'pages/Asset/Location'
 import PageAssetType from 'pages/Asset/Type'
 import PageAssetList from 'pages/Asset/List'
 import PageOwner from 'pages/Owner'
-import PageTenant from 'pages/Tenant'
+import PageTenantApartment from 'pages/Tenant/Apartment'
 import PageAccessCardUnit from 'pages/AccessCard/Unit'
 import PageAccessCardParking from 'pages/AccessCard/Park'
 import PageAccessCardVehicleList from 'pages/AccessCard/VehicleList'
@@ -48,6 +48,7 @@ import PageUnitFacility from 'pages/Unit/Facility'
 import PageAreaList from 'pages/Area/List'
 import PageNews from 'pages/News'
 import PageUnitPermissionFacility from 'pages/UnitPermission/Facility'
+import PageTenantCafe from 'pages/Tenant/Cafe'
 
 const router = createBrowserRouter([
   {
@@ -135,8 +136,12 @@ const router = createBrowserRouter([
     Component: PageOwner,
   },
   {
-    path: '/tenant',
-    Component: PageTenant,
+    path: '/tenant-apartment',
+    Component: PageTenantApartment,
+  },
+  {
+    path: '/tenant-cafe',
+    Component: PageTenantCafe,
   },
   {
     path: '/access-card/unit',

@@ -610,8 +610,8 @@ function PageVendorList() {
             <TextArea
               placeholder="Keterangan"
               label="Keterangan"
-              name="alamat"
-              value={fields.address}
+              name="notes"
+              value={fields.notes}
               onChange={(e) => handleChangeField(e.target.name, e.target.value)}
               readOnly={modalForm.readOnly}
               fullWidth

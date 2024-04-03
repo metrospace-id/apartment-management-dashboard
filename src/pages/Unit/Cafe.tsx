@@ -427,8 +427,8 @@ function PageUnitCafe() {
               <Input
                 placeholder="Panjang"
                 name="length"
-                value={fields.length}
-                onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+                value={(+fields.length).toLocaleString()}
+                onChange={(e) => handleChangeNumericField(e.target.name, e.target.value.replace(/\W+/g, ''))}
                 readOnly={modalForm.readOnly}
                 fullWidth
                 rightIcon={<span className="text-slate-600 dark:text-white">M</span>}
@@ -437,8 +437,8 @@ function PageUnitCafe() {
               <Input
                 placeholder="Lebar"
                 name="width"
-                value={fields.width}
-                onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+                value={(+fields.width).toLocaleString()}
+                onChange={(e) => handleChangeNumericField(e.target.name, e.target.value.replace(/\W+/g, ''))}
                 readOnly={modalForm.readOnly}
                 fullWidth
                 rightIcon={<span className="text-slate-600 dark:text-white">M</span>}
@@ -450,8 +450,8 @@ function PageUnitCafe() {
             placeholder="Daya Listrik"
             label="Daya Listrik"
             name="watt"
-            value={fields.watt}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            value={(+fields.watt).toLocaleString()}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value.replace(/\W+/g, ''))}
             readOnly={modalForm.readOnly}
             fullWidth
             rightIcon={<span className="text-slate-600 dark:text-white">Watt</span>}

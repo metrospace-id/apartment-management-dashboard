@@ -1,35 +1,35 @@
-import {
-  useState, useMemo, useEffect, useRef,
-} from 'react'
 import dayjs from 'dayjs'
-import { fakerID_ID as faker } from '@faker-js/faker'
+import {
+  useEffect, useRef,
+  useState,
+} from 'react'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { exportToExcel } from 'utils/export'
-import TextArea from 'components/Form/TextArea'
-import { toBase64 } from 'utils/file'
-import { VENDOR_SECTORS } from 'constants/vendor'
 import DatePicker from 'components/Form/DatePicker'
+import Input from 'components/Form/Input'
+import TextArea from 'components/Form/TextArea'
+import { Edit as IconEdit, FileText as IconFile, TrashAlt as IconTrash } from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
+import Toast from 'components/Toast'
+import { MODAL_CONFIRM_TYPE, PAGE_SIZE } from 'constants/form'
+import useDebounce from 'hooks/useDebounce'
+import api from 'utils/api'
+import { exportToExcel } from 'utils/export'
+import { toBase64 } from 'utils/file'
 
 const PAGE_NAME = 'Kontrak Kerjasama'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'No. Kontrak',
-    key: 'contract_no',
+    key: 'contract_number',
   },
   {
     label: 'Nama Perusahaan',
@@ -51,57 +51,39 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  contract_no: `12345${key + 1}`,
-  vendor_id: key + 1,
-  vendor_name: faker.company.name(),
-  vendor_address: faker.location.streetAddress(),
-  vendor_phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  vendor_fax: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  vendor_email: faker.internet.email(),
-  notes: 'Keterangan Lorem Ipsum',
-  start_date: '2023-12-31 00:00:00',
-  end_date: '2024-12-31 00:00:00',
-  document: [{
-    id: 1,
-    picture: 'https://via.placeholder.com/300x300',
-  }],
-}))
-
-const VENDOR_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: faker.company.name(),
-  contact_name: faker.person.fullName(),
-  address: faker.location.streetAddress(),
-  phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  fax: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  email: faker.internet.email(),
-  sector: VENDOR_SECTORS[0],
-  notes: 'Keterangan Lorem Ipsum',
-  picture: 'https://via.placeholder.com/300x300',
-  document: [{
-    id: 1,
-    picture: 'https://via.placeholder.com/300x300',
-  }],
-}))
+interface FieldProps {
+  id?: number
+  contract_number: string
+  vendor_id: number
+  start_date: string
+  vendor_address?: string
+  vendor_email?: string
+  vendor_name?: string
+  vendor_phone?: string
+  end_date: string
+  documents: {
+    id: number | string
+    url: string
+  }[]
+}
 
 function PageVendorContract() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
+  const [dataVendors, setDataVendors] = useState<{ id: number, name: string, phone: string, email: string, address: string }[]>([])
+  const [fields, setFields] = useState<FieldProps>({
     id: 0,
-    contract_no: '',
+    contract_number: '',
     vendor_id: 0,
-    vendor_name: '',
-    vendor_address: '',
-    vendor_phone: '',
-    vendor_fax: '',
-    vendor_email: '',
-    notes: '',
     start_date: dayjs().format('YYYY-MM-DD'),
     end_date: dayjs().format('YYYY-MM-DD'),
-    documents: [{}],
+    documents: [],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -125,18 +107,13 @@ function PageVendorContract() {
   const [selectedDocument, setSelectedDocument] = useState({ id: 0, picture: '' })
   const uploadRef = useRef<any>(null)
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
@@ -159,17 +136,11 @@ function PageVendorContract() {
     }))
     setFields({
       id: 0,
-      contract_no: '',
+      contract_number: '',
       vendor_id: 0,
-      vendor_name: '',
-      vendor_address: '',
-      vendor_phone: '',
-      vendor_fax: '',
-      vendor_email: '',
-      notes: '',
       start_date: dayjs().format('YYYY-MM-DD'),
       end_date: dayjs().format('YYYY-MM-DD'),
-      documents: [{}],
+      documents: [],
     })
   }
 
@@ -195,49 +166,57 @@ function PageVendorContract() {
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      contract_no: fieldData.contract_no,
-      vendor_id: fieldData.vendor_id,
-      vendor_name: fieldData.vendor_name,
-      vendor_address: fieldData.vendor_address,
-      vendor_phone: fieldData.vendor_phone,
-      vendor_fax: fieldData.vendor_fax,
-      vendor_email: fieldData.vendor_email,
-      notes: fieldData.notes,
-      start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
-      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
-      documents: fieldData.document,
-    }))
+    api({
+      url: `/v1/vendor-contract/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
-      title: `Ubah ${PAGE_NAME}`,
+      title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      contract_no: fieldData.contract_no,
-      vendor_id: fieldData.vendor_id,
-      vendor_name: fieldData.vendor_name,
-      vendor_address: fieldData.vendor_address,
-      vendor_phone: fieldData.vendor_phone,
-      vendor_fax: fieldData.vendor_fax,
-      vendor_email: fieldData.vendor_email,
-      notes: fieldData.notes,
-      start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
-      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
-      documents: fieldData.document,
-    }))
+    api({
+      url: `/v1/vendor-contract/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -250,31 +229,12 @@ function PageVendorContract() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      contract_no: fieldData.contract_no,
-      vendor_id: fieldData.vendor_id,
-      vendor_name: fieldData.vendor_name,
-      vendor_address: fieldData.vendor_address,
-      vendor_phone: fieldData.vendor_phone,
-      vendor_fax: fieldData.vendor_fax,
-      vendor_email: fieldData.vendor_email,
-      notes: fieldData.notes,
-      start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
-      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
-      documents: fieldData.document,
     }))
   }
 
   const handleModalDeleteDocumentOpen = (fieldData: any) => {
     setIsModalDeleteDocumentOpen(true)
     setSelectedDocument(fieldData)
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -285,13 +245,12 @@ function PageVendorContract() {
   }
 
   const handleChangeVendorField = (vendorId: number) => {
-    const selectedVendor = VENDOR_DATA.find(({ id }) => id === vendorId)
+    const selectedVendor = dataVendors.find(({ id }) => id === vendorId)
     setFields((prevState) => ({
       ...prevState,
       vendor_id: selectedVendor?.id || 0,
       vendor_name: selectedVendor?.name || '',
       vendor_address: selectedVendor?.address || '',
-      vendor_fax: selectedVendor?.fax || '',
       vendor_email: selectedVendor?.email || '',
       vendor_phone: selectedVendor?.phone || '',
     }))
@@ -310,16 +269,99 @@ function PageVendorContract() {
     setSubmitType(type)
   }
 
+  const handleGetVendorContracts = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/vendor-contract',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllVendors = () => {
+    api({
+      url: '/v1/vendor',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataVendors(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/vendor-contract/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/vendor-contract/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/vendor-contract/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetVendorContracts()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleClickCancelDeleteDocument = () => {
@@ -360,8 +402,8 @@ function PageVendorContract() {
           setFields((prevState) => ({
             ...prevState,
             documents: [...prevState.documents, {
-              id: prevState.documents.length,
-              picture: result,
+              id: `temp-${prevState.documents.length}`,
+              url: result as string,
             }],
           }))
         })
@@ -375,9 +417,9 @@ function PageVendorContract() {
     }
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
-    contract_no: column.contract_no,
+    contract_number: column.contract_number,
     vendor_name: column.vendor_name,
     start_date: dayjs(column.start_date).format('YYYY-MM-DD'),
     end_date: dayjs(column.end_date).format('YYYY-MM-DD'),
@@ -388,39 +430,38 @@ function PageVendorContract() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('vendor-contract-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('vendor-contract-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.vendor_name.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.contract_no.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetVendorContracts()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllVendors()
+  }, [])
 
   return (
     <Layout>
@@ -440,11 +481,11 @@ function PageVendorContract() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -455,8 +496,8 @@ function PageVendorContract() {
           <Input
             placeholder="No. Kontrak"
             label="No. Kontrak"
-            name="contract_no"
-            value={fields.contract_no}
+            name="contract_number"
+            value={fields.contract_number}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -466,13 +507,13 @@ function PageVendorContract() {
             placeholder="Nama Vendor"
             label="Nama Vendor"
             name="vendor_id"
-            items={VENDOR_DATA.map((itemData) => ({
+            items={dataVendors.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: VENDOR_DATA.find((itemData) => itemData.id === fields.vendor_id)?.name || '',
-              value: VENDOR_DATA.find((itemData) => itemData.id === fields.vendor_id)?.id || '',
+              label: dataVendors.find((itemData) => itemData.id === fields.vendor_id)?.name || '',
+              value: dataVendors.find((itemData) => itemData.id === fields.vendor_id)?.id || '',
             }}
             onChange={(value) => handleChangeVendorField(+value.value)}
             readOnly={modalForm.readOnly}
@@ -485,7 +526,7 @@ function PageVendorContract() {
               label="Alamat"
               name="alamat"
               value={fields.vendor_address}
-              readOnly={modalForm.readOnly}
+              disabled
               fullWidth
             />
           </div>
@@ -494,7 +535,7 @@ function PageVendorContract() {
             placeholder="No. Telepon Vendor"
             label="No. Telepon Vendor"
             value={fields.vendor_phone}
-            readOnly
+            disabled
             fullWidth
           />
 
@@ -502,7 +543,7 @@ function PageVendorContract() {
             placeholder="Email Vendor"
             label="Email Vendor"
             value={fields.vendor_email}
-            readOnly
+            disabled
             fullWidth
           />
 
@@ -539,25 +580,20 @@ function PageVendorContract() {
               </div>
             )}
             <div className="flex gap-2">
-              {fields.documents.length ? fields.documents.map((document: any) => {
-                if (document.id) {
-                  return (
-                    <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
-                      {!modalForm.readOnly && (
-                        <span
-                          className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
-                          onClick={() => handleModalDeleteDocumentOpen(document)}
-                          role="presentation"
-                        >
-                          <IconTrash className="text-white" width={16} height={16} />
-                        </span>
-                      )}
-                      <img src={document.picture.includes('pdf') ? '/images/pdf.png' : document.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
-                    </div>
-                  )
-                }
-                return null
-              }) : (
+              {fields.documents.length ? fields.documents.map((document: any) => (
+                <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
+                  {!modalForm.readOnly && (
+                  <span
+                    className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
+                    onClick={() => handleModalDeleteDocumentOpen(document)}
+                    role="presentation"
+                  >
+                    <IconTrash className="text-white" width={16} height={16} />
+                  </span>
+                  )}
+                  <img src={document.url.includes('pdf') ? '/images/pdf.png' : document.url} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                </div>
+              )) : (
                 <p className="text-sm text-slate-600">Belum ada dokumen</p>
               )}
             </div>

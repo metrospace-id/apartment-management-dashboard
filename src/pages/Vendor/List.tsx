@@ -1,26 +1,27 @@
 import {
-  useState, useMemo, useEffect, useRef,
+  useEffect, useRef,
+  useState,
 } from 'react'
-import { fakerID_ID as faker } from '@faker-js/faker'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { exportToExcel } from 'utils/export'
+import Input from 'components/Form/Input'
 import TextArea from 'components/Form/TextArea'
-import { toBase64 } from 'utils/file'
+import { Edit as IconEdit, FileText as IconFile, TrashAlt as IconTrash } from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
+import Toast from 'components/Toast'
+import { MODAL_CONFIRM_TYPE, PAGE_SIZE } from 'constants/form'
 import { VENDOR_SECTORS } from 'constants/vendor'
+import useDebounce from 'hooks/useDebounce'
+import api from 'utils/api'
+import { exportToExcel } from 'utils/export'
+import { toBase64 } from 'utils/file'
 
 const PAGE_NAME = 'Vendor List'
 
@@ -31,7 +32,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'Nara Hubung',
-    key: 'contact_name',
+    key: 'contact_person',
   },
   {
     label: 'No. Telepon',
@@ -49,30 +50,36 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: faker.company.name(),
-  contact_name: faker.person.fullName(),
-  address: faker.location.streetAddress(),
-  phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  fax: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  email: faker.internet.email(),
-  sector: VENDOR_SECTORS[0],
-  notes: 'Keterangan Lorem Ipsum',
-  picture: 'https://via.placeholder.com/300x300',
-  document: [{
-    id: 1,
-    picture: 'https://via.placeholder.com/300x300',
-  }],
-}))
+interface FieldProps {
+  id?: number
+  name: string
+  contact_person: string
+  address: string
+  phone: string
+  fax: string
+  email: string
+  sector: string
+  notes: string
+  picture: string
+  documents: {
+    id: number | string
+    url: string
+  }[]
+}
 
 function PageVendorList() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
+  const [fields, setFields] = useState<FieldProps>({
     id: 0,
     name: '',
-    contact_name: '',
+    contact_person: '',
     address: '',
     phone: '',
     fax: '',
@@ -80,7 +87,7 @@ function PageVendorList() {
     sector: '',
     notes: '',
     picture: '',
-    documents: [{}],
+    documents: [],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -106,18 +113,13 @@ function PageVendorList() {
   const pictureRef = useRef<any>(null)
   const uploadRef = useRef<any>(null)
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
@@ -141,7 +143,7 @@ function PageVendorList() {
     setFields({
       id: 0,
       name: '',
-      contact_name: '',
+      contact_person: '',
       address: '',
       phone: '',
       fax: '',
@@ -149,7 +151,7 @@ function PageVendorList() {
       sector: '',
       notes: '',
       picture: '',
-      documents: [{}],
+      documents: [],
     })
   }
 
@@ -175,47 +177,57 @@ function PageVendorList() {
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      name: fieldData.name,
-      contact_name: fieldData.contact_name,
-      address: fieldData.address,
-      phone: fieldData.phone,
-      fax: fieldData.fax,
-      email: fieldData.email,
-      sector: fieldData.sector,
-      notes: fieldData.notes,
-      picture: fieldData.picture,
-      documents: fieldData.document,
-    }))
+    api({
+      url: `/v1/vendor/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
-      title: `Ubah ${PAGE_NAME}`,
+      title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      name: fieldData.name,
-      contact_name: fieldData.contact_name,
-      address: fieldData.address,
-      phone: fieldData.phone,
-      fax: fieldData.fax,
-      email: fieldData.email,
-      sector: fieldData.sector,
-      notes: fieldData.notes,
-      picture: fieldData.picture,
-      documents: fieldData.document,
-    }))
+    api({
+      url: `/v1/vendor/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -228,16 +240,6 @@ function PageVendorList() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      name: fieldData.name,
-      contact_name: fieldData.contact_name,
-      address: fieldData.address,
-      phone: fieldData.phone,
-      fax: fieldData.fax,
-      email: fieldData.email,
-      sector: fieldData.sector,
-      notes: fieldData.notes,
-      picture: fieldData.picture,
-      documents: fieldData.document,
     }))
   }
 
@@ -248,14 +250,6 @@ function PageVendorList() {
 
   const handleModalDeletePictureOpen = () => {
     setIsModalDeletePictureOpen(true)
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -284,16 +278,77 @@ function PageVendorList() {
     setSubmitType(type)
   }
 
+  const handleGetVendors = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/vendor',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/vendor/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/vendor/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/vendor/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetVendors()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleClickCancelDeleteDocument = () => {
@@ -380,8 +435,8 @@ function PageVendorList() {
           setFields((prevState) => ({
             ...prevState,
             documents: [...prevState.documents, {
-              id: prevState.documents.length,
-              picture: result,
+              id: `temp-${prevState.documents.length}`,
+              url: result as string,
             }],
           }))
         })
@@ -395,10 +450,10 @@ function PageVendorList() {
     }
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     name: column.name,
-    contact_name: column.contact_name,
+    contact_person: column.contact_person,
     phone: column.phone,
     email: column.email,
     action: (
@@ -408,39 +463,36 @@ function PageVendorList() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('vendor-list-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('vendor-list-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.contact_name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetVendors()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>
@@ -450,7 +502,7 @@ function PageVendorList() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama, no. unit" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <div className="sm:ml-auto flex gap-1">
               <Button onClick={handleExportExcel} variant="warning">Export</Button>
@@ -460,11 +512,11 @@ function PageVendorList() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -502,8 +554,8 @@ function PageVendorList() {
           <Input
             placeholder="Nama Narahubung"
             label="Nama Narahubung"
-            name="contact_name"
-            value={fields.contact_name}
+            name="contact_person"
+            value={fields.contact_person}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -513,7 +565,7 @@ function PageVendorList() {
             <TextArea
               placeholder="Alamat"
               label="Alamat"
-              name="alamat"
+              name="address"
               value={fields.address}
               onChange={(e) => handleChangeField(e.target.name, e.target.value)}
               readOnly={modalForm.readOnly}
@@ -548,7 +600,7 @@ function PageVendorList() {
             label="Email"
             name="email"
             type="email"
-            value={fields.phone}
+            value={fields.email}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -613,25 +665,20 @@ function PageVendorList() {
               </div>
             )}
             <div className="flex gap-2">
-              {fields.documents.length ? fields.documents.map((document: any) => {
-                if (document.id) {
-                  return (
-                    <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
-                      {!modalForm.readOnly && (
-                        <span
-                          className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
-                          onClick={() => handleModalDeleteDocumentOpen(document)}
-                          role="presentation"
-                        >
-                          <IconTrash className="text-white" width={16} height={16} />
-                        </span>
-                      )}
-                      <img src={document.picture.includes('pdf') ? '/images/pdf.png' : document.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
-                    </div>
-                  )
-                }
-                return null
-              }) : (
+              {fields.documents.length ? fields.documents.map((document: any) => (
+                <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
+                  {!modalForm.readOnly && (
+                  <span
+                    className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
+                    onClick={() => handleModalDeleteDocumentOpen(document)}
+                    role="presentation"
+                  >
+                    <IconTrash className="text-white" width={16} height={16} />
+                  </span>
+                  )}
+                  <img src={document.url.includes('pdf') ? '/images/pdf.png' : document.url} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                </div>
+              )) : (
                 <p className="text-sm text-slate-600">Belum ada dokumen</p>
               )}
             </div>

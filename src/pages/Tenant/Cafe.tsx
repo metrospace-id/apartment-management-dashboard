@@ -1,34 +1,33 @@
+import dayjs from 'dayjs'
 import {
-  useState, useEffect, useRef, useCallback,
+  useCallback,
+  useEffect, useRef,
+  useState,
 } from 'react'
 import Webcam from 'react-webcam'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { exportToExcel } from 'utils/export'
+import Input from 'components/Form/Input'
 import TextArea from 'components/Form/TextArea'
+import { Edit as IconEdit, FileText as IconFile, TrashAlt as IconTrash } from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
+import Toast from 'components/Toast'
+import { MODAL_CONFIRM_TYPE, PAGE_SIZE } from 'constants/form'
+import useDebounce from 'hooks/useDebounce'
+import { exportToExcel } from 'utils/export'
 import { toBase64 } from 'utils/file'
-import dayjs from 'dayjs'
-import Select from 'components/Form/Select'
+import Badge from 'components/Badge'
 import DatePicker from 'components/Form/DatePicker'
 import api from 'utils/api'
-import Badge from 'components/Badge'
 
 const PAGE_NAME = 'Penghuni Cafe'
-
-const RELATION = ['Penyewa', 'Saudara', 'Orang Tua', 'Anak', 'Kerabat']
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -632,15 +631,17 @@ function PageTenantCafe() {
             leftIcon={<span className="text-slate-600">Rp</span>}
           />
 
-          <TextArea
-            placeholder="Alamat"
-            label="Alamat"
-            name="address"
-            value={fields.address}
-            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
+          <div className="sm:col-span-2">
+            <TextArea
+              placeholder="Alamat"
+              label="Alamat"
+              name="address"
+              value={fields.address}
+              onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+              readOnly={modalForm.readOnly}
+              fullWidth
+            />
+          </div>
 
           <DatePicker
             label="Tanggal Masuk"

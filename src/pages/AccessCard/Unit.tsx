@@ -568,7 +568,7 @@ function PageAccessCardUnit() {
             }))]}
           />
 
-          {fields.id && (
+          {!!fields.id && (
             <Select
               placeholder="Status Kartu"
               label="Status Kartu"

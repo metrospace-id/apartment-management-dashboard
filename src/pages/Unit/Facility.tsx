@@ -207,6 +207,12 @@ function PageUnitFacility() {
     }))
   }
 
+  const handleChangeNumericField = (fieldName: string, value: string) => {
+    if (/^\d*$/.test(value) || value === '') {
+      handleChangeField(fieldName, value)
+    }
+  }
+
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
@@ -397,7 +403,7 @@ function PageUnitFacility() {
             label="Nomor Lantai"
             name="floor_no"
             value={fields.floor_no}
-            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />

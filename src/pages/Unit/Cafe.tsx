@@ -36,6 +36,14 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'floor_no',
   },
   {
+    label: 'Luas',
+    key: 'wide',
+  },
+  {
+    label: 'Daya Listrik',
+    key: 'watt',
+  },
+  {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
@@ -58,6 +66,9 @@ function PageUnitCafe() {
     floor_no: '',
     tower: '',
     unit_code: '',
+    length: 0,
+    width: 0,
+    watt: 0,
     type: 2,
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
@@ -105,6 +116,9 @@ function PageUnitCafe() {
       floor_no: '',
       tower: '',
       unit_code: '',
+      length: 0,
+      width: 0,
+      watt: 0,
       type: 2,
     })
   }
@@ -158,6 +172,9 @@ function PageUnitCafe() {
       tower: fieldData.tower,
       floor_no: fieldData.floor_no,
       unit_code: fieldData.unit_code,
+      length: fieldData.length,
+      width: fieldData.width,
+      watt: fieldData.watt,
       type: 2,
     })
   }
@@ -174,6 +191,9 @@ function PageUnitCafe() {
       tower: fieldData.tower,
       floor_no: fieldData.floor_no,
       unit_code: fieldData.unit_code,
+      length: fieldData.length,
+      width: fieldData.width,
+      watt: fieldData.watt,
       type: 2,
     })
   }
@@ -196,6 +216,12 @@ function PageUnitCafe() {
       ...prevState,
       [fieldName]: value,
     }))
+  }
+
+  const handleChangeNumericField = (fieldName: string, value: string) => {
+    if (/^\d*$/.test(value) || value === '') {
+      handleChangeField(fieldName, value)
+    }
   }
 
   const handleClickConfirm = (type: string) => {
@@ -291,6 +317,8 @@ function PageUnitCafe() {
     tower: column.tower,
     room_no: column.room_no,
     floor_no: column.floor_no,
+    wide: `${column.length * column.width} M² (${column.length} x ${column.width})`,
+    watt: `${column.watt} watt`,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -390,6 +418,43 @@ function PageUnitCafe() {
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
+          />
+
+          <div className="flex gap-2 flex-col">
+            <p className="text-sm font-medium text-slate-600 dark:text-white">Luas Ruangan</p>
+
+            <div className="flex gap-2">
+              <Input
+                placeholder="Panjang"
+                name="length"
+                value={fields.length}
+                onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+                readOnly={modalForm.readOnly}
+                fullWidth
+                rightIcon={<span className="text-slate-600 dark:text-white">M</span>}
+              />
+
+              <Input
+                placeholder="Lebar"
+                name="width"
+                value={fields.width}
+                onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+                readOnly={modalForm.readOnly}
+                fullWidth
+                rightIcon={<span className="text-slate-600 dark:text-white">M</span>}
+              />
+            </div>
+          </div>
+
+          <Input
+            placeholder="Daya Listrik"
+            label="Daya Listrik"
+            name="watt"
+            value={fields.watt}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+            rightIcon={<span className="text-slate-600 dark:text-white">Watt</span>}
           />
 
         </form>

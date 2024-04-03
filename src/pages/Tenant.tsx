@@ -24,6 +24,7 @@ import dayjs from 'dayjs'
 import Select from 'components/Form/Select'
 import DatePicker from 'components/Form/DatePicker'
 import api from 'utils/api'
+import Badge from 'components/Badge'
 
 const PAGE_NAME = 'Penghuni'
 
@@ -490,7 +491,7 @@ function PageTenant() {
     name: column.id ? column.name : column.owner_name,
     phone: column.id ? column.phone : column.owner_phone,
     owner_name: column.id ? column.owner_name : '-',
-    relation: column.relation || 'Pemilik',
+    relation: column.id ? <Badge variant="default">{column.relation}</Badge> : <Badge variant="primary">Pemilik</Badge>,
     start_date: column.start_date ? dayjs(column.start_date).format('YYYY-MM-DD') : '-',
     end_date: column.end_date ? dayjs(column.end_date).format('YYYY-MM-DD') : '-',
     action: (

@@ -34,3 +34,26 @@ export const ACCESS_CARD_DURATION = [
     label: 'Bulan',
   },
 ]
+
+export const ACCESS_CARD_STATUS = [
+  {
+    id: 0,
+    label: 'Nonaktif',
+  },
+  {
+    id: 1,
+    label: 'Pending',
+  },
+  {
+    id: 2,
+    label: 'Menunggu Pembayaran',
+  },
+  {
+    id: 3,
+    label: 'Aktif',
+  },
+  {
+    id: 4,
+    label: 'Expired',
+  },
+]

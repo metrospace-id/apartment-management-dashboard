@@ -1,25 +1,40 @@
+import dayjs from 'dayjs'
 import {
-  useState, useMemo, useEffect,
+  useEffect,
+  useState,
 } from 'react'
 
-import Layout from 'components/Layout'
+import Badge from 'components/Badge'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { exportToExcel } from 'utils/export'
-import dayjs from 'dayjs'
-import Select from 'components/Form/Select'
 import DatePicker from 'components/Form/DatePicker'
+import Input from 'components/Form/Input'
+import Select from 'components/Form/Select'
+import { Edit as IconEdit, FileText as IconFile, TrashAlt as IconTrash } from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
+import Toast from 'components/Toast'
+import { ACCESS_CARD_STATUS } from 'constants/accessCard'
+import { MODAL_CONFIRM_TYPE, PAGE_SIZE } from 'constants/form'
+import useDebounce from 'hooks/useDebounce'
+import api from 'utils/api'
+import { exportToExcel } from 'utils/export'
+
+const REUQESTER_TYPE = [
+  {
+    label: 'Penghuni',
+    value: '1',
+  },
+  {
+    label: 'Penyewa',
+    value: '2',
+  },
+]
 
 const PAGE_NAME = 'Kartu Akses Unit'
 
@@ -37,16 +52,16 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'rfid_no',
   },
   {
-    label: 'Jenis Kartu',
-    key: 'card_type',
-  },
-  {
     label: 'Nama Pemohon',
     key: 'requester_name',
   },
   {
     label: 'Status Pemohon',
-    key: 'requester_status',
+    key: 'requester_type',
+  },
+  {
+    label: 'Status Kartu',
+    key: 'status',
   },
   {
     label: 'Aksi',
@@ -56,42 +71,56 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_id: key + 1,
-  unit_code: `A/01/${key + 1}`,
-  card_no: `000${key + 1}`,
-  rfid_no: `000000${key + 1}`,
-  card_type: 1,
-  requester_name: `Nama Penyewa ${key + 1}`,
-  requester_status: 'Penyewa',
-  request_date: '2023-12-31 00:00:00',
-}))
+const renderStatusLabel = (status: number) => {
+  const statusData = ACCESS_CARD_STATUS.find((itemData) => itemData.id === status)
+  const label = statusData?.label || '-'
 
-const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_code: `A/${key + 1}/${key + 1}`,
-  tower: 'A',
-  unit_no: `${key + 1}`,
-  floor_no: `${key + 1}`,
-}))
+  let variant = 'default'
+  if (+status === 1) {
+    variant = 'warning'
+  }
+  if (+status === 2) {
+    variant = 'info'
+  }
+  if (+status === 3) {
+    variant = 'primary'
+  }
+  if (+status === 4) {
+    variant = 'danger'
+  }
+  return {
+    label,
+    variant,
+  }
+}
 
 function PageAccessCardUnit() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataUnits, setDataUnits] = useState<{ id: number, unit_code: string }[]>([])
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     unit_id: 0,
     card_no: '',
     rfid_no: '',
     requester_name: '',
-    requester_status: '',
+    requester_phone: '',
+    requester_type: '',
+    status: '',
+    type: 1,
     request_date: dayjs().format('YYYY-MM-DD'),
   })
   const [filter, setFilter] = useState({
-    requester_status: '',
+    requester_type: '',
     active_start_date: '',
     active_end_date: '',
+    status: '',
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -113,18 +142,13 @@ function PageAccessCardUnit() {
   })
   const [submitType, setSubmitType] = useState('create')
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
@@ -151,7 +175,10 @@ function PageAccessCardUnit() {
       card_no: '',
       rfid_no: '',
       requester_name: '',
-      requester_status: '',
+      requester_phone: '',
+      requester_type: '',
+      status: '',
+      type: 1,
       request_date: dayjs().format('YYYY-MM-DD'),
     })
   }
@@ -198,7 +225,8 @@ function PageAccessCardUnit() {
       card_no: fieldData.card_no,
       rfid_no: fieldData.rfid_no,
       requester_name: fieldData.requester_name,
-      requester_status: fieldData.requester_status,
+      requester_phone: fieldData.requester_phone,
+      requester_type: fieldData.requester_type,
       request_date: fieldData.request_date,
     }))
   }
@@ -216,7 +244,8 @@ function PageAccessCardUnit() {
       card_no: fieldData.card_no,
       rfid_no: fieldData.rfid_no,
       requester_name: fieldData.requester_name,
-      requester_status: fieldData.requester_status,
+      requester_phone: fieldData.requester_phone,
+      requester_type: fieldData.requester_type,
       request_date: fieldData.request_date,
     }))
   }
@@ -231,21 +260,7 @@ function PageAccessCardUnit() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      card_no: fieldData.card_no,
-      rfid_no: fieldData.rfid_no,
-      requester_name: fieldData.requester_name,
-      requester_status: fieldData.requester_status,
-      request_date: fieldData.request_date,
     }))
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -281,34 +296,119 @@ function PageAccessCardUnit() {
     setSubmitType(type)
   }
 
+  const handleGetAccessCards = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/access-card',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        type: 1,
+        page,
+        limit: PAGE_SIZE,
+        search,
+        requester_type: filter.requester_type,
+        active_start_date: filter.active_start_date,
+        active_end_date: filter.active_end_date,
+        status: filter.status,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllUnits = () => {
+    api({
+      url: '/v1/unit',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataUnits(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/access-card/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/access-card/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/access-card/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetAccessCards()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleSubmitFilter = () => {
-    setIsLoadingData(true)
+    handleGetAccessCards()
     handleModalFilterClose()
-    setTimeout(() => {
-      setIsLoadingData(false)
-    }, 500)
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     unit_code: column.unit_code,
     card_no: column.card_no,
     rfid_no: column.rfid_no,
-    card_type: column.card_type,
     requester_name: column.requester_name,
-    requester_status: column.requester_status,
+    requester_type: REUQESTER_TYPE.find((itemData) => itemData.value === column.requester_type)?.label || '',
+    status: <Badge variant={renderStatusLabel(column.status).variant as any}>{renderStatusLabel(column.status).label}</Badge>,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -316,40 +416,38 @@ function PageAccessCardUnit() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('access-card-unit-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('access-card-unit-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.rfid_no.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.card_no.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetAccessCards()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllUnits()
+  }, [])
 
   return (
     <Layout>
@@ -370,11 +468,11 @@ function PageAccessCardUnit() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -396,13 +494,13 @@ function PageAccessCardUnit() {
             placeholder="Nomor Unit"
             label="Nomor Unit"
             name="unit_id"
-            items={UNIT_DATA.map((itemData) => ({
+            items={dataUnits.map((itemData) => ({
               label: itemData.unit_code,
               value: itemData.id,
             }))}
             value={{
-              label: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
-              value: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.id || '',
+              label: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
+              value: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.id || '',
             }}
             onChange={(value) => handleChangeField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
@@ -436,7 +534,17 @@ function PageAccessCardUnit() {
             label="Nama Pemohon"
             name="requester_name"
             value={fields.requester_name}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Input
+            placeholder="No. Telepon Pemohon"
+            label="No. Telepon Pemohon"
+            name="requester_phone"
+            value={fields.requester_phone}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -444,9 +552,9 @@ function PageAccessCardUnit() {
           <Select
             placeholder="Status Pemohon"
             label="Status Pemohon"
-            name="requester_status"
-            value={fields.requester_status}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            name="requester_type"
+            value={fields.requester_type}
+            onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
             options={[{
@@ -454,15 +562,33 @@ function PageAccessCardUnit() {
               value: '',
               disabled: true,
             },
-            {
-              label: 'Penghuni',
-              value: 'Penghuni',
-            },
-            {
-              label: 'Penyewa',
-              value: 'Penyewa',
-            }]}
+            ...REUQESTER_TYPE.map((itemData) => ({
+              label: itemData.label,
+              value: itemData.value,
+            }))]}
           />
+
+          {fields.id && (
+            <Select
+              placeholder="Status Kartu"
+              label="Status Kartu"
+              name="status"
+              value={fields.status}
+              onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+              readOnly={modalForm.readOnly}
+              fullWidth
+              options={[{
+                label: 'Pilih Status Kartu',
+                value: '',
+                disabled: true,
+              },
+              ...ACCESS_CARD_STATUS.map(((type) => ({
+                value: type.id,
+                label: type.label,
+              }))),
+              ]}
+            />
+          )}
 
         </form>
         <div className="flex gap-2 justify-end p-4">
@@ -502,8 +628,8 @@ function PageAccessCardUnit() {
           <Select
             placeholder="Status Pemohon"
             label="Status Pemohon"
-            name="requester_status"
-            value={filter.requester_status}
+            name="requester_type"
+            value={filter.requester_type}
             onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -512,14 +638,30 @@ function PageAccessCardUnit() {
               value: '',
               disabled: true,
             },
-            {
-              label: 'Penghuni',
-              value: 'Penghuni',
+            ...REUQESTER_TYPE.map((itemData) => ({
+              label: itemData.label,
+              value: itemData.value,
+            }))]}
+          />
+
+          <Select
+            placeholder="Status Kartu"
+            label="Status Kartu"
+            name="status"
+            value={filter.status}
+            onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+            options={[{
+              label: 'Pilih Status Kartu',
+              value: '',
+              disabled: true,
             },
-            {
-              label: 'Penyewa',
-              value: 'Penyewa',
-            }]}
+            ...ACCESS_CARD_STATUS.map(((type) => ({
+              value: type.id,
+              label: type.label,
+            }))),
+            ]}
           />
         </form>
         <div className="flex gap-2 justify-end p-4">

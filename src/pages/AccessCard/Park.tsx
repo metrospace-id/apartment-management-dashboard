@@ -305,6 +305,7 @@ function PageAccessCardParking() {
       requester_type: fieldData.requester_type,
       request_date: fieldData.request_date,
       expired_date: fieldData.expired_date,
+      status: fieldData.status,
     }))
   }
 
@@ -333,6 +334,7 @@ function PageAccessCardParking() {
       requester_type: fieldData.requester_type,
       request_date: fieldData.request_date,
       expired_date: fieldData.expired_date,
+      status: fieldData.status,
     }))
   }
 

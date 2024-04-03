@@ -228,6 +228,7 @@ function PageAccessCardUnit() {
       requester_phone: fieldData.requester_phone,
       requester_type: fieldData.requester_type,
       request_date: fieldData.request_date,
+      status: fieldData.status,
     }))
   }
 
@@ -247,6 +248,7 @@ function PageAccessCardUnit() {
       requester_phone: fieldData.requester_phone,
       requester_type: fieldData.requester_type,
       request_date: fieldData.request_date,
+      status: fieldData.status,
     }))
   }
 

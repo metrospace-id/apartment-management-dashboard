@@ -37,10 +37,6 @@ export const ACCESS_CARD_DURATION = [
 
 export const ACCESS_CARD_STATUS = [
   {
-    id: 0,
-    label: 'Nonaktif',
-  },
-  {
     id: 1,
     label: 'Pending',
   },

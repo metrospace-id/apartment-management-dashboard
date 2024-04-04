@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import TWDatepicker from 'tailwind-datepicker-react'
 import dayjs from 'dayjs'
 import type { IOptions } from 'tailwind-datepicker-react/types/Options'
+import ReactModal from 'react-modal'
 
-import useOutsideClick from 'hooks/useOutsideClick'
 import {
   Calendar as IconCalendar,
   ArrowLeft as IconArrowLeft,
@@ -40,7 +40,7 @@ const options: IOptions = {
     next: () => <IconArrowRight />,
   },
   datepickerClassNames:
-    'datepicker top-[68px] [&_.bg-primary-500]:!text-base-white',
+    'datepicker top-0 pt-0 [&_.bg-primary-500]:!text-base-white !relative',
   language: 'id',
   disabledDates: [],
   weekDays: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
@@ -80,7 +80,7 @@ export default function DatePicker({
 }: DatepickerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [localValue, setLocalValue] = useState('')
-  const datePickerRef = useRef<HTMLDivElement | null>(null)
+  const calendarWrapperRef = useRef<HTMLDivElement>(null)
   const handleChange = (selectedDate: Date) => {
     onChange?.(selectedDate)
     setLocalValue(dayjs(selectedDate).format('D MMMM YYYY'))
@@ -89,13 +89,23 @@ export default function DatePicker({
   const dateValue = value ? new Date(value) : new Date()
   const defaultDate = isValidDate(dateValue) ? dateValue : new Date()
 
-  useOutsideClick(datePickerRef, () => setIsOpen(false))
-
   const handleClose = (state: boolean) => {
     setIsOpen(state)
   }
 
   const currDate = new Date()
+
+  const customStyles = {
+    overlay: {
+      backgroundColor: 'transparent',
+      zIndex: 9999,
+      top: calendarWrapperRef.current?.getBoundingClientRect()?.top,
+    },
+    content: {
+      left: calendarWrapperRef.current?.getBoundingClientRect()?.left,
+      width: calendarWrapperRef.current?.clientWidth,
+    },
+  }
 
   useEffect(() => {
     if (value) {
@@ -106,30 +116,43 @@ export default function DatePicker({
   return (
     <div
       id={id}
-      ref={datePickerRef}
+      className="w-full relative"
     >
-      <TWDatepicker
-        options={{
-          ...options,
-          ...(option || {}),
-          ...(disableFuture && { maxDate: currDate }),
-          defaultDate,
-        }}
-        onChange={handleChange}
-        show={isOpen}
-        setShow={handleClose}
-        value={value || new Date()}
-        classNames="relative"
-      >
-        <Input
-          {...props}
-          disabled={disabled}
-          value={localValue}
-          rightIcon={<IconCalendar className="w-4 h-4 lg:w-5 lg:h-5" />}
-          onFocus={disabled || readOnly ? () => null : () => setIsOpen(true)}
-          readOnly
-        />
-      </TWDatepicker>
+      <Input
+        {...props}
+        disabled={disabled}
+        value={localValue}
+        rightIcon={<IconCalendar className="w-4 h-4 lg:w-5 lg:h-5" />}
+        onClick={disabled || readOnly ? () => null : () => setIsOpen(true)}
+        readOnly
+      />
+      <div className="relative" id="form-autocomplete" ref={calendarWrapperRef}>
+        <ReactModal
+          isOpen={isOpen}
+          style={customStyles}
+          shouldCloseOnEsc
+          shouldCloseOnOverlayClick
+          onRequestClose={() => setIsOpen(false)}
+          className="mt-1 max-h-[calc(36px*5)] absolute z-50 focus-visible:outline-none"
+        >
+
+          <TWDatepicker
+            options={{
+              ...options,
+              ...(option || {}),
+              ...(disableFuture && { maxDate: currDate }),
+              defaultDate,
+            }}
+            onChange={handleChange}
+            show={isOpen}
+            setShow={handleClose}
+            value={value || new Date()}
+          >
+            <div />
+          </TWDatepicker>
+        </ReactModal>
+      </div>
+
     </div>
   )
 }

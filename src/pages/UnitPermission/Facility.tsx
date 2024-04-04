@@ -1,7 +1,7 @@
 import {
   useState, useMemo, useEffect,
 } from 'react'
-import { fakerID_ID as faker } from '@faker-js/faker'
+import dayjs from 'dayjs'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -20,7 +20,7 @@ import DatePicker from 'components/Form/DatePicker'
 import TextArea from 'components/Form/TextArea'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { exportToExcel } from 'utils/export'
-import dayjs from 'dayjs'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Izin Pemakaian Fasilitas'
 
@@ -38,8 +38,12 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'requester_name',
   },
   {
-    label: 'Tanggal Pemakaian',
+    label: 'Tanggal Mulai Pemakaian',
     key: 'start_date',
+  },
+  {
+    label: 'Tanggal Selesai Pemakaian',
+    key: 'end_date',
   },
   {
     label: 'Aksi',
@@ -49,42 +53,27 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_id: key + 1,
-  unit_code: `A/01/${key + 1}`,
-  name: `Fasilitas ${key + 1}`,
-  requester_name: faker.person.fullName(),
-  requester_phone_no: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  requester_address: faker.location.streetAddress(),
-  start_date: '2023-12-31 00:00:00',
-  end_date: '2024-12-31 00:00:00',
-}))
-
-const ITEM_CATEGORY_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Kategori Barang ${key + 1}`,
-}))
-
-const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_code: `A/${key + 1}/${key + 1}`,
-  name: `Fasilitas ${key + 1}`,
-  tower: 'A',
-  unit_no: `${key + 1}`,
-  floor_no: `${key + 1}`,
-}))
-
 function PageUnitPermissionFacility() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataUnits, setDataUnits] = useState<{
+    id: number,
+    unit_code: string,
+    name: string,
+  }[]>([])
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     unit_id: 0,
     unit_code: '',
     name: '',
     requester_name: '',
-    requester_phone_no: '',
+    requester_phone: '',
     requester_address: '',
     start_date: dayjs().format('YYYY-MM-DD'),
     end_date: dayjs().format('YYYY-MM-DD'),
@@ -114,18 +103,13 @@ function PageUnitPermissionFacility() {
   })
   const [submitType, setSubmitType] = useState('create')
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
@@ -152,7 +136,7 @@ function PageUnitPermissionFacility() {
       unit_code: '',
       name: '',
       requester_name: '',
-      requester_phone_no: '',
+      requester_phone: '',
       requester_address: '',
       start_date: dayjs().format('YYYY-MM-DD'),
       end_date: dayjs().format('YYYY-MM-DD'),
@@ -201,12 +185,9 @@ function PageUnitPermissionFacility() {
       unit_id: fieldData.unit_id,
       unit_code: fieldData.unit_code,
       name: fieldData.name,
-      phone_no: fieldData.phone_no,
       requester_name: fieldData.requester_name,
-      requester_phone_no: fieldData.requester_phone_no,
+      requester_phone: fieldData.requester_phone,
       requester_address: fieldData.requester_address,
-      item_category_id: fieldData.item_category_id,
-      item_desc: fieldData.item_desc,
       start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
       end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
     }))
@@ -224,12 +205,9 @@ function PageUnitPermissionFacility() {
       unit_id: fieldData.unit_id,
       unit_code: fieldData.unit_code,
       name: fieldData.name,
-      phone_no: fieldData.phone_no,
       requester_name: fieldData.requester_name,
-      requester_phone_no: fieldData.requester_phone_no,
+      requester_phone: fieldData.requester_phone,
       requester_address: fieldData.requester_address,
-      item_category_id: fieldData.item_category_id,
-      item_desc: fieldData.item_desc,
       start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
       end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
     }))
@@ -245,17 +223,6 @@ function PageUnitPermissionFacility() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      unit_code: fieldData.unit_code,
-      name: fieldData.name,
-      phone_no: fieldData.phone_no,
-      requester_name: fieldData.requester_name,
-      requester_phone_no: fieldData.requester_phone_no,
-      requester_address: fieldData.requester_address,
-      item_category_id: fieldData.item_category_id,
-      item_desc: fieldData.item_desc,
-      start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
-      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
     }))
   }
 
@@ -268,7 +235,7 @@ function PageUnitPermissionFacility() {
   }
 
   const handleChangeUnitField = (value: string | number) => {
-    const facility = UNIT_DATA.find((unit) => unit.id === value)
+    const facility = dataUnits.find((unit) => unit.id === value)
     setFields((prevState) => ({
       ...prevState,
       name: facility?.name || '',
@@ -310,27 +277,110 @@ function PageUnitPermissionFacility() {
     setSubmitType(type)
   }
 
+  const handleGetRentFacilities = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/rent-facility',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        type: 2,
+        page,
+        limit: PAGE_SIZE,
+        search,
+        ...filter,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllUnits = () => {
+    api({
+      url: '/v1/unit',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        type: 3,
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataUnits(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/rent-facility/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/rent-facility/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/rent-facility/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetRentFacilities()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleSubmitFilter = () => {
-    setIsLoadingData(true)
+    handleGetRentFacilities()
     handleModalFilterClose()
-    setTimeout(() => {
-      setIsLoadingData(false)
-    }, 500)
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     unit_code: column.unit_code,
     name: column.name,
@@ -344,39 +394,38 @@ function PageUnitPermissionFacility() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('unit-permission-facility-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('unit-permission-facility-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.requester_name.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetRentFacilities()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllUnits()
+  }, [])
 
   return (
     <Layout>
@@ -397,11 +446,11 @@ function PageUnitPermissionFacility() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -409,26 +458,40 @@ function PageUnitPermissionFacility() {
 
       <Modal open={modalForm.open} title={modalForm.title}>
         <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
-          <DatePicker
-            label="Tanggal Pemakaian"
-            placeholder="Tanggal Pemakaian"
-            name="start_date"
-            value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
+
+          <div>
+            <p className="text-sm font-medium text-slate-600 dark:text-white mb-2">Tanggal Pemakaian</p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <DatePicker
+                placeholder="Tanggal Mulai"
+                name="start_date"
+                value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
+                onChange={(selectedDate) => handleChangeField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                readOnly={modalForm.readOnly}
+                fullWidth
+              />
+
+              <DatePicker
+                placeholder="Tanggal Selesai"
+                name="end_date"
+                value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
+                onChange={(selectedDate) => handleChangeField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                readOnly={modalForm.readOnly}
+                fullWidth
+              />
+            </div>
+          </div>
 
           <Autocomplete
             placeholder="Nama Fasilitas"
             label="Nama Fasilitas"
-            items={UNIT_DATA.map((itemData) => ({
+            items={dataUnits.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.name || '',
-              value: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.id || '',
+              label: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.name || '',
+              value: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.id || '',
             }}
             onChange={(value) => handleChangeUnitField(value.value)}
             readOnly={modalForm.readOnly}
@@ -456,9 +519,9 @@ function PageUnitPermissionFacility() {
           <Input
             placeholder="No. Telepon Pemohon"
             label="No. Telepon Pemohon"
-            name="requester_phone_no"
+            name="requester_phone"
             type="tel"
-            value={fields.requester_phone_no}
+            value={fields.requester_phone}
             onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -487,7 +550,7 @@ function PageUnitPermissionFacility() {
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
 
           <div className="flex flex-col gap-2 w-full">
-            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Masuk</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Pemakaian</p>
             <div className="flex flex-col gap-1">
               <DatePicker
                 placeholder="Tanggal Awal"
@@ -508,23 +571,6 @@ function PageUnitPermissionFacility() {
               />
             </div>
           </div>
-
-          <Autocomplete
-            placeholder="Jenis Barang"
-            label="Jenis Barang"
-            name="item_category_id"
-            items={ITEM_CATEGORY_DATA.map((itemData) => ({
-              label: itemData.name,
-              value: itemData.id,
-            }))}
-            value={{
-              label: ITEM_CATEGORY_DATA.find((itemData) => itemData.id === filter.item_category_id)?.name || '',
-              value: ITEM_CATEGORY_DATA.find((itemData) => itemData.id === filter.item_category_id)?.id || '',
-            }}
-            onChange={(value) => handleChangeFilterField('item_category_id', value.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-          />
 
         </form>
         <div className="flex gap-2 justify-end p-4">

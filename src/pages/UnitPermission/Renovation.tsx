@@ -1,7 +1,7 @@
 import {
   useState, useMemo, useEffect,
 } from 'react'
-import { fakerID_ID as faker } from '@faker-js/faker'
+import dayjs from 'dayjs'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -20,7 +20,7 @@ import DatePicker from 'components/Form/DatePicker'
 import TextArea from 'components/Form/TextArea'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { exportToExcel } from 'utils/export'
-import dayjs from 'dayjs'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Izin Renovasi'
 
@@ -35,7 +35,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'Total Pekerja',
-    key: 'worker_total',
+    key: 'total_workers',
   },
   {
     label: 'Jenis Renovasi',
@@ -57,54 +57,39 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_id: key + 1,
-  unit_code: `A/01/${key + 1}`,
-  requester_name: faker.person.fullName(),
-  contractor_name: faker.person.fullName(),
-  worker_total: 5,
-  pic_name: faker.person.fullName(),
-  pic_phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  supervisor_name: faker.person.fullName(),
-  supervisor_phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  renovation_category_id: 1,
-  description: `Deskripsi pekerjaan ${key + 1}`,
-  start_date: '2023-12-31 00:00:00',
-  end_date: '2024-12-31 00:00:00',
-}))
-
-const RENOVATION_CATEGORY_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Kategori Renovasi ${key + 1}`,
-}))
-
-const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_code: `A/${key + 1}/${key + 1}`,
-  owner_name: faker.person.fullName(),
-  tower: 'A',
-  unit_no: `${key + 1}`,
-  floor_no: `${key + 1}`,
-}))
-
 function PageRenovation() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataUnits, setDataUnits] = useState<{
+    unit_id: number,
+    unit_code: string,
+    owner_name: string,
+    owner_phone: string,
+    name: string,
+    phone: string
+  }[]>([])
+  const [dataCategories, setDataCategories] = useState<{ id: number, name: string }[]>([])
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     unit_id: 0,
     requester_name: '',
+    requester_phone: '',
     contractor_name: '',
-    worker_total: 0,
+    total_workers: 0,
     pic_name: '',
     pic_phone: '',
     supervisor_name: '',
     supervisor_phone: '',
     renovation_category_id: 0,
+    renovation_description: '',
     start_date: dayjs().format('YYYY-MM-DD'),
     end_date: dayjs().format('YYYY-MM-DD'),
-    description: '',
   })
   const [filter, setFilter] = useState({
     start_date: '',
@@ -131,18 +116,13 @@ function PageRenovation() {
   })
   const [submitType, setSubmitType] = useState('create')
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
@@ -167,16 +147,17 @@ function PageRenovation() {
       id: 0,
       unit_id: 0,
       requester_name: '',
+      requester_phone: '',
       contractor_name: '',
-      worker_total: 0,
+      total_workers: 0,
       pic_name: '',
       pic_phone: '',
       supervisor_name: '',
       supervisor_phone: '',
       renovation_category_id: 0,
+      renovation_description: '',
       start_date: dayjs().format('YYYY-MM-DD'),
       end_date: dayjs().format('YYYY-MM-DD'),
-      description: '',
     })
   }
 
@@ -220,16 +201,17 @@ function PageRenovation() {
       id: fieldData.id,
       unit_id: fieldData.unit_id,
       requester_name: fieldData.requester_name,
+      requester_phone: fieldData.requester_phone,
       contractor_name: fieldData.contractor_name,
-      worker_total: fieldData.worker_total,
+      total_workers: fieldData.total_workers,
       pic_name: fieldData.pic_name,
       pic_phone: fieldData.pic_phone,
       supervisor_name: fieldData.supervisor_name,
       supervisor_phone: fieldData.supervisor_phone,
       renovation_category_id: fieldData.renovation_category_id,
+      renovation_description: fieldData.renovation_description,
       start_date: fieldData.start_date,
       end_date: fieldData.end_date,
-      description: fieldData.description,
     }))
   }
 
@@ -244,16 +226,17 @@ function PageRenovation() {
       id: fieldData.id,
       unit_id: fieldData.unit_id,
       requester_name: fieldData.requester_name,
+      requester_phone: fieldData.requester_phone,
       contractor_name: fieldData.contractor_name,
-      worker_total: fieldData.worker_total,
+      total_workers: fieldData.total_workers,
       pic_name: fieldData.pic_name,
       pic_phone: fieldData.pic_phone,
       supervisor_name: fieldData.supervisor_name,
       supervisor_phone: fieldData.supervisor_phone,
       renovation_category_id: fieldData.renovation_category_id,
+      renovation_description: fieldData.renovation_description,
       start_date: fieldData.start_date,
       end_date: fieldData.end_date,
-      description: fieldData.description,
     }))
   }
 
@@ -267,18 +250,6 @@ function PageRenovation() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      requester_name: fieldData.requester_name,
-      contractor_name: fieldData.contractor_name,
-      worker_total: fieldData.worker_total,
-      pic_name: fieldData.pic_name,
-      pic_phone: fieldData.pic_phone,
-      supervisor_name: fieldData.supervisor_name,
-      supervisor_phone: fieldData.supervisor_phone,
-      renovation_category_id: fieldData.renovation_category_id,
-      start_date: fieldData.start_date,
-      end_date: fieldData.end_date,
-      description: fieldData.description,
     }))
   }
 
@@ -291,10 +262,14 @@ function PageRenovation() {
   }
 
   const handleChangeUnitField = (fieldName: string, value: string | number) => {
-    const requesterName = UNIT_DATA.find((unit) => unit.id === value)
+    const requester = dataUnits.find((unit) => unit.unit_id === value)
+    const requesterName = requester?.owner_name || requester?.name
+    const requesterPhone = requester?.owner_phone || requester?.phone
+
     setFields((prevState) => ({
       ...prevState,
-      requester_name: requesterName?.owner_name || '',
+      requester_name: requesterName || '',
+      requester_phone: requesterPhone || '',
       [fieldName]: value,
     }))
   }
@@ -332,33 +307,136 @@ function PageRenovation() {
     setSubmitType(type)
   }
 
+  const handleGetRenovations = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/renovation',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+        ...filter,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllUnits = () => {
+    api({
+      url: '/v1/tenant/unit',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataUnits(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const handleGetAllWorkCategories = () => {
+    api({
+      url: '/v1/renovation-category',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataCategories(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/renovation/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/renovation/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/renovation/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetRenovations()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleSubmitFilter = () => {
-    setIsLoadingData(true)
+    handleGetRenovations()
     handleModalFilterClose()
-    setTimeout(() => {
-      setIsLoadingData(false)
-    }, 500)
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     unit_code: column.unit_code,
     requester_name: column.requester_name,
     contractor_name: column.contractor_name,
-    worker_total: column.worker_total,
-    renovation_category: RENOVATION_CATEGORY_DATA.find((cat) => cat.id === column.renovation_category_id)?.name,
+    total_workers: column.total_workers,
+    renovation_category: column.renovation_category_name,
     renovation_category_id: column.renovation_category_id,
     start_date: dayjs(column.start_date).format('YYYY-MM-DD'),
     end_date: dayjs(column.end_date).format('YYYY-MM-DD'),
@@ -370,39 +448,39 @@ function PageRenovation() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('unit-permission-renovation-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('unit-permission-renovation-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.requester_name.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetRenovations()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllUnits()
+    handleGetAllWorkCategories()
+  }, [])
 
   return (
     <Layout>
@@ -423,11 +501,11 @@ function PageRenovation() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -439,13 +517,13 @@ function PageRenovation() {
             placeholder="Nomor Unit"
             label="Nomor Unit"
             name="unit_id"
-            items={UNIT_DATA.map((itemData) => ({
+            items={dataUnits.map((itemData) => ({
               label: itemData.unit_code,
-              value: itemData.id,
+              value: itemData.unit_id,
             }))}
             value={{
-              label: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
-              value: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.id || '',
+              label: dataUnits.find((itemData) => itemData.unit_id === fields.unit_id)?.unit_code || '',
+              value: dataUnits.find((itemData) => itemData.unit_id === fields.unit_id)?.unit_id || '',
             }}
             onChange={(value) => handleChangeUnitField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
@@ -475,10 +553,10 @@ function PageRenovation() {
           <Input
             placeholder="Jumlah Pekerja"
             label="Jumlah Pekerja"
-            name="worker_total"
+            name="total_workers"
             type="tel"
-            value={fields.worker_total}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            value={(+fields.total_workers).toLocaleString()}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value.replace(/\W+/g, ''))}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -530,7 +608,7 @@ function PageRenovation() {
             placeholder="Tanggal Mulai"
             name="start_date"
             value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            onChange={(selectedDate) => handleChangeField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -540,7 +618,7 @@ function PageRenovation() {
             placeholder="Tanggal Selesai"
             name="end_date"
             value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            onChange={(selectedDate) => handleChangeField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -549,13 +627,13 @@ function PageRenovation() {
             placeholder="Jenis Renovasi"
             label="Jenis Renovasi"
             name="renovation_category_id"
-            items={RENOVATION_CATEGORY_DATA.map((itemData) => ({
+            items={dataCategories.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: RENOVATION_CATEGORY_DATA.find((itemData) => itemData.id === fields.renovation_category_id)?.name || '',
-              value: RENOVATION_CATEGORY_DATA.find((itemData) => itemData.id === fields.renovation_category_id)?.id || '',
+              label: dataCategories.find((itemData) => itemData.id === fields.renovation_category_id)?.name || '',
+              value: dataCategories.find((itemData) => itemData.id === fields.renovation_category_id)?.id || '',
             }}
             onChange={(value) => handleChangeField('renovation_category_id', value.value)}
             readOnly={modalForm.readOnly}
@@ -565,8 +643,8 @@ function PageRenovation() {
           <TextArea
             placeholder="Deskripsi Renovasi"
             label="Deskripsi Renovasi"
-            name="description"
-            value={fields.description}
+            name="renovation_description"
+            value={fields.renovation_description}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -611,13 +689,13 @@ function PageRenovation() {
             placeholder="Jenis Renovasi"
             label="Jenis Renovasi"
             name="renovation_category_id"
-            items={RENOVATION_CATEGORY_DATA.map((itemData) => ({
+            items={dataCategories.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: RENOVATION_CATEGORY_DATA.find((itemData) => itemData.id === filter.renovation_category_id)?.name || '',
-              value: RENOVATION_CATEGORY_DATA.find((itemData) => itemData.id === filter.renovation_category_id)?.id || '',
+              label: dataCategories.find((itemData) => itemData.id === filter.renovation_category_id)?.name || '',
+              value: dataCategories.find((itemData) => itemData.id === filter.renovation_category_id)?.id || '',
             }}
             onChange={(value) => handleChangeFilterField('renovation_category_id', value.value)}
             readOnly={modalForm.readOnly}

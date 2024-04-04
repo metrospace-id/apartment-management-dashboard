@@ -26,7 +26,7 @@ import PageError404 from 'pages/Error/404'
 import PageWork from 'pages/UnitPermission/Work'
 import PageRenovation from 'pages/UnitPermission/Renovation'
 import PageIncomingItem from 'pages/UnitPermission/IncomingItem'
-import PageOutcomingItem from 'pages/UnitPermission/OutcomingItem'
+import PageOutgoingItem from 'pages/UnitPermission/OutgoingItem'
 import PageItemStock from 'pages/Item/Stock'
 import PageItemHistory from 'pages/Item/History'
 import PageDepartment from 'pages/Department'
@@ -168,8 +168,8 @@ const router = createBrowserRouter([
     Component: PageIncomingItem,
   },
   {
-    path: '/unit-permission/outcoming-item',
-    Component: PageOutcomingItem,
+    path: '/unit-permission/outgoing-item',
+    Component: PageOutgoingItem,
   },
   {
     path: '/unit-permission/facility',

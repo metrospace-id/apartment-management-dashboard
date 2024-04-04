@@ -1,7 +1,7 @@
 import {
-  useState, useMemo, useEffect,
+  useState, useEffect,
 } from 'react'
-import { fakerID_ID as faker } from '@faker-js/faker'
+import dayjs from 'dayjs'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -20,7 +20,7 @@ import DatePicker from 'components/Form/DatePicker'
 import TextArea from 'components/Form/TextArea'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { exportToExcel } from 'utils/export'
-import dayjs from 'dayjs'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Izin Barang Masuk'
 
@@ -53,51 +53,36 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_id: key + 1,
-  unit_code: `A/01/${key + 1}`,
-  name: faker.person.fullName(),
-  phone_no: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  requester_name: faker.person.fullName(),
-  requester_phone_no: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  requester_address: faker.location.streetAddress(),
-  item_category_id: 1,
-  item_desc: `Keterangan barang ${key + 1}`,
-  start_date: '2023-12-31 00:00:00',
-  end_date: '2024-12-31 00:00:00',
-}))
-
-const ITEM_CATEGORY_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Kategori Barang ${key + 1}`,
-}))
-
-const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_code: `A/${key + 1}/${key + 1}`,
-  owner_name: faker.person.fullName(),
-  phone_no: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  tower: 'A',
-  unit_no: `${key + 1}`,
-  floor_no: `${key + 1}`,
-}))
-
 function PageIncomingItem() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataUnits, setDataUnits] = useState<{
+    unit_id: number,
+    unit_code: string,
+    owner_name: string,
+    owner_phone: string,
+    name: string,
+    phone: string
+  }[]>([])
+  const [dataCategories, setDataCategories] = useState<{ id: number, name: string }[]>([])
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     unit_id: 0,
     name: '',
-    phone_no: '',
+    phone: '',
     requester_name: '',
-    requester_phone_no: '',
+    requester_phone: '',
     requester_address: '',
     item_category_id: 0,
-    item_desc: '',
+    item_description: '',
     start_date: dayjs().format('YYYY-MM-DD'),
-    end_date: dayjs().format('YYYY-MM-DD'),
+    type: 1,
   })
   const [filter, setFilter] = useState({
     start_date: '',
@@ -124,18 +109,13 @@ function PageIncomingItem() {
   })
   const [submitType, setSubmitType] = useState('create')
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
@@ -160,14 +140,14 @@ function PageIncomingItem() {
       id: 0,
       unit_id: 0,
       name: '',
-      phone_no: '',
+      phone: '',
       requester_name: '',
-      requester_phone_no: '',
+      requester_phone: '',
       requester_address: '',
       item_category_id: 0,
-      item_desc: '',
+      item_description: '',
       start_date: dayjs().format('YYYY-MM-DD'),
-      end_date: dayjs().format('YYYY-MM-DD'),
+      type: 1,
     })
   }
 
@@ -212,14 +192,13 @@ function PageIncomingItem() {
       id: fieldData.id,
       unit_id: fieldData.unit_id,
       name: fieldData.name,
-      phone_no: fieldData.phone_no,
+      phone: fieldData.phone,
       requester_name: fieldData.requester_name,
-      requester_phone_no: fieldData.requester_phone_no,
+      requester_phone: fieldData.requester_phone,
       requester_address: fieldData.requester_address,
       item_category_id: fieldData.item_category_id,
-      item_desc: fieldData.item_desc,
+      item_description: fieldData.item_description,
       start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
-      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
     }))
   }
 
@@ -234,14 +213,13 @@ function PageIncomingItem() {
       id: fieldData.id,
       unit_id: fieldData.unit_id,
       name: fieldData.name,
-      phone_no: fieldData.phone_no,
+      phone: fieldData.phone,
       requester_name: fieldData.requester_name,
-      requester_phone_no: fieldData.requester_phone_no,
+      requester_phone: fieldData.requester_phone,
       requester_address: fieldData.requester_address,
       item_category_id: fieldData.item_category_id,
-      item_desc: fieldData.item_desc,
+      item_description: fieldData.item_description,
       start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
-      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
     }))
   }
 
@@ -255,33 +233,18 @@ function PageIncomingItem() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      name: fieldData.name,
-      phone_no: fieldData.phone_no,
-      requester_name: fieldData.requester_name,
-      requester_phone_no: fieldData.requester_phone_no,
-      requester_address: fieldData.requester_address,
-      item_category_id: fieldData.item_category_id,
-      item_desc: fieldData.item_desc,
-      start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
-      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
     }))
   }
 
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
-  }
-
   const handleChangeUnitField = (fieldName: string, value: string | number) => {
-    const requesterName = UNIT_DATA.find((unit) => unit.id === value)
+    const tenant = dataUnits.find((unit) => unit.unit_id === value)
+    const tenantName = tenant?.owner_name || tenant?.name
+    const tenantPhone = tenant?.owner_phone || tenant?.phone
+
     setFields((prevState) => ({
       ...prevState,
-      name: requesterName?.owner_name || '',
-      phone_no: requesterName?.phone_no || '',
+      name: tenantName || '',
+      phone: tenantPhone || '',
       [fieldName]: value,
     }))
   }
@@ -319,32 +282,136 @@ function PageIncomingItem() {
     setSubmitType(type)
   }
 
+  const handleGetIncomingItems = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/movement-item',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        type: 1,
+        page,
+        limit: PAGE_SIZE,
+        search,
+        ...filter,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllUnits = () => {
+    api({
+      url: '/v1/tenant/unit',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataUnits(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const handleGetAllWorkCategories = () => {
+    api({
+      url: '/v1/item-category',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataCategories(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/movement-item/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/movement-item/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/movement-item/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetIncomingItems()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleSubmitFilter = () => {
-    setIsLoadingData(true)
+    handleGetIncomingItems()
     handleModalFilterClose()
-    setTimeout(() => {
-      setIsLoadingData(false)
-    }, 500)
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     unit_code: column.unit_code,
     name: column.name,
     requester_name: column.requester_name,
-    item_category_name: ITEM_CATEGORY_DATA.find((cat) => cat.id === column.item_category_id)?.name,
+    item_category_name: column.item_category_name,
     item_category_id: column.item_category_id,
     start_date: dayjs(column.start_date).format('YYYY-MM-DD'),
     end_date: dayjs(column.end_date).format('YYYY-MM-DD'),
@@ -355,39 +422,39 @@ function PageIncomingItem() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('unit-permission-incoming-item-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('unit-permission-incoming-item-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.requester_name.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetIncomingItems()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllUnits()
+    handleGetAllWorkCategories()
+  }, [])
 
   return (
     <Layout>
@@ -408,11 +475,11 @@ function PageIncomingItem() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -425,7 +492,7 @@ function PageIncomingItem() {
             placeholder="Tanggal Masuk"
             name="start_date"
             value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            onChange={(selectedDate) => handleChangeField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -434,13 +501,13 @@ function PageIncomingItem() {
             placeholder="Nomor Unit"
             label="Nomor Unit"
             name="unit_id"
-            items={UNIT_DATA.map((itemData) => ({
+            items={dataUnits.map((itemData) => ({
               label: itemData.unit_code,
-              value: itemData.id,
+              value: itemData.unit_id,
             }))}
             value={{
-              label: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
-              value: UNIT_DATA.find((itemData) => itemData.id === fields.unit_id)?.id || '',
+              label: dataUnits.find((itemData) => itemData.unit_id === fields.unit_id)?.unit_code || '',
+              value: dataUnits.find((itemData) => itemData.unit_id === fields.unit_id)?.unit_id || '',
             }}
             onChange={(value) => handleChangeUnitField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
@@ -458,7 +525,7 @@ function PageIncomingItem() {
           <Input
             placeholder="No. Telp Penghuni"
             label="No. Telp Penghuni"
-            value={fields.phone_no}
+            value={fields.phone}
             disabled
             fullWidth
           />
@@ -467,13 +534,13 @@ function PageIncomingItem() {
             placeholder="Jenis Barang"
             label="Jenis Barang"
             name="item_category_id"
-            items={ITEM_CATEGORY_DATA.map((itemData) => ({
+            items={dataCategories.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: ITEM_CATEGORY_DATA.find((itemData) => itemData.id === fields.item_category_id)?.name || '',
-              value: ITEM_CATEGORY_DATA.find((itemData) => itemData.id === fields.item_category_id)?.id || '',
+              label: dataCategories.find((itemData) => itemData.id === fields.item_category_id)?.name || '',
+              value: dataCategories.find((itemData) => itemData.id === fields.item_category_id)?.id || '',
             }}
             onChange={(value) => handleChangeField('item_category_id', value.value)}
             readOnly={modalForm.readOnly}
@@ -483,8 +550,8 @@ function PageIncomingItem() {
           <TextArea
             placeholder="Keterangan Barang"
             label="Keterangan Barang"
-            name="item_desc"
-            value={fields.item_desc}
+            name="item_description"
+            value={fields.item_description}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -503,9 +570,9 @@ function PageIncomingItem() {
           <Input
             placeholder="No. Telepon Pemohon"
             label="No. Telepon Pemohon"
-            name="requester_phone_no"
+            name="requester_phone"
             type="tel"
-            value={fields.requester_phone_no}
+            value={fields.requester_phone}
             onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -560,13 +627,13 @@ function PageIncomingItem() {
             placeholder="Jenis Barang"
             label="Jenis Barang"
             name="item_category_id"
-            items={ITEM_CATEGORY_DATA.map((itemData) => ({
+            items={dataCategories.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: ITEM_CATEGORY_DATA.find((itemData) => itemData.id === filter.item_category_id)?.name || '',
-              value: ITEM_CATEGORY_DATA.find((itemData) => itemData.id === filter.item_category_id)?.id || '',
+              label: dataCategories.find((itemData) => itemData.id === filter.item_category_id)?.name || '',
+              value: dataCategories.find((itemData) => itemData.id === filter.item_category_id)?.id || '',
             }}
             onChange={(value) => handleChangeFilterField('item_category_id', value.value)}
             readOnly={modalForm.readOnly}

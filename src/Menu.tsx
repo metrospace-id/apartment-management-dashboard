@@ -355,10 +355,10 @@ export const MENUS: MenuProp[] = [
     section: 'main',
   },
   {
-    code: 'unit-permission-outcoming-item',
+    code: 'unit-permission-outgoing-item',
     parent_code: 'unit-permission',
     name: 'Izin Barang Keluar',
-    url: '/unit-permission/outcoming-item',
+    url: '/unit-permission/outgoing-item',
     section: 'main',
   },
   {

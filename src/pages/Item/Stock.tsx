@@ -1,19 +1,20 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import Input from 'components/Form/Input'
+import { Edit as IconEdit, FileText as IconFile, TrashAlt as IconTrash } from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
+import Toast from 'components/Toast'
+import { MODAL_CONFIRM_TYPE, PAGE_SIZE } from 'constants/form'
+import useDebounce from 'hooks/useDebounce'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Stok Barang'
 
@@ -24,11 +25,11 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'Kategori Barang',
-    key: 'type_name',
+    key: 'item_category_name',
   },
   {
     label: 'Jumlah',
-    key: 'qty',
+    key: 'quantity',
   },
   {
     label: 'Aksi',
@@ -38,32 +39,35 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Barang ${key + 1}`,
-  type_id: key + 1,
-  qty: `${key + 1}`,
-}))
-
-const TYPE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Jenis Barang ${key + 1}`,
-}))
+interface FieldProps {
+  id: number
+  name: string
+  item_category_id: number | null
+  quantity: number
+}
 
 function PageItemStock() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataCategories, setDataCategories] = useState<{ id: number, name: string }[]>([])
+  const [page, setPage] = useState(1)
+  const [fields, setFields] = useState<FieldProps>({
     id: 0,
     name: '',
-    type_id: 0,
-    qty: 0,
+    item_category_id: null,
+    quantity: 0,
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
     message: '',
+    variant: 'default',
   })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
@@ -78,15 +82,11 @@ function PageItemStock() {
   })
   const [submitType, setSubmitType] = useState('create')
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleCloseToast = () => {
     setToast({
+      variant: 'default',
       open: false,
       message: '',
     })
@@ -105,8 +105,8 @@ function PageItemStock() {
     setFields({
       id: 0,
       name: '',
-      type_id: 0,
-      qty: 0,
+      item_category_id: 0,
+      quantity: 0,
     })
   }
 
@@ -141,8 +141,8 @@ function PageItemStock() {
       ...prevState,
       id: fieldData.id,
       name: fieldData.name,
-      type_id: fieldData.type_id,
-      qty: fieldData.qty,
+      item_category_id: fieldData.item_category_id,
+      quantity: fieldData.quantity,
     }))
   }
 
@@ -156,8 +156,8 @@ function PageItemStock() {
       ...prevState,
       id: fieldData.id,
       name: fieldData.name,
-      type_id: fieldData.type_id,
-      qty: fieldData.qty,
+      item_category_id: fieldData.item_category_id,
+      quantity: fieldData.quantity,
     }))
   }
 
@@ -171,18 +171,7 @@ function PageItemStock() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      name: fieldData.name,
-      type_id: fieldData.type_id,
-      qty: fieldData.qty,
     }))
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -211,23 +200,110 @@ function PageItemStock() {
     setSubmitType(type)
   }
 
-  const handleClickSubmit = () => {
-    setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+  const handleGetItemStocks = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/item-stock',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
       })
-    }, 500)
+      .catch((error) => {
+        setToast(() => ({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        }))
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const handleGetAllWorkCategories = () => {
+    api({
+      url: '/v1/item-category',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataCategories(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast(() => ({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        }))
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/item-stock/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/item-stock/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/item-stock/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
+  const handleClickSubmit = () => {
+    setIsLoadingSubmit(true)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetItemStocks()
+      handleModalFormClose()
+      setToast(() => ({
+        variant: 'default',
+        open: true,
+        message: MODAL_CONFIRM_TYPE[submitType].message,
+      }))
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast(() => ({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        }))
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
+  }
+
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     name: column.name,
-    type_name: TYPE_DATA.find((type) => type.id === column.type_id)?.name,
-    qty: column.qty,
+    item_category_name: column.item_category_name,
+    quantity: column.quantity,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -235,38 +311,38 @@ function PageItemStock() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('item-stock-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('item-stock-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetItemStocks()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllWorkCategories()
+  }, [])
 
   return (
     <Layout>
@@ -283,11 +359,11 @@ function PageItemStock() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -296,8 +372,8 @@ function PageItemStock() {
       <Modal open={modalForm.open} title={modalForm.title}>
         <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
           <Input
-            placeholder="Nama Aset"
-            label="Nama Aset"
+            placeholder="Nama Barang"
+            label="Nama Barang"
             name="name"
             value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
@@ -308,16 +384,16 @@ function PageItemStock() {
           <Autocomplete
             placeholder="Jenis Barang"
             label="Jenis Barang"
-            name="type_id"
-            items={TYPE_DATA.map((itemData) => ({
+            name="item_category_id"
+            items={dataCategories.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: TYPE_DATA.find((itemData) => itemData.id === fields.type_id)?.name || '',
-              value: TYPE_DATA.find((itemData) => itemData.id === fields.type_id)?.id || '',
+              label: dataCategories.find((itemData) => itemData.id === fields.item_category_id)?.name || '',
+              value: dataCategories.find((itemData) => itemData.id === fields.item_category_id)?.id || '',
             }}
-            onChange={(value) => handleChangeField('type_id', value.value)}
+            onChange={(value) => handleChangeField('item_category_id', value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -325,9 +401,9 @@ function PageItemStock() {
           <Input
             placeholder="Jumlah"
             label="Jumlah"
-            name="qty"
-            value={fields.qty}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            name="quantity"
+            value={(+fields.quantity).toLocaleString()}
+            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value.replace(/\W+/g, ''))}
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -355,7 +431,7 @@ function PageItemStock() {
         <LoadingOverlay />
       )}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
+      <Toast open={toast.open} message={toast.message} variant={toast.variant} onClose={handleCloseToast} />
 
     </Layout>
   )

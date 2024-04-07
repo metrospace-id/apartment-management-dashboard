@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
 
 import Layout from 'components/Layout'
@@ -13,8 +13,8 @@ import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE } from 'constants/form'
-import { ITEM_STOCK_TYPE } from 'constants/item'
 import { exportToExcel } from 'utils/export'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Histori Barang'
 
@@ -25,15 +25,15 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'Tanggal',
-    key: 'date',
+    key: 'updated_at',
   },
   {
     label: 'Oleh',
-    key: 'updated_by',
+    key: 'updated_by_name',
   },
   {
-    label: 'Jenis',
-    key: 'type',
+    label: 'Deskripsi',
+    key: 'description',
   },
   {
     label: 'Debit',
@@ -45,25 +45,19 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'Saldo',
-    key: 'balance',
+    key: 'quantity_after',
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  item_id: key + 1,
-  item_name: `Barang ${key + 1}`,
-  type: (key % 3) + 1,
-  date: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-  debit: `${key + 1}`,
-  credit: `${key + 1}`,
-  balance: `${key + 1}`,
-  updated_by: `Nama Karyawan ${key + 1}`,
-}))
-
 function PageItemHistory() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
 
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -77,12 +71,7 @@ function PageItemHistory() {
   })
   const [search, setSearch] = useState('')
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false)
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleModalFilterOpen = () => {
     setIsModalFilterOpen(true)
@@ -99,19 +88,11 @@ function PageItemHistory() {
     })
   }
 
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
-  }
-
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
@@ -122,43 +103,60 @@ function PageItemHistory() {
     }))
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
-    id: column.id,
-    item_name: column.item_name,
-    updated_by: column.updated_by,
-    date: dayjs(column.date).format('YYYY-MM-DD HH:mm:ss'),
-    type: ITEM_STOCK_TYPE.find((type) => type.id === column.type)?.label,
-    debit: column.debit,
-    credit: column.credit,
-    balance: column.balance,
-  }))
-
-  const handleSubmitFilter = () => {
+  const handleGetItemHistories = () => {
     setIsLoadingData(true)
-    handleModalFilterClose()
-    setTimeout(() => {
-      setIsLoadingData(false)
-    }, 500)
+    api({
+      url: '/v1/item-history',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+        ...filter,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
+  const handleSubmitFilter = () => {
+    handleGetItemHistories()
+    handleModalFilterClose()
+  }
+
+  const tableDatas = data.data.map((column) => ({
+    id: column.id,
+    item_name: column.item_name,
+    updated_by_name: column.updated_by_name,
+    updated_at: dayjs(column.updated_at).format('YYYY-MM-DD HH:mm:ss'),
+    description: column.description,
+    debit: column.quantity_after < column.quantity_before ? column.quantity : '-',
+    credit: column.quantity_after >= column.quantity_before ? column.quantity : '-',
+    quantity_after: column.quantity_after,
+  }))
+
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.item_name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetItemHistories()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>
@@ -178,11 +176,11 @@ function PageItemHistory() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>

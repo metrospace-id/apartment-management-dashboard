@@ -22,11 +22,13 @@ interface ToastProps {
   open: boolean
   message: string
   timeout?: number
+  variant?: 'default' | 'success' | 'warning' | 'error' | string
   onClose?: () => void
 }
 
 export default function Toast({
   open, onClose, message, timeout = 3000,
+  variant = 'default',
 }: ToastProps) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -47,6 +49,15 @@ export default function Toast({
     }
   }, [timeout, isOpen])
 
+  let bgColor = 'bg-neutral-500'
+  if (variant === 'success') {
+    bgColor = 'bg-green-500'
+  } else if (variant === 'warning') {
+    bgColor = 'bg-yellow-500'
+  } else if (variant === 'error') {
+    bgColor = 'bg-red-500'
+  }
+
   if (isOpen) {
     return (
       <Modal
@@ -54,7 +65,7 @@ export default function Toast({
         style={customStyles}
         contentLabel="Example Modal"
       >
-        <div className="margin-auto flex gap-4 items-center w-full max-w-[90vh] py-2 px-4 text-white bg-neutral-500 rounded-lg shadow-medium">
+        <div className={`margin-auto flex gap-4 items-center w-full max-w-[90vh] py-2 px-4 text-white ${bgColor} rounded-lg shadow-medium`}>
           <div className="text-sm font-medium">{message}</div>
           <button
             onClick={handleClose}

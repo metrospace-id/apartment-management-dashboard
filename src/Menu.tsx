@@ -447,10 +447,10 @@ export const MENUS: MenuProp[] = [
     ),
   },
   {
-    code: 'inquiry-tenant',
+    code: 'inquiry-ticket',
     parent_code: 'inquiry',
-    name: 'Penghuni',
-    url: '/inquiry/tenant',
+    name: 'Tiket',
+    url: '/inquiry/ticket',
     section: 'main',
   },
   {

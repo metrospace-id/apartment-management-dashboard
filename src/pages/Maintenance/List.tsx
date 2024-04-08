@@ -150,6 +150,7 @@ function PageMaintenanceAsset() {
       status: 1,
       created_at: dayjs().format('YYYY-MM-DD'),
     })
+    setScannedCode('')
   }
 
   const handleModalConfirmClose = () => {

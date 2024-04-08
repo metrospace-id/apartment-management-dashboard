@@ -67,6 +67,10 @@ export const ITEM_PURCHASE_STATUS = [
     id: 2,
     label: 'Disetujui',
   },
+  {
+    id: 3,
+    label: 'Barang Diterima',
+  },
 ]
 
 export const ITEM_UNITS = ['Batang', 'Buah', 'Bungkus', 'Butir', 'Dus', 'Gram', 'Gulung', 'Kaleng', 'Keping', 'Kilogram', 'Koli', 'Lembar', 'Liter', 'Meter', 'Meter Kubik', 'Meter Persegi', 'Pail', 'Pasang', 'Pcs', 'Rim', 'Roll', 'Sak', 'Set', 'Unit']

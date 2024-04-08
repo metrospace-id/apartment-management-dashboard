@@ -3,6 +3,8 @@ import {
 } from 'react'
 import dayjs from 'dayjs'
 
+import Toggle from 'components/Form/Toggle'
+import Badge from 'components/Badge'
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
 import Table from 'components/Table/Table'
@@ -21,16 +23,17 @@ import DatePicker from 'components/Form/DatePicker'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { exportToExcel } from 'utils/export'
 import { ITEM_PURCHASE_TYPE, ITEM_UNITS, ITEM_PURCHASE_STATUS } from 'constants/item'
-import { VENDOR_SECTORS } from 'constants/vendor'
 import Select from 'components/Form/Select'
 import useQuery from 'utils/url'
+import api from 'utils/api'
+import { useNavigate } from 'react-router-dom'
 
 const PAGE_NAME = 'Pembelian Barang'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'No. Pembelian',
-    key: 'purchase_no',
+    key: 'purchase_number',
   },
   {
     label: 'Tanggal',
@@ -60,70 +63,80 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const ITEM_LIST = Array.from(Array(5).keys()).map((key) => ({
-  id: key + 1,
-  item_id: key + 1,
-  name: `Nama Barang ${key + 1}`,
-  qty: 99,
-  unit: 'Unit',
-  price: 10000,
-}))
+const renderStatusLabel = (status: number) => {
+  const statusData = ITEM_PURCHASE_STATUS.find((itemData) => itemData.id === status)
+  const label = statusData?.label || '-'
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  purchase_no: `REQ/01/${key + 1}`,
-  vendor_id: key + 1,
-  vendor_name: `Nama Vendor ${key + 1}`,
-  vendor_phone: `08123${key + 1}`,
-  type: (key % 2) + 1,
-  status: (key % 3),
-  items: ITEM_LIST,
-  notes: 'LOREM IPSUM',
-  created_at: '2024-12-31 00:00:00',
-}))
+  let variant = 'default'
+  if (+status === 1) {
+    variant = 'warning'
+  }
+  if (+status === 2) {
+    variant = 'info'
+  }
+  if (+status === 3) {
+    variant = 'success'
+  }
+  if (+status === 0) {
+    variant = 'danger'
+  }
+  return {
+    label,
+    variant,
+  }
+}
 
-const VENDOR_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Nama Vendor ${key + 1}`,
-  contact_name: `Nama Narahubung ${key + 1}`,
-  address: 'Alamat Lorem Ipsum',
-  phone: `08123${key + 1}`,
-  fax: `12345${key + 1}`,
-  email: `email@pemilik${key + 1}.com`,
-  sector: VENDOR_SECTORS[0],
-  notes: 'Keterangan Lorem Ipsum',
-  picture: 'https://via.placeholder.com/300x300',
-  document: [{
-    id: 1,
-    picture: 'https://via.placeholder.com/300x300',
-  }],
-}))
+interface FieldProps {
+  id?: number
+  type: string
+  vendor_id: number | null
+  vendor_name?: string
+  vendor_phone?: string
+  vendor_sector?: string
+  department_id: number | null
+  status: string
+  notes: string
+  items: {
+    id?: number
+    item_stock_id: number
+    quantity: number
+    price: number
+    unit: string
+  }[]
+}
 
 function PageItemPurchase() {
   const query = useQuery()
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+  const navigate = useNavigate()
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataDepartments, setDataDepartments] = useState<{ id: number, name: string }[]>([])
+  const [dataVendors, setDataVendors] = useState<{ id: number, name: string, phone: string, sector: string }[]>([])
+  const [dataItems, setDataItems] = useState<{ id: number, name: string }[]>([])
+  const [page, setPage] = useState(1)
+  const [fields, setFields] = useState<FieldProps>({
     id: 0,
-    purchase_no: '',
-    vendor_id: 0,
-    vendor_name: '',
-    vendor_phone: '',
-    vendor_sector: '',
-    type: 0,
+    vendor_id: null,
+    department_id: null,
+    type: '',
     status: '',
     notes: '',
     items: [],
-    created_at: dayjs().format('YYYY-MM-DD'),
   })
   const [filter, setFilter] = useState({
     start_date: '',
     end_date: '',
-    item_category_id: 0,
+    status: '',
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
+    variant: 'default',
     open: false,
     message: '',
   })
@@ -141,25 +154,29 @@ function PageItemPurchase() {
   })
   const [submitType, setSubmitType] = useState('create')
   const [isModalDeleteItemOpen, setIsModalDeleteItemOpen] = useState(false)
-  const [selectedItem, setSelectedItem] = useState({ id: 0, item_id: 0 })
+  const [selectedItem, setSelectedItem] = useState({ id: 0, item_stock_id: 0 })
+  const [currentStatus, setCurrentStatus] = useState(0)
 
-  const debounceSearch = useDebounce(search, 500)
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const statuses = useMemo(() => {
+    if (+currentStatus === 2) {
+      return ITEM_PURCHASE_STATUS.filter((status) => status.id === 3)
+    }
+    return ITEM_PURCHASE_STATUS.filter((status) => status.id !== 3)
+  }, [currentStatus])
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
   const handleCloseToast = () => {
     setToast({
+      variant: 'default',
       open: false,
       message: '',
     })
@@ -177,17 +194,17 @@ function PageItemPurchase() {
     }))
     setFields({
       id: 0,
-      purchase_no: '',
-      vendor_id: 0,
-      vendor_name: '',
-      vendor_phone: '',
-      vendor_sector: '',
-      type: 0,
+      vendor_id: null,
+      department_id: null,
+      type: '',
       status: '',
-      items: [],
       notes: '',
-      created_at: dayjs().format('YYYY-MM-DD'),
+      items: [],
     })
+
+    if (query.get('request_id')) {
+      navigate('/item/purchase')
+    }
   }
 
   const handleModalFilterOpen = () => {
@@ -220,48 +237,61 @@ function PageItemPurchase() {
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      purchase_no: fieldData.purchase_no,
-      vendor_id: fieldData.vendor_id,
-      vendor_name: fieldData.vendor_name,
-      vendor_phone: fieldData.vendor_phone,
-      vendor_sector: fieldData.vendor_sector,
-      type: fieldData.type,
-      status: fieldData.status,
-      items: fieldData.items,
-      notes: fieldData.note,
-      created_at: dayjs().format(fieldData.created_at),
-    }))
+    api({
+      url: `/v1/item-purchase/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setCurrentStatus(+responseData.data.status)
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
-      title: `Ubah ${PAGE_NAME}`,
+      title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      purchase_no: fieldData.purchase_no,
-      vendor_id: fieldData.vendor_id,
-      vendor_name: fieldData.vendor_name,
-      vendor_phone: fieldData.vendor_phone,
-      vendor_sector: fieldData.vendor_sector,
-      type: fieldData.type,
-      status: fieldData.status,
-      items: fieldData.items,
-      notes: fieldData.note,
-      created_at: dayjs().format(fieldData.created_at),
-    }))
+    api({
+      url: `/v1/item-purchase/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setCurrentStatus(+responseData.data.status)
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -274,16 +304,6 @@ function PageItemPurchase() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      purchase_no: fieldData.purchase_no,
-      vendor_id: fieldData.vendor_id,
-      vendor_name: fieldData.vendor_name,
-      vendor_phone: fieldData.vendor_phone,
-      vendor_sector: fieldData.vendor_sector,
-      type: fieldData.type,
-      status: fieldData.status,
-      items: fieldData.items,
-      notes: fieldData.note,
-      created_at: dayjs().format(fieldData.created_at),
     }))
   }
 
@@ -294,7 +314,7 @@ function PageItemPurchase() {
 
   const handleClickCancelDeleteItem = () => {
     setIsModalDeleteItemOpen(false)
-    setSelectedItem({ id: 0, item_id: 0 })
+    setSelectedItem({ id: 0, item_stock_id: 0 })
   }
 
   const handleClickSubmitDeleteItem = () => {
@@ -305,6 +325,7 @@ function PageItemPurchase() {
     setTimeout(() => {
       setIsLoadingSubmit(false)
       setToast({
+        variant: 'default',
         open: true,
         message: 'Berhasil menghapus barang.',
       })
@@ -316,27 +337,20 @@ function PageItemPurchase() {
   }
 
   const handleAddItem = () => {
+    const itemLength = fields.items.length
     setFields((prevState: any) => ({
       ...prevState,
       items: [
         ...prevState.items,
         {
-          id: 0,
-          item_id: 0,
-          qty: 0,
+          id: `temp-${itemLength + 1}`,
+          item_stock_id: 0,
+          quantity: 0,
           price: 0,
           unit: '',
         },
       ],
     }))
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -375,7 +389,7 @@ function PageItemPurchase() {
   }
 
   const handleChangeVendorField = (vendorId: number) => {
-    const selectedVendor = VENDOR_DATA.find(({ id }) => id === vendorId)
+    const selectedVendor = dataVendors.find(({ id }) => id === vendorId)
     setFields((prevState) => ({
       ...prevState,
       vendor_id: selectedVendor?.id || 0,
@@ -405,34 +419,165 @@ function PageItemPurchase() {
     setSubmitType(type)
   }
 
+  const handleGetItemPurchases = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/item-purchase',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+        ...filter,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllItems = () => {
+    api({
+      url: '/v1/item-stock',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataItems(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const handleGetAllDepartments = () => {
+    api({
+      url: '/v1/department',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataDepartments(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const handleGetAllVendors = () => {
+    api({
+      url: '/v1/vendor',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataVendors(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/item-purchase/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/item-purchase/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/item-purchase/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetItemPurchases()
       handleModalFormClose()
       setToast({
+        variant: 'default',
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleSubmitFilter = () => {
-    setIsLoadingData(true)
     handleModalFilterClose()
-    setTimeout(() => {
-      setIsLoadingData(false)
-    }, 500)
+    handleGetItemPurchases()
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
-    purchase_no: column.purchase_no,
+    purchase_number: column.purchase_number,
     created_at: dayjs(column.created_at).format('YYYY-MM-DD'),
     vendor_name: column.vendor_name,
     vendor_phone: column.vendor_phone,
-    type: ITEM_PURCHASE_TYPE.find((type) => type.id === column.type)?.label,
-    status: ITEM_PURCHASE_STATUS[column.status].label,
+    type: <Badge variant={+column.type === 1 ? 'info' : 'primary'}>{ITEM_PURCHASE_TYPE.find((type) => type.id === +column.type)?.label}</Badge>,
+    status: <Badge variant={renderStatusLabel(column.status).variant as any}>{renderStatusLabel(column.status).label}</Badge>,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -440,42 +585,76 @@ function PageItemPurchase() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('item-purchase-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('item-purchase-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.purchase_no.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.vendor_name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetItemPurchases()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllItems()
+    handleGetAllDepartments()
+    handleGetAllVendors()
+  }, [])
 
   useEffect(() => {
     if (query.get('request_id')) {
+      setIsLoadingData(true)
+      setModalForm({
+        title: `Detail ${PAGE_NAME}`,
+        open: true,
+        readOnly: true,
+      })
+      api({
+        url: `/v1/item-request/${query.get('request_id')}`,
+        withAuth: true,
+      }).then(({ data: responseData }) => {
+        setFields((prevState) => ({
+          ...prevState,
+          item_request_id: responseData.data.id,
+          department_id: responseData.data.department_id,
+          items: responseData.data.items.map((item: any) => ({
+            id: item.id,
+            item_stock_id: item.item_stock_id,
+            quantity: item.quantity,
+            price: '',
+            unit: item.unit,
+          })),
+        }))
+        setIsLoadingData(false)
+      })
+        .catch((error) => {
+          setToast({
+            variant: 'error',
+            open: true,
+            message: error.response?.data?.message,
+          })
+        }).finally(() => {
+          setIsLoadingData(false)
+        })
       handleModalCreateOpen()
     }
   }, [query])
@@ -499,11 +678,11 @@ function PageItemPurchase() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -517,7 +696,7 @@ function PageItemPurchase() {
             name="type"
             value={fields.type}
             onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
+            readOnly={modalForm.readOnly || currentStatus > 1}
             fullWidth
             options={[{
               label: 'Pilih Jenis Permintaan',
@@ -528,19 +707,36 @@ function PageItemPurchase() {
           />
 
           <Autocomplete
-            placeholder="Nama Vendor"
-            label="Nama Vendor"
-            name="vendor_id"
-            items={VENDOR_DATA.map((itemData) => ({
+            placeholder="Departemen"
+            label="Departemen"
+            name="department_id"
+            items={dataDepartments.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: VENDOR_DATA.find((itemData) => itemData.id === fields.vendor_id)?.name || '',
-              value: VENDOR_DATA.find((itemData) => itemData.id === fields.vendor_id)?.id || '',
+              label: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.name || '',
+              value: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.id || '',
+            }}
+            onChange={(value) => handleChangeField('department_id', value.value)}
+            readOnly={modalForm.readOnly || currentStatus > 1}
+            fullWidth
+          />
+
+          <Autocomplete
+            placeholder="Nama Vendor"
+            label="Nama Vendor"
+            name="vendor_id"
+            items={dataVendors.map((itemData) => ({
+              label: itemData.name,
+              value: itemData.id,
+            }))}
+            value={{
+              label: dataVendors.find((itemData) => itemData.id === fields.vendor_id)?.name || '',
+              value: dataVendors.find((itemData) => itemData.id === fields.vendor_id)?.id || '',
             }}
             onChange={(value) => handleChangeVendorField(+value.value)}
-            readOnly={modalForm.readOnly}
+            readOnly={modalForm.readOnly || currentStatus > 1}
             fullWidth
           />
 
@@ -564,35 +760,38 @@ function PageItemPurchase() {
             <TextArea
               placeholder="Catatan"
               label="Catatan"
-              name="note"
+              name="notes"
               value={fields.notes}
-              readOnly={modalForm.readOnly}
+              readOnly={modalForm.readOnly || currentStatus > 1}
+              onChange={(e) => handleChangeField(e.target.name, e.target.value)}
               fullWidth
             />
           </div>
 
-          <Select
-            placeholder="Status"
-            label="Status"
-            name="status"
-            value={fields.status}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-            options={[
-              {
+          {!!fields.id && currentStatus < 2 && (
+            <Select
+              placeholder="Status"
+              label="Status"
+              name="status"
+              value={fields.status}
+              onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+              readOnly={modalForm.readOnly || currentStatus > 1}
+              fullWidth
+              options={[{
                 label: 'Pilih Status',
                 value: '',
                 disabled: true,
               },
-              ...ITEM_PURCHASE_STATUS.map((type) => ({ value: type.id, label: type.label })),
-            ]}
-          />
+              ...statuses.map((status) => ({ value: status.id, label: status.label })),
+              ]}
+            />
+          )}
 
           <div className="sm:col-span-2">
             <p className="text-sm text-slate-600 font-medium mb-2">Barang</p>
+            {(!modalForm.readOnly && currentStatus < 2) && (
             <Button size="sm" variant="secondary" onClick={handleAddItem}>Tambah</Button>
-
+            )}
             <div className="border border-slate-200 dark:border-slate-700 rounded-md w-full overflow-scroll mt-2">
               <table className="border-collapse min-w-full w-max relative">
                 <thead>
@@ -611,27 +810,27 @@ function PageItemPurchase() {
                       <tr key={item.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
                         <td className="p-2" aria-label="Item Name">
                           <Autocomplete
-                            name="item_id"
+                            name="item_stock_id"
                             placeholder="Cari Barang"
-                            items={ITEM_LIST.map((itemData) => ({
+                            items={dataItems.map((itemData) => ({
                               label: itemData.name,
                               value: itemData.id,
                             }))}
                             value={{
-                              label: ITEM_LIST.find((itemData) => itemData.id === item.item_id)?.name || '',
-                              value: ITEM_LIST.find((itemData) => itemData.id === item.item_id)?.id || '',
+                              label: dataItems.find((itemData) => itemData.id === item.item_stock_id)?.name || '',
+                              value: dataItems.find((itemData) => itemData.id === item.item_stock_id)?.id || '',
                             }}
-                            onChange={(value) => handleChangeItemField(index, 'item_id', value.value)}
-                            readOnly={modalForm.readOnly}
+                            onChange={(value) => handleChangeItemField(index, 'item_stock_id', value.value)}
+                            readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
                           />
                         </td>
                         <td className="p-2" aria-label="Qty">
                           <Input
-                            value={(+item.qty)}
-                            name="qty"
-                            onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value)}
-                            readOnly={modalForm.readOnly}
+                            name="quantity"
+                            value={(+item.quantity).toLocaleString()}
+                            onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value.replace(/\W+/g, ''))}
+                            readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
                           />
                         </td>
@@ -648,23 +847,24 @@ function PageItemPurchase() {
                               value: ITEM_UNITS.find((itemData) => itemData === item.unit) || '',
                             }}
                             onChange={(value) => handleChangeItemField(index, 'unit', value.value)}
-                            readOnly={modalForm.readOnly}
-                            fullWidth
-                          />
-                        </td>
-                        <td className="p-2" aria-label="Price">
-                          <Input
-                            value={(+item.price)}
-                            name="price"
-                            onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value)}
-                            readOnly={modalForm.readOnly}
+                            readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
                           />
                         </td>
                         <td className="p-2" aria-label="Price">
                           <Input
                             leftIcon={<p>Rp</p>}
-                            value={(item.price * item.qty).toLocaleString('id')}
+                            name="price"
+                            value={(+item.price).toLocaleString()}
+                            onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value.replace(/\W+/g, ''))}
+                            readOnly={modalForm.readOnly || currentStatus > 1}
+                            fullWidth
+                          />
+                        </td>
+                        <td className="p-2" aria-label="Price">
+                          <Input
+                            leftIcon={<p>Rp</p>}
+                            value={(+item.price * +item.quantity).toLocaleString('id')}
                             disabled
                             fullWidth
                           />
@@ -688,9 +888,20 @@ function PageItemPurchase() {
             </div>
           </div>
 
+          {!!fields.id && +fields.type === 1 && currentStatus === 2 && (
+          <Toggle label="Barang Telah Diterima" name="status" checked={+fields.status === 3} onChange={(e) => handleChangeField('status', e.target.checked ? '3' : '2')} />
+          )}
+
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button
+            onClick={query.get('request_id')
+              ? () => navigate('/item/request')
+              : handleModalFormClose}
+            variant="default"
+          >
+            Tutup
+          </Button>
           {!modalForm.readOnly && (
             <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
           )}
@@ -708,7 +919,7 @@ function PageItemPurchase() {
                 name="start_date"
                 value={filter.start_date ? dayjs(filter.start_date).toDate() : undefined}
                 onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
-                readOnly={modalForm.readOnly}
+                readOnly={modalForm.readOnly || currentStatus > 1}
                 fullWidth
               />
 
@@ -717,26 +928,27 @@ function PageItemPurchase() {
                 name="end_date"
                 value={filter.end_date ? dayjs(filter.end_date).toDate() : undefined}
                 onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
-                readOnly={modalForm.readOnly}
+                readOnly={modalForm.readOnly || currentStatus > 1}
                 fullWidth
               />
             </div>
           </div>
 
           <Select
-            placeholder="Jenis Pembelian"
-            label="Jenis Pembelian"
-            name="type"
-            value={fields.type}
+            placeholder="Status"
+            label="Status"
+            name="status"
+            value={filter.status}
             onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
+            readOnly={modalForm.readOnly || currentStatus > 1}
             fullWidth
             options={[{
-              label: 'Pilih Jenis Permintaan',
+              label: 'Pilih Status',
               value: '',
               disabled: true,
             },
-            ...ITEM_PURCHASE_TYPE.map((type) => ({ value: type.id, label: type.label }))]}
+            ...ITEM_PURCHASE_STATUS.map((status) => ({ value: status.id, label: status.label })),
+            ]}
           />
 
         </form>
@@ -770,7 +982,7 @@ function PageItemPurchase() {
         <LoadingOverlay />
       )}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
+      <Toast open={toast.open} message={toast.message} variant={toast.variant} onClose={handleCloseToast} />
 
     </Layout>
   )

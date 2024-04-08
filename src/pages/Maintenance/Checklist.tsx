@@ -1,23 +1,24 @@
-import { useState, useMemo, useEffect } from 'react'
 import { Scanner } from '@yudiel/react-qr-scanner'
 import dayjs from 'dayjs'
+import { useEffect, useState } from 'react'
 
-import Layout from 'components/Layout'
+import Badge from 'components/Badge'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { EXAMPLE_COMPONENTS, EXAMPLE_SUBMISSION } from 'constants/asset'
-
 import { Form } from 'components/Form/FormBuilder'
+import Input from 'components/Form/Input'
+import Select from 'components/Form/Select'
+import { Edit as IconEdit, FileText as IconFile, TrashAlt as IconTrash } from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
+import Toast from 'components/Toast'
+import { MODAL_CONFIRM_TYPE, PAGE_SIZE } from 'constants/form'
+import useDebounce from 'hooks/useDebounce'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Checklist Aset'
 
@@ -36,7 +37,11 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'Oleh',
-    key: 'created_by',
+    key: 'created_by_name',
+  },
+  {
+    label: 'Status',
+    key: 'status',
   },
   {
     label: 'Aksi',
@@ -46,43 +51,54 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  asset_code: '01-01-01-2024-1',
-  asset_name: `Aset ${key + 1}`,
-  submission: JSON.stringify(EXAMPLE_SUBMISSION),
-  created_at: '2024-31-12 00:00:00',
-  created_by: 'Pegawai Engineering',
-}))
+const renderStatusLabel = (status: number) => {
+  const statusData = [{
+    label: 'Pending',
+    value: 1,
+  },
+  {
+    label: 'Approve',
+    value: 2,
+  }].find((itemData) => itemData.value === status)
 
-const ASSET_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  code: '01-01-01-2024-1',
-  name: `Aset ${key + 1}`,
-  group_id: key + 1,
-  group_name: `Golongan ${key + 1}`,
-  location_id: key + 1,
-  location_name: `Lokasi ${key + 1}`,
-  type_id: key + 1,
-  type_name: `Jenis ${key + 1}`,
-  year: '2024',
-  brand: 'Samsung',
-  notes: 'Lorem ipsum',
-}))
+  const label = statusData?.label || '-'
+
+  let variant = 'default'
+  if (+status === 1) {
+    variant = 'warning'
+  }
+  if (+status === 2) {
+    variant = 'success'
+  }
+
+  return {
+    label,
+    variant,
+  }
+}
 
 function PageMaintenanceChecklist() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
+    type: 2,
+    asset_id: 0,
     asset_code: '',
     asset_name: '',
+    checklist_form: '',
     created_by: '',
     submission: '',
+    status: 1,
     created_at: dayjs().format('YYYY-MM-DD'),
   })
   const [scannedCode, setScannedCode] = useState('')
-  const [assetForm, setAssetForm] = useState('')
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
@@ -101,13 +117,9 @@ function PageMaintenanceChecklist() {
     open: false,
   })
   const [submitType, setSubmitType] = useState('create')
+  const [currentStatus, setCurrentStatus] = useState(0)
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleCloseToast = () => {
     setToast({
@@ -128,10 +140,14 @@ function PageMaintenanceChecklist() {
     }))
     setFields({
       id: 0,
+      type: 2,
+      asset_id: 0,
       asset_code: '',
       asset_name: '',
       created_by: '',
+      checklist_form: '',
       submission: '',
+      status: 1,
       created_at: dayjs().format('YYYY-MM-DD'),
     })
   }
@@ -158,37 +174,67 @@ function PageMaintenanceChecklist() {
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
+    setIsLoadingData(true)
+    setFields((prevState) => ({
+      ...prevState,
+      id: fieldData.id,
+    }))
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-    setFields({
-      id: fieldData.id,
-      asset_code: fieldData.asset_code,
-      asset_name: fieldData.asset_name,
-      created_at: fieldData.created_at,
-      created_by: fieldData.created_by,
-      submission: fieldData.submission,
+    api({
+      url: `/v1/maintenance/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setCurrentStatus(+responseData.data.status)
+      setIsLoadingData(false)
     })
-    setAssetForm(JSON.stringify(EXAMPLE_COMPONENTS))
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields({
+    setFields((prevState) => ({
+      ...prevState,
       id: fieldData.id,
-      asset_code: fieldData.asset_code,
-      asset_name: fieldData.asset_name,
-      created_at: fieldData.created_at,
-      created_by: fieldData.created_by,
-      submission: fieldData.submission,
+    }))
+    api({
+      url: `/v1/maintenance/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setCurrentStatus(+responseData.data.status)
+      setIsLoadingData(false)
     })
-    setAssetForm(JSON.stringify(EXAMPLE_COMPONENTS))
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -198,22 +244,10 @@ function PageMaintenanceChecklist() {
       open: true,
     })
     setSubmitType('delete')
-    setFields({
+    setFields((prevState) => ({
+      ...prevState,
       id: fieldData.id,
-      asset_code: fieldData.asset_code,
-      asset_name: fieldData.asset_name,
-      created_at: fieldData.created_at,
-      created_by: fieldData.created_by,
-      submission: fieldData.submission,
-    })
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
+    }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -221,6 +255,12 @@ function PageMaintenanceChecklist() {
       ...prevState,
       [fieldName]: value,
     }))
+  }
+
+  const handleChangeNumericField = (fieldName: string, value: string) => {
+    if (/^\d*$/.test(value) || value === '') {
+      handleChangeField(fieldName, value)
+    }
   }
 
   const handleClickConfirm = (type: string) => {
@@ -236,44 +276,116 @@ function PageMaintenanceChecklist() {
     setSubmitType(type)
   }
 
+  const handleGetChecklists = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/maintenance',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        type: '2',
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/maintenance/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/maintenance/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/maintenance/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetChecklists()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
-  const handleScanCode = (text: string) => {
-    const selectedAset = ASSET_DATA.find((item) => item.code === text)
-
-    setFields((prevState) => ({
-      ...prevState,
-      code: selectedAset?.code || '',
-      name: selectedAset?.name || '',
-    }))
-
-    setTimeout(() => {
-      setScannedCode(text)
-      setAssetForm(JSON.stringify(EXAMPLE_COMPONENTS))
-    }, 500)
+  const handleScanCode = (code: string) => {
+    api({
+      url: `/v1/asset/code/${code}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        checklist_form: responseData?.data.checklist_form || '',
+        asset_id: responseData?.data.id || 0,
+        asset_code: responseData?.data.code || '',
+        asset_name: responseData?.data.name || '',
+      }))
+      setScannedCode(code)
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleOpenScanCode = () => {
     setScannedCode('')
-    setAssetForm('')
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     asset_code: column.asset_code,
     asset_name: column.asset_name,
     created_at: dayjs(column.created_at).format('YYYY-MM-DD'),
-    created_by: column.created_by,
+    created_by_name: column.created_by_name,
+    status: <Badge variant={renderStatusLabel(column.status).variant as any}>{renderStatusLabel(column.status).label}</Badge>,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -281,39 +393,36 @@ function PageMaintenanceChecklist() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('checklist-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('checklist-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.asset_code.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.asset_name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetChecklists()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>
@@ -330,11 +439,11 @@ function PageMaintenanceChecklist() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -380,12 +489,38 @@ function PageMaintenanceChecklist() {
               fullWidth
             />
             )}
+
+            {!!fields.id && (
+            <Select
+              placeholder="Status"
+              label="Status"
+              name="status"
+              value={fields.status}
+              onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+              readOnly={modalForm.readOnly || currentStatus > 1}
+              fullWidth
+              options={[{
+                label: 'Pilih Status',
+                value: '',
+                disabled: true,
+              },
+              {
+                label: 'Pending',
+                value: 1,
+              },
+              {
+                label: 'Approve',
+                value: 2,
+              },
+              ]}
+            />
+            )}
           </div>
 
           <div className="flex-1">
             <Form
-              readOnly={modalForm.readOnly}
-              formComponent={assetForm}
+              readOnly={modalForm.readOnly || currentStatus > 1}
+              formComponent={fields.checklist_form}
               onChange={(e) => handleChangeField('submission', JSON.stringify(e.data))}
               submission={JSON.parse(fields.submission || '[]')}
             />

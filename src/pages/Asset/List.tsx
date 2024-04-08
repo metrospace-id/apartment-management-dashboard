@@ -68,6 +68,8 @@ function PageAssetList() {
     asset_group_id: 0,
     asset_location_id: 0,
     asset_type_id: 0,
+    form_maintenance_id: 0,
+    form_checklist_id: 0,
     year: '',
     brand: '',
     notes: '',
@@ -75,6 +77,7 @@ function PageAssetList() {
   const [dataAssetGroup, setDataAssetGroup] = useState<{ id: number, name: string }[]>([])
   const [dataAssetLocation, setDataAssetLocation] = useState<{ id: number, name: string }[]>([])
   const [dataAssetType, setDataAssetType] = useState<{ id: number, name: string }[]>([])
+  const [dataFormMaintenance, setDataFormMaintenance] = useState<{ id: number, name: string, type: string }[]>([])
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
@@ -121,6 +124,8 @@ function PageAssetList() {
       asset_group_id: 0,
       asset_location_id: 0,
       asset_type_id: 0,
+      form_maintenance_id: 0,
+      form_checklist_id: 0,
       year: '',
       brand: '',
       notes: '',
@@ -161,6 +166,8 @@ function PageAssetList() {
       asset_group_id: fieldData.asset_group_id,
       asset_location_id: fieldData.asset_location_id,
       asset_type_id: fieldData.asset_type_id,
+      form_checklist_id: fieldData.form_checklist_id,
+      form_maintenance_id: fieldData.form_maintenance_id,
       year: fieldData.year,
       brand: fieldData.brand,
       notes: fieldData.notes,
@@ -180,6 +187,8 @@ function PageAssetList() {
       asset_group_id: fieldData.asset_group_id,
       asset_location_id: fieldData.asset_location_id,
       asset_type_id: fieldData.asset_type_id,
+      form_checklist_id: fieldData.form_checklist_id,
+      form_maintenance_id: fieldData.form_maintenance_id,
       year: fieldData.year,
       brand: fieldData.brand,
       notes: fieldData.notes,
@@ -325,6 +334,31 @@ function PageAssetList() {
       })
   }
 
+  const handleGetAllFormMaintenance = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/form',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataFormMaintenance(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
   const apiSubmitCreate = () => api({
     url: '/v1/asset/create',
     withAuth: true,
@@ -424,6 +458,7 @@ function PageAssetList() {
     handleGetAllAssetGroups()
     handleGetAllAssetLocations()
     handleGetAllAssetTypes()
+    handleGetAllFormMaintenance()
   }, [])
 
   return (
@@ -546,6 +581,42 @@ function PageAssetList() {
               fullWidth
             />
           </div>
+
+          <Autocomplete
+            placeholder="Form Maintenance"
+            label="Form Maintenance"
+            name="form_maintenance_id"
+            items={dataFormMaintenance.filter((itemData) => itemData.type === '1')
+              .map((itemData) => ({
+                label: itemData.name,
+                value: itemData.id,
+              }))}
+            value={{
+              label: dataFormMaintenance.find((itemData) => itemData.id === fields.form_maintenance_id)?.name || '',
+              value: dataFormMaintenance.find((itemData) => itemData.id === fields.form_maintenance_id)?.id || '',
+            }}
+            onChange={(value) => handleChangeField('form_maintenance_id', value.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+
+          <Autocomplete
+            placeholder="Form Checklist"
+            label="Form Checklist"
+            name="form_checklist_id"
+            items={dataFormMaintenance.filter((itemData) => itemData.type === '2')
+              .map((itemData) => ({
+                label: itemData.name,
+                value: itemData.id,
+              }))}
+            value={{
+              label: dataFormMaintenance.find((itemData) => itemData.id === fields.form_checklist_id)?.name || '',
+              value: dataFormMaintenance.find((itemData) => itemData.id === fields.form_checklist_id)?.id || '',
+            }}
+            onChange={(value) => handleChangeField('form_checklist_id', value.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
 
           {!!fields.id && (
             <Input

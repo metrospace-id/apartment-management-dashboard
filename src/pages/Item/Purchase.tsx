@@ -789,7 +789,7 @@ function PageItemPurchase() {
 
           <div className="sm:col-span-2">
             <p className="text-sm text-slate-600 font-medium mb-2">Barang</p>
-            {(!modalForm.readOnly && currentStatus < 2) && (
+            {(!modalForm.readOnly && currentStatus < 2 && !query.get('request_id')) && (
             <Button size="sm" variant="secondary" onClick={handleAddItem}>Tambah</Button>
             )}
             <div className="border border-slate-200 dark:border-slate-700 rounded-md w-full overflow-scroll mt-2">
@@ -870,9 +870,11 @@ function PageItemPurchase() {
                           />
                         </td>
                         <td className="p-2 w-fit" aria-label="Item Action">
+                          {(!modalForm.readOnly && currentStatus < 2 && !query.get('request_id')) && (
                           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteItemOpen(item)}>
                             <IconTrash className="text-white" width={16} height={16} />
                           </Button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -900,7 +902,7 @@ function PageItemPurchase() {
               : handleModalFormClose}
             variant="default"
           >
-            Tutup
+            {query.get('request_id') ? 'Kembali' : 'Tutup'}
           </Button>
           {!modalForm.readOnly && (
             <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>

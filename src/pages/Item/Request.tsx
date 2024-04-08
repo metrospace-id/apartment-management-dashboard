@@ -561,7 +561,7 @@ function PageItemRequest() {
           </Button>
         </Popover>
         )}
-        {+column.type === 2 && (
+        {+column.type === 2 && column.status > 1 && (
         <Popover content="Beli">
           <Button variant="primary" size="sm" icon onClick={() => handleModalPurchaseOpen(column)}>
             <IconCart className="w-4 h-4" />
@@ -763,7 +763,7 @@ function PageItemRequest() {
             </div>
           </div>
 
-          {!!fields.id && currentStatus === 2 && (
+          {!!fields.id && +fields.type === 1 && currentStatus === 2 && (
           <Toggle label="Barang Telah Dikeluarkan" name="status" checked={+fields.status === 3} onChange={(e) => handleChangeField('status', e.target.checked ? '3' : '2')} />
           )}
 

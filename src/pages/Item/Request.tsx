@@ -4,6 +4,7 @@ import {
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
 
+import Badge from 'components/Badge'
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
 import Table from 'components/Table/Table'
@@ -22,15 +23,17 @@ import Autocomplete from 'components/Form/Autocomplete'
 import DatePicker from 'components/Form/DatePicker'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { exportToExcel } from 'utils/export'
-import { ITEM_REQUEST_TYPE, ITEM_UNITS } from 'constants/item'
+import { ITEM_REQUEST_TYPE, ITEM_UNITS, ITEM_REQUEST_STATUS } from 'constants/item'
 import Select from 'components/Form/Select'
+import api from 'utils/api'
+import Toggle from 'components/Form/Toggle'
 
 const PAGE_NAME = 'Permintaan Barang'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'No. Permintaan',
-    key: 'request_no',
+    key: 'request_number',
   },
   {
     label: 'Department',
@@ -41,16 +44,20 @@ const TABLE_HEADERS: TableHeaderProps[] = [
     key: 'type',
   },
   {
+    label: 'Status',
+    key: 'status',
+  },
+  {
     label: 'Dibuat Oleh',
-    key: 'created_by',
+    key: 'created_by_name',
   },
   {
     label: 'Disetujui Oleh',
-    key: 'approved_by',
+    key: 'approved_by_name',
   },
   {
     label: 'Dikeluarkan Oleh',
-    key: 'issued_by',
+    key: 'issued_by_name',
   },
   {
     label: 'Aksi',
@@ -60,53 +67,70 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const ITEM_LIST = Array.from(Array(5).keys()).map((key) => ({
-  id: key + 1,
-  item_id: key + 1,
-  name: `Nama Barang ${key + 1}`,
-  qty: 99,
-  unit: 'Unit',
-}))
+const renderStatusLabel = (status: number) => {
+  const statusData = ITEM_REQUEST_STATUS.find((itemData) => itemData.id === status)
+  const label = statusData?.label || '-'
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  request_no: `REQ/01/${key + 1}`,
-  department_id: key + 1,
-  department_name: `Nama Deparemen ${key + 1}`,
-  type: (key % 2) + 1,
-  phone_no: `08123${key + 1}`,
-  created_by: `Nama Karyawan ${key + 1}`,
-  approved_by: `Nama Karyawan ${key + 1}`,
-  issued_by: key % 2 ? '-' : `Nama Karyawan ${key + 1}`,
-  items: ITEM_LIST,
-}))
+  let variant = 'default'
+  if (+status === 1) {
+    variant = 'warning'
+  }
+  if (+status === 2) {
+    variant = 'info'
+  }
+  if (+status === 3) {
+    variant = 'success'
+  }
+  if (+status === 0) {
+    variant = 'danger'
+  }
+  return {
+    label,
+    variant,
+  }
+}
 
-const DEPARTMENT_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Nama Departemen ${key + 1}`,
-}))
+interface FieldProps {
+  id?: number
+  type: string
+  department_id: number | null
+  status: string
+  items: {
+    id?: number
+    item_stock_id: number
+    quantity: number
+    unit: string
+  }[]
+}
 
 function PageItemRequest() {
   const navigate = useNavigate()
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataDepartments, setDataDepartments] = useState<{ id: number, name: string }[]>([])
+  const [dataItems, setDataItems] = useState<{ id: number, name: string }[]>([])
+  const [page, setPage] = useState(1)
+  const [fields, setFields] = useState<FieldProps>({
     id: 0,
-    type: 0,
-    department_id: 0,
-    approved_by: '',
-    issued_by: '',
+    type: '',
+    department_id: null,
     status: '',
     items: [],
   })
   const [filter, setFilter] = useState({
     start_date: '',
     end_date: '',
-    item_category_id: 0,
+    status: '',
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
+    variant: 'default',
     open: false,
     message: '',
   })
@@ -124,25 +148,29 @@ function PageItemRequest() {
   })
   const [submitType, setSubmitType] = useState('create')
   const [isModalDeleteItemOpen, setIsModalDeleteItemOpen] = useState(false)
-  const [selectedItem, setSelectedItem] = useState({ id: 0, item_id: 0 })
+  const [selectedItem, setSelectedItem] = useState({ id: 0, item_stock_id: 0 })
+  const [currentStatus, setCurrentStatus] = useState(0)
 
-  const debounceSearch = useDebounce(search, 500)
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const statuses = useMemo(() => {
+    if (+currentStatus === 2) {
+      return ITEM_REQUEST_STATUS.filter((status) => status.id === 3)
+    }
+    return ITEM_REQUEST_STATUS.filter((status) => status.id !== 3)
+  }, [currentStatus])
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
   const handleCloseToast = () => {
     setToast({
+      variant: 'default',
       open: false,
       message: '',
     })
@@ -160,10 +188,8 @@ function PageItemRequest() {
     }))
     setFields({
       id: 0,
-      type: 0,
-      department_id: 0,
-      approved_by: '',
-      issued_by: '',
+      type: '',
+      department_id: null,
       status: '',
       items: [],
     })
@@ -199,38 +225,61 @@ function PageItemRequest() {
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      type: fieldData.type,
-      department_id: fieldData.department_id,
-      approved_by: fieldData.approved_by,
-      issued_by: fieldData.issued_by,
-      items: fieldData.items,
-    }))
+    api({
+      url: `/v1/item-request/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setCurrentStatus(+responseData.data.status)
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
-      title: `Ubah ${PAGE_NAME}`,
+      title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      type: fieldData.type,
-      department_id: fieldData.department_id,
-      approved_by: fieldData.approved_by,
-      issued_by: fieldData.issued_by,
-      items: fieldData.items,
-    }))
+    api({
+      url: `/v1/item-request/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setCurrentStatus(+responseData.data.status)
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -243,11 +292,6 @@ function PageItemRequest() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      type: fieldData.type,
-      department_id: fieldData.department_id,
-      approved_by: fieldData.approved_by,
-      issued_by: fieldData.issued_by,
-      items: fieldData.items,
     }))
   }
 
@@ -261,11 +305,6 @@ function PageItemRequest() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      type: fieldData.type,
-      department_id: fieldData.department_id,
-      approved_by: fieldData.approved_by,
-      issued_by: fieldData.issued_by,
-      items: fieldData.items,
     }))
   }
 
@@ -276,7 +315,7 @@ function PageItemRequest() {
 
   const handleClickCancelDeleteItem = () => {
     setIsModalDeleteItemOpen(false)
-    setSelectedItem({ id: 0, item_id: 0 })
+    setSelectedItem({ id: 0, item_stock_id: 0 })
   }
 
   const handleClickSubmitDeleteItem = () => {
@@ -287,6 +326,7 @@ function PageItemRequest() {
     setTimeout(() => {
       setIsLoadingSubmit(false)
       setToast({
+        variant: 'default',
         open: true,
         message: 'Berhasil menghapus barang.',
       })
@@ -298,26 +338,19 @@ function PageItemRequest() {
   }
 
   const handleAddItem = () => {
+    const itemLength = fields.items.length
     setFields((prevState: any) => ({
       ...prevState,
       items: [
         ...prevState.items,
         {
-          id: 0,
-          item_id: 0,
-          qty: 0,
+          id: `temp-${itemLength + 1}`,
+          item_stock_id: 0,
+          quantity: 0,
           unit: '',
         },
       ],
     }))
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -375,38 +408,145 @@ function PageItemRequest() {
     setSubmitType(type)
   }
 
+  const handleGetItemRequests = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/item-request',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+        ...filter,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllItems = () => {
+    api({
+      url: '/v1/item-stock',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataItems(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const handleGetAllDepartments = () => {
+    api({
+      url: '/v1/department',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataDepartments(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/item-request/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/item-request/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/item-request/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    } else if (submitType === 'purchase') {
+      navigate(`/item/purchase?request_id=${fields.id}`)
+    }
+
+    apiSubmit().then(() => {
+      handleGetItemRequests()
       handleModalFormClose()
-      if (submitType !== 'purchase') {
+      setToast({
+        variant: 'default',
+        open: true,
+        message: MODAL_CONFIRM_TYPE[submitType].message,
+      })
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
         setToast({
+          variant: 'error',
           open: true,
-          message: MODAL_CONFIRM_TYPE[submitType].message,
+          message: error.response?.data?.message,
         })
-      } else {
-        navigate(`/item/purchase?request_id=${fields.id}`)
-      }
-    }, 500)
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleSubmitFilter = () => {
-    setIsLoadingData(true)
     handleModalFilterClose()
-    setTimeout(() => {
-      setIsLoadingData(false)
-    }, 500)
+    handleGetItemRequests()
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
-    request_no: column.request_no,
+    request_number: column.request_number,
     department_name: column.department_name,
-    type: ITEM_REQUEST_TYPE.find((type) => type.id === column.type)?.label,
-    created_by: column.created_by,
-    approved_by: column.approved_by,
-    issued_by: column.issued_by,
+    type: <Badge variant={+column.type === 1 ? 'info' : 'primary'}>{ITEM_REQUEST_TYPE.find((type) => type.id === +column.type)?.label}</Badge>,
+    status: <Badge variant={renderStatusLabel(column.status).variant as any}>{renderStatusLabel(column.status).label}</Badge>,
+    created_by_name: column.created_by_name,
+    approved_by_name: column.approved_by_name || '-',
+    issued_by_name: column.issued_by_name || '-',
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -414,44 +554,46 @@ function PageItemRequest() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('item-request-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {+column.type === 2 && (
         <Popover content="Beli">
           <Button variant="primary" size="sm" icon onClick={() => handleModalPurchaseOpen(column)}>
             <IconCart className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('item-request-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.request_no.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.department_name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetItemRequests()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllItems()
+    handleGetAllDepartments()
+  }, [])
 
   return (
     <Layout>
@@ -472,11 +614,11 @@ function PageItemRequest() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -490,7 +632,7 @@ function PageItemRequest() {
             name="type"
             value={fields.type}
             onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
+            readOnly={modalForm.readOnly || currentStatus > 1}
             fullWidth
             options={[{
               label: 'Pilih Jenis Permintaan',
@@ -504,45 +646,43 @@ function PageItemRequest() {
             placeholder="Departemen"
             label="Departemen"
             name="department_id"
-            items={DEPARTMENT_DATA.map((itemData) => ({
+            items={dataDepartments.map((itemData) => ({
               label: itemData.name,
               value: itemData.id,
             }))}
             value={{
-              label: DEPARTMENT_DATA.find((itemData) => itemData.id === fields.department_id)?.name || '',
-              value: DEPARTMENT_DATA.find((itemData) => itemData.id === fields.department_id)?.id || '',
+              label: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.name || '',
+              value: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.id || '',
             }}
             onChange={(value) => handleChangeField('department_id', value.value)}
-            readOnly={modalForm.readOnly}
+            readOnly={modalForm.readOnly || currentStatus > 1}
             fullWidth
           />
 
-          <Select
-            placeholder="Status"
-            label="Status"
-            name="status"
-            value={fields.status}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
-            fullWidth
-            options={[{
-              label: 'Pilih Status',
-              value: '',
-              disabled: true,
-            },
-            {
-              label: 'Ditolak',
-              value: 1,
-            },
-            {
-              label: 'Diterima',
-              value: 2,
-            }]}
-          />
+          {!!fields.id && currentStatus < 2 && (
+            <Select
+              placeholder="Status"
+              label="Status"
+              name="status"
+              value={fields.status}
+              onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+              readOnly={modalForm.readOnly || currentStatus > 1}
+              fullWidth
+              options={[{
+                label: 'Pilih Status',
+                value: '',
+                disabled: true,
+              },
+              ...statuses.map((status) => ({ value: status.id, label: status.label })),
+              ]}
+            />
+          )}
 
           <div className="sm:col-span-2">
             <p className="text-sm text-slate-600 font-medium mb-2">Barang</p>
+            {(!modalForm.readOnly && currentStatus < 2) && (
             <Button size="sm" variant="secondary" onClick={handleAddItem}>Tambah</Button>
+            )}
 
             <div className="border border-slate-200 dark:border-slate-700 rounded-md w-full overflow-scroll mt-2">
               <table className="border-collapse min-w-full w-max relative">
@@ -560,27 +700,28 @@ function PageItemRequest() {
                       <tr key={item.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
                         <td className="p-2" aria-label="Item Name">
                           <Autocomplete
-                            name="item_id"
+                            name="item_stock_id"
                             placeholder="Cari Barang"
-                            items={ITEM_LIST.map((itemData) => ({
-                              label: itemData.name,
-                              value: itemData.id,
-                            }))}
+                            items={dataItems.filter((itemData) => !fields.items.find((fieldItem) => fieldItem.item_stock_id === itemData.id))
+                              .map((itemData) => ({
+                                label: itemData.name,
+                                value: itemData.id,
+                              }))}
                             value={{
-                              label: ITEM_LIST.find((itemData) => itemData.id === item.item_id)?.name || '',
-                              value: ITEM_LIST.find((itemData) => itemData.id === item.item_id)?.id || '',
+                              label: dataItems.find((itemData) => itemData.id === item.item_stock_id)?.name || '',
+                              value: dataItems.find((itemData) => itemData.id === item.item_stock_id)?.id || '',
                             }}
-                            onChange={(value) => handleChangeItemField(index, 'item_id', value.value)}
-                            readOnly={modalForm.readOnly}
+                            onChange={(value) => handleChangeItemField(index, 'item_stock_id', value.value)}
+                            readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
                           />
                         </td>
                         <td className="p-2" aria-label="Qty">
                           <Input
-                            value={item.qty}
-                            name="qty"
-                            onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value)}
-                            readOnly={modalForm.readOnly}
+                            name="quantity"
+                            value={(+item.quantity).toLocaleString()}
+                            onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value.replace(/\W+/g, ''))}
+                            readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
                           />
                         </td>
@@ -597,14 +738,16 @@ function PageItemRequest() {
                               value: ITEM_UNITS.find((itemData) => itemData === item.unit) || '',
                             }}
                             onChange={(value) => handleChangeItemField(index, 'unit', value.value)}
-                            readOnly={modalForm.readOnly}
+                            readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
                           />
                         </td>
                         <td className="p-2 w-fit" aria-label="Item Action">
+                          {(!modalForm.readOnly && currentStatus < 2) && (
                           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteItemOpen(item)}>
                             <IconTrash className="text-white" width={16} height={16} />
                           </Button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -620,10 +763,14 @@ function PageItemRequest() {
             </div>
           </div>
 
+          {!!fields.id && currentStatus === 2 && (
+          <Toggle label="Barang Telah Dikeluarkan" name="status" checked={+fields.status === 3} onChange={(e) => handleChangeField('status', e.target.checked ? '3' : '2')} />
+          )}
+
         </form>
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
-          {!modalForm.readOnly && (
+          {(!modalForm.readOnly && currentStatus < 3) && (
             <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
           )}
         </div>
@@ -640,7 +787,7 @@ function PageItemRequest() {
                 name="start_date"
                 value={filter.start_date ? dayjs(filter.start_date).toDate() : undefined}
                 onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
-                readOnly={modalForm.readOnly}
+                readOnly={modalForm.readOnly || currentStatus > 1}
                 fullWidth
               />
 
@@ -649,26 +796,27 @@ function PageItemRequest() {
                 name="end_date"
                 value={filter.end_date ? dayjs(filter.end_date).toDate() : undefined}
                 onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
-                readOnly={modalForm.readOnly}
+                readOnly={modalForm.readOnly || currentStatus > 1}
                 fullWidth
               />
             </div>
           </div>
 
           <Select
-            placeholder="Jenis Permintaan"
-            label="Jenis Permintaan"
-            name="type"
-            value={fields.type}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
-            readOnly={modalForm.readOnly}
+            placeholder="Status"
+            label="Status"
+            name="status"
+            value={filter.status}
+            onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly || currentStatus > 1}
             fullWidth
             options={[{
-              label: 'Pilih Jenis Permintaan',
+              label: 'Pilih Status',
               value: '',
               disabled: true,
             },
-            ...ITEM_REQUEST_TYPE.map((type) => ({ value: type.id, label: type.label }))]}
+            ...ITEM_REQUEST_STATUS.map((status) => ({ value: status.id, label: status.label })),
+            ]}
           />
 
         </form>
@@ -702,7 +850,7 @@ function PageItemRequest() {
         <LoadingOverlay />
       )}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
+      <Toast open={toast.open} message={toast.message} variant={toast.variant} onClose={handleCloseToast} />
 
     </Layout>
   )

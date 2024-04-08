@@ -24,6 +24,25 @@ export const ITEM_REQUEST_TYPE = [
   },
 ]
 
+export const ITEM_REQUEST_STATUS = [
+  {
+    id: 0,
+    label: 'Ditolak',
+  },
+  {
+    id: 1,
+    label: 'Pending',
+  },
+  {
+    id: 2,
+    label: 'Disetujui',
+  },
+  {
+    id: 3,
+    label: 'Barang Dikeluarkan',
+  },
+]
+
 export const ITEM_PURCHASE_TYPE = [
   {
     id: 1,

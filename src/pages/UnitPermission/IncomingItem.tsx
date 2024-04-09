@@ -238,8 +238,8 @@ function PageIncomingItem() {
 
   const handleChangeUnitField = (fieldName: string, value: string | number) => {
     const tenant = dataUnits.find((unit) => unit.unit_id === value)
-    const tenantName = tenant?.owner_name || tenant?.name
-    const tenantPhone = tenant?.owner_phone || tenant?.phone
+    const tenantName = tenant?.name || tenant?.owner_name
+    const tenantPhone = tenant?.phone || tenant?.owner_phone
 
     setFields((prevState) => ({
       ...prevState,

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 
+import Autocomplete from 'components/Form/Autocomplete'
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
 import Table from 'components/Table/Table'
@@ -20,7 +21,7 @@ import api from 'utils/api'
 const PAGE_NAME = 'Role'
 
 const LEVELS = [
-  { level: '0', label: 'Super Admin' },
+  // { level: '0', label: 'Super Admin' },
   { level: '1', label: 'Admin Department' },
   { level: '2', label: 'Supervisor' },
   { level: '3', label: 'Karyawan' },
@@ -30,6 +31,10 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Nama',
     key: 'name',
+  },
+  {
+    label: 'Departemen',
+    key: 'department_name',
   },
   {
     label: 'Level',
@@ -48,6 +53,7 @@ interface FieldProps {
   name: string
   level: string
   permission_ids: number[]
+  department_id: number | null
 }
 
 function PageRole() {
@@ -59,12 +65,14 @@ function PageRole() {
     total: 0,
   })
   const [dataPermissions, setDataPermissions] = useState<Record<string, any>[]>([])
+  const [dataDepartments, setDataDepartments] = useState<{ id: number, name: string }[]>([])
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState<FieldProps>({
     id: 0,
     name: '',
     level: '',
     permission_ids: [],
+    department_id: null,
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -109,6 +117,7 @@ function PageRole() {
       name: '',
       level: '',
       permission_ids: [],
+      department_id: null,
     })
   }
 
@@ -149,6 +158,7 @@ function PageRole() {
         name: responseData.data.name,
         level: responseData.data.level,
         permission_ids: responseData.data.permissions.map((permission: any) => permission.id),
+        department_id: responseData.data.department_id,
       }
       setFields(mapData)
     })
@@ -178,6 +188,7 @@ function PageRole() {
         name: responseData.data.name,
         level: responseData.data.level,
         permission_ids: responseData.data.permissions.map((permission: any) => permission.id),
+        department_id: responseData.data.department_id,
       }
       setFields(mapData)
     })
@@ -251,6 +262,28 @@ function PageRole() {
     setSubmitType(type)
   }
 
+  const handleGetAllDepartments = () => {
+    api({
+      url: '/v1/department',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataDepartments(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
   const handleGetRoles = () => {
     api({
       url: '/v1/role',
@@ -317,6 +350,7 @@ function PageRole() {
       name: fields.name,
       level: fields.level,
       permission_ids: fields.permission_ids,
+      department_id: fields.department_id,
     },
   })
 
@@ -328,6 +362,7 @@ function PageRole() {
       name: fields.name,
       level: fields.level,
       permission_ids: fields.permission_ids,
+      department_id: fields.department_id,
     },
   })
 
@@ -369,6 +404,7 @@ function PageRole() {
   const tableDatas = data.data.map((column) => ({
     id: column.id,
     name: column.name,
+    department_name: column.department_name || '-',
     level: LEVELS.find((level) => level.level === column.level)?.label,
     action: (
       <div className="flex items-center gap-1">
@@ -405,6 +441,7 @@ function PageRole() {
 
   useEffect(() => {
     handleGetAllPermissions()
+    handleGetAllDepartments()
   }, [])
 
   useEffect(() => {
@@ -449,6 +486,22 @@ function PageRole() {
             name="name"
             value={fields.name}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly}
+            fullWidth
+          />
+          <Autocomplete
+            placeholder="Department"
+            label="Department"
+            name="department_id"
+            items={dataDepartments.map((itemData) => ({
+              label: itemData.name,
+              value: itemData.id,
+            }))}
+            value={{
+              label: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.name || '',
+              value: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.id || '',
+            }}
+            onChange={(value) => handleChangeField('department_id', +value.value)}
             readOnly={modalForm.readOnly}
             fullWidth
           />

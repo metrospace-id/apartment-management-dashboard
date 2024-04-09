@@ -40,8 +40,8 @@ import PageTodoList from 'pages/TodoList'
 import PageNote from 'pages/Note'
 import PageProfile from 'pages/Profile'
 import PageCategoryInquiry from 'pages/Category/Inquiry'
-import PageInquiryTenant from 'pages/Inquiry/Tenant'
-import PageInquiryWorkOrder from 'pages/Inquiry/Technician'
+import PageInquiryTicket from 'pages/Inquiry/Ticket'
+import PageInquiryWorkOrder from 'pages/Inquiry/WorkOrder'
 import PageTemplateForm from 'pages/Template/Form'
 import PageTemplateDocument from 'pages/Template/Document'
 import PageUnitFacility from 'pages/Unit/Facility'
@@ -208,8 +208,8 @@ const router = createBrowserRouter([
     Component: PageMaintenanceChecklist,
   },
   {
-    path: '/inquiry/tenant',
-    Component: PageInquiryTenant,
+    path: '/inquiry/ticket',
+    Component: PageInquiryTicket,
   },
   {
     path: '/inquiry/workorder',

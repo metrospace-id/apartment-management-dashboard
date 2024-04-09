@@ -1,7 +1,6 @@
 import {
-  useState, useMemo, useEffect, useRef,
+  useState, useEffect, useRef, useMemo,
 } from 'react'
-import { fakerID_ID as faker } from '@faker-js/faker'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -24,8 +23,9 @@ import DatePicker from 'components/Form/DatePicker'
 import Badge from 'components/Badge'
 import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
+import api from 'utils/api'
 
-const PAGE_NAME = 'Workorder Teknisi'
+const PAGE_NAME = 'Inquiry Penghuni'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
@@ -34,7 +34,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'No. Inquiry',
-    key: 'inquiry_no',
+    key: 'inquiry_number',
   },
   {
     label: 'Kategori',
@@ -50,7 +50,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
   {
     label: 'Dibuat Oleh',
-    key: 'created_by',
+    key: 'created_by_name',
   },
   {
     label: 'Status',
@@ -64,81 +64,70 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_id: key + 1,
-  unit_code: `A/01/${key + 1}`,
-  inquiry_no: `INQ/01/01/${key + 1}`,
-  inquiry_category_id: key + 1,
-  inquiry_category_name: `Kategori ${key + 1}`,
-  requester_name: faker.person.fullName(),
-  requester_phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  created_at: '2023-12-31 00:00:00',
-  created_by: faker.person.fullName(),
-  status: key % 3,
-  notes: faker.lorem.paragraphs(),
-  department_id: 1,
-  department_admin_id: 1,
-  department_employee_id: 1,
-  images: [{
-    id: 1,
-    picture: 'https://via.placeholder.com/300x300',
-  }],
-  progress_images: [{
-    id: 1,
-    picture: 'https://via.placeholder.com/300x300',
-  }],
-  progress_notes: [{
-    id: 1,
-    notes: 'Inquiry diterima, akan dilanjutkan ke tim terkait.',
-    created_at: '2023-12-31 00:00:00',
-  }, {
-    id: 2,
-    notes: faker.lorem.sentences(),
-    created_at: '2023-12-31 00:00:00',
-  }, {
-    id: 3,
-    notes: faker.lorem.sentences(),
-    created_at: '2023-12-31 00:00:00',
-  }],
-}))
+interface FieldProps {
+  id?: number
+  type: string
+  unit_id: number
+  inquiry_category_id: number
+  requester_name: string
+  requester_phone: string
+  notes: string
+  department_id: number | null
+  department_admin_id: number | null
+  department_employee_id: number | null
+  images: {
+    id: number | string
+    url: string
+  }[]
+  progress_images: {
+    id: number | string
+    url: string
+  }[]
+  progress_notes: {
+    id: number | string
+    notes: string
+    created_at: string
+  }[]
+  is_validated: number
+  status: number
+}
 
-const UNIT_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  unit_code: `A/${key + 1}/${key + 1}`,
-  tower: 'A',
-  unit_no: `${key + 1}`,
-  floor_no: `${key + 1}`,
-  owner_name: faker.person.fullName(),
-  owner_phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
-  tenant_name: faker.person.fullName(),
-  tenant_phone: faker.helpers.fromRegExp(/081[0-9]{8}/),
-}))
-
-const INQUIRY_CATEGORY_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Kategori Inquiry ${key + 1}`,
-}))
-
-function PageInquiryWorkOrder() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+function PageInquiryTenant() {
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [dataUsers, setDataUsers] = useState<{ id: number, name: string, roles: any[] }[]>([])
+  const [dataCategories, setDataCategories] = useState<{ id: number, name: string }[]>([])
+  const [dataDepartments, setDataDepartments] = useState<{ id: number, name: string }[]>([])
+  const [dataUnits, setDataUnits] = useState<{
+    unit_id: number,
+    unit_code: string,
+    owner_name: string,
+    owner_phone: string,
+    name: string,
+    phone: string
+  }[]>([])
+  const [page, setPage] = useState(1)
+  const [fields, setFields] = useState<FieldProps>({
+    type: 'inquiry',
     id: 0,
     unit_id: 0,
     inquiry_category_id: 0,
     requester_name: '',
     requester_phone: '',
-    created_by: '',
-    created_at: dayjs().format('YYYY-MM-DD'),
-    status: 0,
     notes: '',
-    department_id: '',
-    department_admin_id: '',
-    department_employee_id: '',
-    images: [{}],
-    progress_images: [{}],
-    progress_notes: [{}],
+    department_id: null,
+    department_admin_id: null,
+    department_employee_id: null,
+    images: [],
+    progress_images: [],
+    progress_notes: [],
+    status: 0,
+    is_validated: 0,
   })
   const [filter, setFilter] = useState({
     status: 0,
@@ -148,6 +137,7 @@ function PageInquiryWorkOrder() {
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
+    variant: 'default',
     open: false,
     message: '',
   })
@@ -172,29 +162,29 @@ function PageInquiryWorkOrder() {
   const [selectedProgressImage, setSelectedProgressImage] = useState({ id: 0, picture: '' })
   const [progressNote, setProgressNote] = useState('')
 
-  const debounceSearch = useDebounce(search, 500)
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const dataUserDepartmentAdmin = useMemo(() => dataUsers.filter((user) => user.roles.find((role) => (role.level === '1' || role.level === '2') && role.department_id === fields.department_id)), [dataUsers, fields.department_id])
+  const dataUserDepartmentEmployee = useMemo(() => dataUsers.filter((user) => user.roles.find((role) => role.level === '3' && role.department_id === fields.department_admin_id)), [dataUsers, fields.department_admin_id])
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)
     setTimeout(() => {
       setIsLoadingSubmit(false)
-      exportToExcel(data, PAGE_NAME)
+      exportToExcel(data.data, PAGE_NAME)
     }, 500)
   }
 
   const handleCloseToast = () => {
     setToast({
+      variant: 'default',
       open: false,
       message: '',
     })
   }
 
   const handleModalFormClose = () => {
+    setProgressNote('')
     setModalForm({
       title: '',
       open: false,
@@ -205,21 +195,21 @@ function PageInquiryWorkOrder() {
       open: false,
     }))
     setFields({
+      type: 'inquiry',
       id: 0,
       unit_id: 0,
       inquiry_category_id: 0,
       requester_name: '',
       requester_phone: '',
-      created_by: '',
-      created_at: dayjs().format('YYYY-MM-DD'),
-      status: 0,
       notes: '',
       images: [],
       progress_images: [],
       progress_notes: [],
-      department_id: '',
-      department_admin_id: '',
-      department_employee_id: '',
+      department_id: null,
+      department_admin_id: null,
+      department_employee_id: null,
+      status: 0,
+      is_validated: 0,
     })
   }
 
@@ -253,55 +243,59 @@ function PageInquiryWorkOrder() {
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      inquiry_category_id: fieldData.inquiry_category_id,
-      requester_name: fieldData.requester_name,
-      requester_phone: fieldData.requester_phone,
-      created_by: fieldData.created_by,
-      created_at: fieldData.created_at,
-      status: fieldData.status,
-      notes: fieldData.notes,
-      images: fieldData.images,
-      progress_images: fieldData.progress_images,
-      progress_notes: fieldData.progress_notes,
-      department_id: fieldData.department_id,
-      department_admin_id: fieldData.department_admin_id,
-      department_employee_id: fieldData.department_employee_id,
-    }))
+    api({
+      url: `/v1/inquiry/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      inquiry_category_id: fieldData.inquiry_category_id,
-      requester_name: fieldData.requester_name,
-      requester_phone: fieldData.requester_phone,
-      created_by: fieldData.created_by,
-      created_at: fieldData.created_at,
-      status: fieldData.status,
-      notes: fieldData.notes,
-      images: fieldData.images,
-      progress_images: fieldData.progress_images,
-      progress_notes: fieldData.progress_notes,
-      department_id: fieldData.department_id,
-      department_admin_id: fieldData.department_admin_id,
-      department_employee_id: fieldData.department_employee_id,
-    }))
+    api({
+      url: `/v1/inquiry/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -314,29 +308,7 @@ function PageInquiryWorkOrder() {
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
-      unit_id: fieldData.unit_id,
-      inquiry_category_id: fieldData.inquiry_category_id,
-      requester_name: fieldData.requester_name,
-      requester_phone: fieldData.requester_phone,
-      created_by: fieldData.created_by,
-      created_at: fieldData.created_at,
-      status: fieldData.status,
-      notes: fieldData.notes,
-      images: fieldData.images,
-      progress_images: fieldData.progress_images,
-      progress_notes: fieldData.progress_notes,
-      department_id: fieldData.department_id,
-      department_admin_id: fieldData.department_admin_id,
-      department_employee_id: fieldData.department_employee_id,
     }))
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -353,13 +325,17 @@ function PageInquiryWorkOrder() {
   }
 
   const handleChangeUnit = (unitId: number) => {
-    const selectedUnit = UNIT_DATA.find((unitData) => unitData.id === unitId)
-    if (selectedUnit) {
+    const tenant = dataUnits.find((unit) => unit.unit_id === unitId)
+
+    if (tenant) {
+      const tenantName = tenant?.name || tenant?.owner_name
+      const tenantPhone = tenant?.phone || tenant?.owner_phone
+
       setFields((prevState) => ({
         ...prevState,
-        unit_id: selectedUnit.id,
-        requester_name: selectedUnit.owner_name,
-        requester_phone: selectedUnit.owner_phone,
+        unit_id: tenant.unit_id,
+        requester_name: tenantName,
+        requester_phone: tenantPhone,
       }))
     }
   }
@@ -384,24 +360,179 @@ function PageInquiryWorkOrder() {
     setSubmitType(type)
   }
 
+  const handleGetInquiries = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/inquiry',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        type: 'inquiry',
+        page,
+        limit: PAGE_SIZE,
+        search,
+        ...filter,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleGetAllUnits = () => {
+    api({
+      url: '/v1/tenant/unit',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataUnits(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const handleGetAllUsers = () => {
+    api({
+      url: '/v1/user',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataUsers(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const handleGetAllInquiryCategories = () => {
+    api({
+      url: '/v1/inquiry-category',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataCategories(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const handleGetAllDepartments = () => {
+    api({
+      url: '/v1/department',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+      },
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setDataDepartments(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/inquiry/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/inquiry/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/inquiry/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetInquiries()
       handleModalFormClose()
       setToast({
+        variant: 'default',
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleSubmitFilter = () => {
-    setIsLoadingData(true)
+    handleGetInquiries()
     handleModalFilterClose()
-    setTimeout(() => {
-      setIsLoadingData(false)
-    }, 500)
   }
 
   const handleModalDeleteImageOpen = (fieldData: any) => {
@@ -422,6 +553,7 @@ function PageInquiryWorkOrder() {
     setTimeout(() => {
       setIsLoadingSubmit(false)
       setToast({
+        variant: 'default',
         open: true,
         message: 'Berhasil menghapus foto.',
       })
@@ -447,14 +579,15 @@ function PageInquiryWorkOrder() {
           setFields((prevState) => ({
             ...prevState,
             images: [...prevState.images, {
-              id: prevState.images.length + 1,
-              picture: result,
+              id: `temp-${prevState.images.length}`,
+              url: result as string,
             }],
           }))
         })
       } else {
         const message = file.size > 500000 ? 'Ukuran file terlalu besar, silakan pilih file dibawah 500kb.' : 'Dokumen format tidak sesuai, silakan pilih format image.'
         setToast({
+          variant: 'error',
           open: true,
           message,
         })
@@ -481,6 +614,7 @@ function PageInquiryWorkOrder() {
       setIsLoadingSubmit(false)
       setToast({
         open: true,
+        variant: 'default',
         message: 'Berhasil menghapus foto.',
       })
       setFields((prevState) => ({
@@ -505,14 +639,15 @@ function PageInquiryWorkOrder() {
           setFields((prevState) => ({
             ...prevState,
             progress_images: [...prevState.progress_images, {
-              id: prevState.progress_images.length + 1,
-              picture: result,
+              id: `temp-${prevState.progress_images.length}`,
+              url: result as string,
             }],
           }))
         })
       } else {
         const message = file.size > 500000 ? 'Ukuran file terlalu besar, silakan pilih file dibawah 500kb.' : 'Dokumen format tidak sesuai, silakan pilih format image.'
         setToast({
+          variant: 'error',
           open: true,
           message,
         })
@@ -521,7 +656,7 @@ function PageInquiryWorkOrder() {
   }
 
   const handleAddProgressNote = () => {
-    const newProgressNote = [...fields.progress_notes, { id: fields.progress_notes.length + 1, notes: progressNote, created_at: dayjs().format('YYYY-MM-DD HH:mm:ss') }]
+    const newProgressNote = [...fields.progress_notes, { id: `temp-${fields.progress_notes.length}`, notes: progressNote, created_at: dayjs().format('YYYY-MM-DD HH:mm:ss') }]
     setProgressNote('')
     setFields((prevState) => ({
       ...prevState,
@@ -539,15 +674,15 @@ function PageInquiryWorkOrder() {
     return <Badge variant="success">Selesai</Badge>
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
     unit_code: column.unit_code,
-    inquiry_no: column.inquiry_no,
+    inquiry_number: column.inquiry_number,
     inquiry_category_name: column.inquiry_category_name,
     requester_name: column.requester_name,
     requester_phone: column.requester_phone,
-    created_by: column.created_by,
-    status: renderStatus(column.status + 1),
+    created_by_name: column.created_by_name,
+    status: renderStatus(column.status),
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -555,42 +690,41 @@ function PageInquiryWorkOrder() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('inquiry-ticket-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('inquiry-ticket-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.inquiry_no.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.requester_name.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.unit_code.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetInquiries()
+  }, [debounceSearch, page])
 
-  console.log(fields)
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+
+    handleGetAllUnits()
+    handleGetAllDepartments()
+    handleGetAllInquiryCategories()
+    handleGetAllUsers()
+  }, [])
 
   return (
     <Layout>
@@ -600,7 +734,7 @@ function PageInquiryWorkOrder() {
         <div className="p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari no. unit, no. kartu" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari no. unit, no. inquiry, nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
             <div className="sm:ml-auto flex gap-1">
@@ -611,23 +745,40 @@ function PageInquiryWorkOrder() {
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="flex gap-4 p-6 flex-col lg:flex-row">
+        <form autoComplete="off" className="flex flex-col lg:flex-row gap-4 p-6">
           <div className="flex flex-col gap-4 flex-1">
+            <Autocomplete
+              placeholder="Nomor Unit"
+              label="Nomor Unit"
+              name="unit_id"
+              items={dataUnits.map((itemData) => ({
+                label: itemData.unit_code,
+                value: itemData.unit_id,
+              }))}
+              value={{
+                label: dataUnits.find((itemData) => itemData.unit_id === fields.unit_id)?.unit_code || '',
+                value: dataUnits.find((itemData) => itemData.unit_id === fields.unit_id)?.unit_id || '',
+              }}
+              onChange={(value) => handleChangeUnit(+value.value)}
+              readOnly={modalForm.readOnly}
+              fullWidth
+            />
+
             <Input
               placeholder="Nama Pemohon"
               label="Nama Pemohon"
-              value="Admin Teknisi"
+              value={fields.requester_name}
               readOnly
               fullWidth
             />
@@ -635,7 +786,7 @@ function PageInquiryWorkOrder() {
             <Input
               placeholder="No. Telepon Pemohon"
               label="No. Telepon Pemohon"
-              value="081234567890"
+              value={fields.requester_phone}
               readOnly
               fullWidth
             />
@@ -644,13 +795,13 @@ function PageInquiryWorkOrder() {
               placeholder="Jenis Inquiry"
               label="Jenis Inquiry"
               name="inquiry_category_id"
-              items={INQUIRY_CATEGORY_DATA.map((itemData) => ({
+              items={dataCategories.map((itemData) => ({
                 label: itemData.name,
                 value: itemData.id,
               }))}
               value={{
-                label: INQUIRY_CATEGORY_DATA.find((itemData) => itemData.id === fields.inquiry_category_id)?.name || '',
-                value: INQUIRY_CATEGORY_DATA.find((itemData) => itemData.id === fields.inquiry_category_id)?.id || '',
+                label: dataCategories.find((itemData) => itemData.id === fields.inquiry_category_id)?.name || '',
+                value: dataCategories.find((itemData) => itemData.id === fields.inquiry_category_id)?.id || '',
               }}
               onChange={(value) => handleChangeField('inquiry_category_id', +value.value)}
               readOnly={modalForm.readOnly}
@@ -694,7 +845,7 @@ function PageInquiryWorkOrder() {
                           <IconTrash className="text-white w-[12px] h-[12px]" />
                         </span>
                         )}
-                        <img src={document.picture.includes('/pdf') ? '/images/pdf.png' : document.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                        <img src={document.url.includes('/pdf') ? '/images/pdf.png' : document.url} alt="doc" className="w-[100px] h-[100px] object-contain" />
                       </div>
                     )
                   }
@@ -707,23 +858,55 @@ function PageInquiryWorkOrder() {
           </div>
 
           <div className="flex flex-col gap-4 flex-1">
-            <Select
-              placeholder="Pilih Teknisi"
-              label="Pilih Teknisi"
-              name="department_employee_id"
-              value={fields.department_employee_id}
-              onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+            <Autocomplete
+              placeholder="Department"
+              label="Department"
+              name="department_id"
+              items={dataDepartments.map((itemData) => ({
+                label: itemData.name,
+                value: itemData.id,
+              }))}
+              value={{
+                label: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.name || '',
+                value: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.id || '',
+              }}
+              onChange={(value) => handleChangeField('department_id', +value.value)}
               readOnly={modalForm.readOnly}
               fullWidth
-              options={[{
-                label: 'Pilih Pilih Teknisi',
-                value: '',
-                disabled: true,
-              },
-              {
-                label: 'Teknisi 1',
-                value: 1,
-              }]}
+            />
+
+            <Autocomplete
+              placeholder="Admin Department"
+              label="Admin Department"
+              name="department_admin_id"
+              items={dataUserDepartmentAdmin.map((itemData) => ({
+                label: itemData.name,
+                value: itemData.id,
+              }))}
+              value={{
+                label: dataUserDepartmentAdmin.find((itemData) => itemData.id === fields.department_admin_id)?.name || '',
+                value: dataUserDepartmentAdmin.find((itemData) => itemData.id === fields.department_admin_id)?.id || '',
+              }}
+              onChange={(value) => handleChangeField('department_admin_id', +value.value)}
+              readOnly={modalForm.readOnly}
+              fullWidth
+            />
+
+            <Autocomplete
+              placeholder="Karyawan Department"
+              label="Karyawan Department"
+              name="department_employee_id"
+              items={dataUserDepartmentEmployee.map((itemData) => ({
+                label: itemData.name,
+                value: itemData.id,
+              }))}
+              value={{
+                label: dataUserDepartmentEmployee.find((itemData) => itemData.id === fields.department_employee_id)?.name || '',
+                value: dataUserDepartmentEmployee.find((itemData) => itemData.id === fields.department_employee_id)?.id || '',
+              }}
+              onChange={(value) => handleChangeField('department_employee_id', +value.value)}
+              readOnly={modalForm.readOnly}
+              fullWidth
             />
 
             <div className="flex flex-col gap-2">
@@ -752,7 +935,7 @@ function PageInquiryWorkOrder() {
                           <IconTrash className="text-white w-[12px] h-[12px]" />
                         </span>
                         )}
-                        <img src={document.picture.includes('/pdf') ? '/images/pdf.png' : document.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                        <img src={document.url.includes('/pdf') ? '/images/pdf.png' : document.url} alt="doc" className="w-[100px] h-[100px] object-contain" />
                       </div>
                     )
                   }
@@ -785,13 +968,13 @@ function PageInquiryWorkOrder() {
               </div>
               {!modalForm.readOnly && (
                 <div className="flex gap-4">
-                  <div className="w-[150px]">
-                    <Button onClick={handleAddProgressNote} className="w-full" size="sm" variant="secondary">
-                      Tambah Note
-                    </Button>
-                  </div>
                   <div className="flex-1">
                     <textarea onChange={(e) => setProgressNote(e.target.value)} value={progressNote} className="w-full border-1 rounded border-slate-400 font-medium text-xs p-2 text-slate-600" />
+                  </div>
+                  <div className="w-[150px]">
+                    <Button onClick={handleAddProgressNote} className="w-full" size="sm" variant="secondary" disabled={!progressNote}>
+                      Tambah Note
+                    </Button>
                   </div>
                 </div>
               )}
@@ -801,8 +984,8 @@ function PageInquiryWorkOrder() {
               placeholder="Status Inquiry"
               label="Status Inquiry"
               name="status"
-              value={filter.status}
-              onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+              value={fields.status}
+              onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
               readOnly={modalForm.readOnly}
               fullWidth
               options={[{
@@ -811,21 +994,26 @@ function PageInquiryWorkOrder() {
                 disabled: true,
               },
               {
-                label: 'Dalam Progress',
+                label: 'Pending',
                 value: 1,
               },
               {
-                label: 'Selesai',
+                label: 'Dalam Progress',
                 value: 2,
-              }]}
+              },
+              {
+                label: 'Selesai',
+                value: 3,
+              },
+              ]}
             />
 
             <Select
               placeholder="Admin Validation"
               label="Admin Validation"
-              name="status"
-              value={filter.status}
-              onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+              name="is_validated"
+              value={fields.is_validated}
+              onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
               readOnly={modalForm.readOnly}
               fullWidth
               options={[{
@@ -835,11 +1023,11 @@ function PageInquiryWorkOrder() {
               },
               {
                 label: 'Diterima',
-                value: 3,
+                value: 1,
               },
               {
                 label: 'Ditolak',
-                value: 1,
+                value: 0,
               }]}
             />
           </div>
@@ -892,13 +1080,18 @@ function PageInquiryWorkOrder() {
               disabled: true,
             },
             {
-              label: 'Dalam Progress',
+              label: 'Pending',
               value: 1,
             },
             {
-              label: 'Selesai',
+              label: 'Dalam Progress',
               value: 2,
-            }]}
+            },
+            {
+              label: 'Selesai',
+              value: 3,
+            },
+            ]}
           />
         </form>
         <div className="flex gap-2 justify-end p-4">
@@ -941,10 +1134,10 @@ function PageInquiryWorkOrder() {
         <LoadingOverlay />
       )}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
+      <Toast open={toast.open} message={toast.message} variant={toast.variant} onClose={handleCloseToast} />
 
     </Layout>
   )
 }
 
-export default PageInquiryWorkOrder
+export default PageInquiryTenant

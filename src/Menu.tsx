@@ -477,7 +477,7 @@ export const MENUS: MenuProp[] = [
     code: 'app-calendar',
     parent_code: '',
     name: 'Kalender',
-    url: '/calendar',
+    url: '/app-calendar',
     section: 'app',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -489,7 +489,7 @@ export const MENUS: MenuProp[] = [
     code: 'app-todo',
     parent_code: '',
     name: 'To Do List',
-    url: '/todo-list',
+    url: '/app-todo',
     section: 'app',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -501,7 +501,7 @@ export const MENUS: MenuProp[] = [
     code: 'app-note',
     parent_code: '',
     name: 'Catatan',
-    url: '/note',
+    url: '/app-note',
     section: 'app',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">

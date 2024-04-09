@@ -12,23 +12,28 @@ import LoadingContent from 'components/Loading/LoadingContent'
 import { MODAL_CONFIRM_TYPE } from 'constants/form'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
+import api from 'utils/api'
 
 const PAGE_NAME = 'To Do List'
 
-const TABLE_DATA = Array.from(Array(25).keys()).map((key) => ({
-  id: key + 1,
-  title: `Nama Todo List ${key + 1}`,
-  description: `Description Todo List ${key + 1}`,
-  is_done: key % 2 === 0,
-  status: 1,
-}))
-
 function PageTodoList() {
-  const [data, setData] = useState<any[]>([])
+  const [currentUser, setCurrentUser] = useState<{ id: number; name: string } | null>(null)
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [filter, setFilter] = useState({
+    is_deleted: 0,
+    is_done: 0,
+  })
   const [fields, setFields] = useState({
     id: 0,
     title: '',
     description: '',
+    is_done: 0,
+    status: 0,
   })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
@@ -58,6 +63,13 @@ function PageTodoList() {
       open: true,
       readOnly: false,
     })
+    setFields({
+      id: 0,
+      title: '',
+      description: '',
+      is_done: 0,
+      status: 1,
+    })
   }
 
   const handleCloseToast = () => {
@@ -81,6 +93,8 @@ function PageTodoList() {
       id: 0,
       title: '',
       description: '',
+      is_done: 0,
+      status: 0,
     })
   }
 
@@ -135,40 +149,26 @@ function PageTodoList() {
 
   const handleFilterDataByMenu = (menuIndex: number) => {
     if (menuIndex === 1) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = TABLE_DATA.filter((tableData) => tableData.is_done)
-        setData(newData)
-      }, 500)
+      setFilter(() => ({
+        is_deleted: 0,
+        is_done: 1,
+      }))
     } else if (menuIndex === 2) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = TABLE_DATA.filter((tableData) => !tableData.status)
-        setData(newData)
-      }, 500)
+      setFilter(() => ({
+        is_deleted: 1,
+        is_done: 0,
+      }))
     } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(TABLE_DATA)
-      }, 500)
+      setFilter(() => ({
+        is_deleted: 0,
+        is_done: 0,
+      }))
     }
   }
 
   const handleChangeMenu = (number: number) => {
     setSelectedMenu(number)
     handleFilterDataByMenu(number)
-  }
-
-  const handleCheckTodo = (id: number) => {
-    const newData = [...data].map((d) => ({
-      ...d,
-      is_done: d.id === id ? !d.is_done : d.is_done,
-    }))
-
-    setData(newData)
   }
 
   const handleClickConfirm = (type: string) => {
@@ -184,37 +184,110 @@ function PageTodoList() {
     setSubmitType(type)
   }
 
+  const apiSubmitCreate = () => api({
+    url: '/v1/todo/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/todo/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/todo/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
+  const handleGetTodos = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/todo',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        limit: 9999,
+        search,
+        ...filter,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleCheckTodo = (id: number) => {
+    api({
+      url: `/v1/todo/done/${id}`,
+      withAuth: true,
+      method: 'POST',
+    })
+      .then(() => {
+        handleGetTodos()
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetTodos()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = TABLE_DATA.filter(
-          (tableData) => tableData.title.toLowerCase().includes(debounceSearch.toLowerCase())
-          || tableData.description.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(TABLE_DATA)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetTodos()
+  }, [debounceSearch, filter])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser) {
+        setCurrentUser(localStorageUser)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>
@@ -254,17 +327,21 @@ function PageTodoList() {
           </div>
           <div className="flex-1 sm:px-4 flex gap-2 flex-col">
             {(isLoadingData) && <LoadingContent />}
-            {(!isLoadingData) && data.map((todo) => (
+            {(!isLoadingData) && data.data.map((todo) => (
               <div className="p-2 border-1 rounded-lg flex gap-2 items-center text-slate-600 dark:text-white" key={todo.id}>
-                <Checkbox checked={todo.is_done} onClick={() => handleCheckTodo(todo.id)} />
+                {!todo.deleted_at && todo.created_by !== currentUser?.id && (
+                  <Checkbox checked={!!todo.is_done} onClick={() => handleCheckTodo(todo.id)} />
+                )}
                 <p className={`text-sm  font-semibold ${todo.is_done ? 'line-through' : ''} flex-1`}>
                   {todo.title}
                 </p>
-                <div role="presentation" className="cursor-pointer hover:text-red-500" onClick={() => handleModalDeleteOpen(todo)}>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                  </svg>
-                </div>
+                {!todo.deleted_at && todo.created_by !== currentUser?.id && (
+                  <div role="presentation" className="cursor-pointer hover:text-red-500" onClick={() => handleModalDeleteOpen(todo)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                  </div>
+                )}
               </div>
             ))}
           </div>

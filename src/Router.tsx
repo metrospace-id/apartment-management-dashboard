@@ -216,19 +216,19 @@ const router = createBrowserRouter([
     Component: PageInquiryWorkOrder,
   },
   {
-    path: '/calendar',
-    Component: PageCalendar,
-  },
-  {
-    path: '/todo-list',
-    Component: PageTodoList,
-  },
-  {
     path: '/news',
     Component: PageNews,
   },
   {
-    path: '/note',
+    path: '/app-calendar',
+    Component: PageCalendar,
+  },
+  {
+    path: '/app-todo',
+    Component: PageTodoList,
+  },
+  {
+    path: '/app-note',
     Component: PageNote,
   },
   {

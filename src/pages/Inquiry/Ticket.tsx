@@ -88,8 +88,8 @@ interface FieldProps {
     notes: string
     created_at: string
   }[]
-  is_validated: number
-  status: number
+  is_validated: number | null
+  status: number | null
 }
 
 function PageInquiryTenant() {
@@ -126,8 +126,8 @@ function PageInquiryTenant() {
     images: [],
     progress_images: [],
     progress_notes: [],
-    status: 0,
-    is_validated: 0,
+    status: null,
+    is_validated: null,
   })
   const [filter, setFilter] = useState({
     status: 0,
@@ -984,7 +984,7 @@ function PageInquiryTenant() {
               placeholder="Status Inquiry"
               label="Status Inquiry"
               name="status"
-              value={fields.status}
+              value={fields.status || ''}
               onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
               readOnly={modalForm.readOnly}
               fullWidth
@@ -1012,7 +1012,7 @@ function PageInquiryTenant() {
               placeholder="Admin Validation"
               label="Admin Validation"
               name="is_validated"
-              value={fields.is_validated}
+              value={fields.is_validated || ''}
               onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
               readOnly={modalForm.readOnly}
               fullWidth

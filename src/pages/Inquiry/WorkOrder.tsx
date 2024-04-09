@@ -76,8 +76,8 @@ interface FieldProps {
     notes: string
     created_at: string
   }[]
-  is_validated: number
-  status: number
+  is_validated: number | null
+  status: number | null
 }
 
 function PageInquiryWorkOrder() {
@@ -106,8 +106,8 @@ function PageInquiryWorkOrder() {
     images: [],
     progress_images: [],
     progress_notes: [],
-    status: 0,
-    is_validated: 0,
+    status: null,
+    is_validated: null,
   })
   const [filter, setFilter] = useState({
     status: 0,
@@ -175,7 +175,7 @@ function PageInquiryWorkOrder() {
       open: false,
     }))
     setFields({
-      type: 'inquiry',
+      type: 'workorder',
       id: 0,
       unit_id: 0,
       inquiry_category_id: 0,
@@ -678,7 +678,7 @@ function PageInquiryWorkOrder() {
         <div className="p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari no. unit, no. kartu" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari no. inquiry, nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
             <div className="sm:ml-auto flex gap-1">
@@ -879,13 +879,13 @@ function PageInquiryWorkOrder() {
               </div>
               {!modalForm.readOnly && (
                 <div className="flex gap-4">
-                  <div className="w-[150px]">
-                    <Button onClick={handleAddProgressNote} className="w-full" size="sm" variant="secondary">
-                      Tambah Note
-                    </Button>
-                  </div>
                   <div className="flex-1">
                     <textarea onChange={(e) => setProgressNote(e.target.value)} value={progressNote} className="w-full border-1 rounded border-slate-400 font-medium text-xs p-2 text-slate-600" />
+                  </div>
+                  <div className="w-[150px]">
+                    <Button onClick={handleAddProgressNote} className="w-full" size="sm" variant="secondary" disabled={!progressNote}>
+                      Tambah Note
+                    </Button>
                   </div>
                 </div>
               )}
@@ -895,7 +895,7 @@ function PageInquiryWorkOrder() {
               placeholder="Status Inquiry"
               label="Status Inquiry"
               name="status"
-              value={filter.status}
+              value={fields.status || ''}
               onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
               readOnly={modalForm.readOnly}
               fullWidth
@@ -905,21 +905,26 @@ function PageInquiryWorkOrder() {
                 disabled: true,
               },
               {
-                label: 'Dalam Progress',
+                label: 'Pending',
                 value: 1,
               },
               {
-                label: 'Selesai',
+                label: 'Dalam Progress',
                 value: 2,
-              }]}
+              },
+              {
+                label: 'Selesai',
+                value: 3,
+              },
+              ]}
             />
 
             <Select
               placeholder="Admin Validation"
               label="Admin Validation"
-              name="status"
-              value={filter.status}
-              onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+              name="is_validated"
+              value={fields.is_validated || ''}
+              onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
               readOnly={modalForm.readOnly}
               fullWidth
               options={[{
@@ -929,11 +934,11 @@ function PageInquiryWorkOrder() {
               },
               {
                 label: 'Diterima',
-                value: 3,
+                value: 1,
               },
               {
                 label: 'Ditolak',
-                value: 1,
+                value: 0,
               }]}
             />
           </div>
@@ -986,13 +991,18 @@ function PageInquiryWorkOrder() {
               disabled: true,
             },
             {
-              label: 'Dalam Progress',
+              label: 'Pending',
               value: 1,
             },
             {
-              label: 'Selesai',
+              label: 'Dalam Progress',
               value: 2,
-            }]}
+            },
+            {
+              label: 'Selesai',
+              value: 3,
+            },
+            ]}
           />
         </form>
         <div className="flex gap-2 justify-end p-4">

@@ -74,6 +74,7 @@ function PageNews() {
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
+    variant: 'default',
     open: false,
     message: '',
   })
@@ -99,6 +100,7 @@ function PageNews() {
 
   const handleCloseToast = () => {
     setToast({
+      variant: 'default',
       open: false,
       message: '',
     })
@@ -165,6 +167,7 @@ function PageNews() {
     })
       .catch((error) => {
         setToast({
+          variant: 'error',
           open: true,
           message: error.response?.data?.message,
         })
@@ -192,6 +195,7 @@ function PageNews() {
     })
       .catch((error) => {
         setToast({
+          variant: 'error',
           open: true,
           message: error.response?.data?.message,
         })
@@ -259,6 +263,7 @@ function PageNews() {
       })
       .catch((error) => {
         setToast({
+          variant: 'error',
           open: true,
           message: error.response?.data?.message,
         })
@@ -300,6 +305,7 @@ function PageNews() {
       handleGetNews()
       handleModalFormClose()
       setToast({
+        variant: 'default',
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
@@ -307,6 +313,7 @@ function PageNews() {
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
+          variant: 'error',
           open: true,
           message: error.response?.data?.message,
         })
@@ -328,6 +335,7 @@ function PageNews() {
     setTimeout(() => {
       setIsLoadingSubmit(false)
       setToast({
+        variant: 'default',
         open: true,
         message: 'Berhasil menghapus dokumen.',
       })
@@ -348,6 +356,7 @@ function PageNews() {
     setTimeout(() => {
       setIsLoadingSubmit(false)
       setToast({
+        variant: 'default',
         open: true,
         message: 'Berhasil menghapus foto.',
       })
@@ -377,6 +386,7 @@ function PageNews() {
       } else {
         const message = file.size > 500000 ? 'Ukuran file terlalu besar, silakan pilih file dibawah 500kb.' : 'Dokumen format tidak sesuai, silakan pilih format image atau pdf.'
         setToast({
+          variant: 'error',
           open: true,
           message,
         })
@@ -407,6 +417,7 @@ function PageNews() {
       } else {
         const message = file.size > 500000 ? 'Ukuran file terlalu besar, silakan pilih file dibawah 500kb.' : 'Dokumen format tidak sesuai, silakan pilih format image atau pdf.'
         setToast({
+          variant: 'error',
           open: true,
           message,
         })
@@ -629,7 +640,7 @@ function PageNews() {
         <LoadingOverlay />
       )}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
+      <Toast open={toast.open} message={toast.message} variant={toast.variant} onClose={handleCloseToast} />
 
     </Layout>
   )

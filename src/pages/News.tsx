@@ -1,5 +1,5 @@
 import {
-  useState, useMemo, useEffect, useRef,
+  useState, useEffect, useRef,
 } from 'react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
@@ -19,21 +19,18 @@ import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { toBase64 } from 'utils/file'
+import api from 'utils/api'
 
 const PAGE_NAME = 'Berita'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
-    label: 'Nama Berita',
-    key: 'name',
+    label: 'Judul',
+    key: 'title',
   },
   {
     label: 'Jenis',
     key: 'type',
-  },
-  {
-    label: 'Status',
-    key: 'status',
   },
   {
     label: 'Aksi',
@@ -43,30 +40,36 @@ const TABLE_HEADERS: TableHeaderProps[] = [
   },
 ]
 
-const TABLE_DATA = Array.from(Array(100).keys()).map((key) => ({
-  id: key + 1,
-  name: `Berita ${key + 1}`,
-  type: key % 2,
-  text: '<p>Berita</p>',
-  picture: 'https://via.placeholder.com/300x300',
-  documents: [{
-    id: 1,
-    picture: 'https://via.placeholder.com/300x300',
-  }],
-  status: 1,
-}))
+interface FieldProps {
+  id?: number
+  title: string
+  type: string
+  status?: string
+  content: string
+  picture: string
+  documents: {
+    id: number | string
+    url: string
+  }[]
+}
 
 function PageNews() {
-  const [data, setData] = useState<Record<string, any>[]>([])
-  const [page, setPage] = useState(0)
-  const [fields, setFields] = useState({
+  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [data, setData] = useState<DataTableProps>({
+    data: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+  })
+  const [page, setPage] = useState(1)
+  const [fields, setFields] = useState<FieldProps>({
     id: 0,
-    name: '',
+    title: '',
     type: '',
-    text: '',
+    content: '',
     status: '',
     picture: '',
-    documents: [{}],
+    documents: [],
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -92,12 +95,7 @@ function PageNews() {
   const pictureRef = useRef<any>(null)
   const uploadRef = useRef<any>(null)
 
-  const debounceSearch = useDebounce(search, 500)
-
-  const paginateTableData = useMemo(
-    () => data.slice(page * PAGE_SIZE, (page * PAGE_SIZE) + PAGE_SIZE),
-    [page, data],
-  )
+  const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const handleCloseToast = () => {
     setToast({
@@ -118,12 +116,12 @@ function PageNews() {
     }))
     setFields({
       id: 0,
-      name: '',
+      title: '',
       type: '',
-      text: '',
+      content: '',
       status: '',
       picture: '',
-      documents: [{}],
+      documents: [],
     })
   }
 
@@ -149,37 +147,57 @@ function PageNews() {
   }
 
   const handleModalDetailOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: true,
     })
-    setFields({
-      id: fieldData.id,
-      name: fieldData.name,
-      type: fieldData.type,
-      text: fieldData.text,
-      status: fieldData.status,
-      picture: fieldData.picture,
-      documents: fieldData.documents,
+    api({
+      url: `/v1/news/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
     })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalUpdateOpen = (fieldData: any) => {
+    setIsLoadingData(true)
     setModalForm({
-      title: `Ubah ${PAGE_NAME}`,
+      title: `Detail ${PAGE_NAME}`,
       open: true,
       readOnly: false,
     })
-    setFields({
-      id: fieldData.id,
-      name: fieldData.name,
-      type: fieldData.type,
-      text: fieldData.text,
-      status: fieldData.status,
-      picture: fieldData.picture,
-      documents: fieldData.documents,
+    api({
+      url: `/v1/news/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+      }))
+      setIsLoadingData(false)
     })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
   }
 
   const handleModalDeleteOpen = (fieldData: any) => {
@@ -189,15 +207,10 @@ function PageNews() {
       open: true,
     })
     setSubmitType('delete')
-    setFields({
+    setFields((prevState) => ({
+      ...prevState,
       id: fieldData.id,
-      name: fieldData.name,
-      type: fieldData.type,
-      text: fieldData.text,
-      status: fieldData.status,
-      picture: fieldData.picture,
-      documents: fieldData.documents,
-    })
+    }))
   }
 
   const handleModalDeleteDocumentOpen = (fieldData: any) => {
@@ -207,14 +220,6 @@ function PageNews() {
 
   const handleModalDeletePictureOpen = () => {
     setIsModalDeletePictureOpen(true)
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
@@ -237,16 +242,77 @@ function PageNews() {
     setSubmitType(type)
   }
 
+  const handleGetNews = () => {
+    setIsLoadingData(true)
+    api({
+      url: '/v1/news',
+      withAuth: true,
+      method: 'GET',
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        search,
+      },
+    })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const apiSubmitCreate = () => api({
+    url: '/v1/news/create',
+    withAuth: true,
+    method: 'POST',
+    data: fields,
+  })
+
+  const apiSubmitUpdate = () => api({
+    url: `/v1/news/${fields.id}`,
+    withAuth: true,
+    method: 'PUT',
+    data: fields,
+  })
+
+  const apiSubmitDelete = () => api({
+    url: `/v1/news/${fields.id}`,
+    withAuth: true,
+    method: 'DELETE',
+  })
+
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
-    setTimeout(() => {
-      setIsLoadingSubmit(false)
+    let apiSubmit = apiSubmitCreate
+    if (submitType === 'update') {
+      apiSubmit = apiSubmitUpdate
+    } else if (submitType === 'delete') {
+      apiSubmit = apiSubmitDelete
+    }
+
+    apiSubmit().then(() => {
+      handleGetNews()
       handleModalFormClose()
       setToast({
         open: true,
         message: MODAL_CONFIRM_TYPE[submitType].message,
       })
-    }, 500)
+    })
+      .catch((error) => {
+        handleModalConfirmClose()
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingSubmit(false)
+      })
   }
 
   const handleClickCancelDeleteDocument = () => {
@@ -333,8 +399,8 @@ function PageNews() {
           setFields((prevState) => ({
             ...prevState,
             documents: [...prevState.documents, {
-              id: prevState.documents.length,
-              picture: result,
+              id: `temp-${prevState.documents.length}`,
+              url: result as string,
             }],
           }))
         })
@@ -348,11 +414,10 @@ function PageNews() {
     }
   }
 
-  const tableDatas = TABLE_DATA.map((column) => ({
+  const tableDatas = data.data.map((column) => ({
     id: column.id,
-    name: column.name,
+    title: column.title,
     type: column.type,
-    status: column.status,
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
@@ -360,38 +425,36 @@ function PageNews() {
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
+        {userPermissions.includes('news-edit') && (
         <Popover content="Ubah">
           <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
             <IconEdit className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
+        {userPermissions.includes('news-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
             <IconTrash className="w-4 h-4" />
           </Button>
         </Popover>
+        )}
       </div>
     ),
   }))
 
   useEffect(() => {
-    if (debounceSearch) {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        const newData = tableDatas.filter(
-          (tableData) => tableData.name.toLowerCase().includes(debounceSearch.toLowerCase()),
-        )
-        setData(newData)
-      }, 500)
-    } else {
-      setIsLoadingData(true)
-      setTimeout(() => {
-        setIsLoadingData(false)
-        setData(tableDatas)
-      }, 500)
-    }
-  }, [debounceSearch])
+    handleGetNews()
+  }, [debounceSearch, page])
+
+  useEffect(() => {
+    setTimeout(() => {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
+      if (localStorageUser.permissions) {
+        setUserPermissions(localStorageUser.permissions)
+      }
+    }, 500)
+  }, [])
 
   return (
     <Layout>
@@ -401,18 +464,18 @@ function PageNews() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input placeholder="Cari judul" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
           </div>
 
           <Table
             tableHeaders={TABLE_HEADERS}
-            tableData={paginateTableData}
-            total={TABLE_DATA.length}
-            page={page + 1}
+            tableData={tableDatas}
+            total={data.total}
+            page={data.page}
             limit={PAGE_SIZE}
-            onChangePage={handleChangePage}
+            onChangePage={setPage}
             isLoading={isLoadingData}
           />
         </div>
@@ -423,8 +486,8 @@ function PageNews() {
           <Input
             placeholder="Judul Berita"
             label="Judul Berita"
-            name="name"
-            value={fields.name}
+            name="title"
+            value={fields.title}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
@@ -445,11 +508,11 @@ function PageNews() {
             },
             {
               label: 'Berita',
-              value: 1,
+              value: 'Berita',
             },
             {
               label: 'Informasi',
-              value: 2,
+              value: 'Informasi',
             }]}
           />
 
@@ -489,12 +552,12 @@ function PageNews() {
 
           <div className="sm:col-span-2">
             <p className="text-sm font-medium text-slate-600 dark:text-white mb-2">Deskripsi</p>
-            <ReactQuill theme="snow" value={fields.text} onChange={(value) => handleChangeField('text', value)} />
+            <ReactQuill theme="snow" value={fields.content} onChange={(value) => handleChangeField('content', value)} />
           </div>
 
           <div className="flex flex-col gap-2">
             <p className="text-sm font-semibold text-slate-600">
-              Dokumen Pendukung
+              Dokumen Tambahan
             </p>
             {!modalForm.readOnly && (
               <div>
@@ -505,25 +568,20 @@ function PageNews() {
               </div>
             )}
             <div className="flex gap-2">
-              {fields.documents.length ? fields.documents.map((document: any) => {
-                if (document.id) {
-                  return (
-                    <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
-                      {!modalForm.readOnly && (
-                        <span
-                          className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
-                          onClick={() => handleModalDeleteDocumentOpen(document)}
-                          role="presentation"
-                        >
-                          <IconTrash className="text-white" width={16} height={16} />
-                        </span>
-                      )}
-                      <img src={document.picture.includes('pdf') ? '/images/pdf.png' : document.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
-                    </div>
-                  )
-                }
-                return null
-              }) : (
+              {fields.documents.length ? fields.documents.map((document: any) => (
+                <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
+                  {!modalForm.readOnly && (
+                  <span
+                    className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
+                    onClick={() => handleModalDeleteDocumentOpen(document)}
+                    role="presentation"
+                  >
+                    <IconTrash className="text-white" width={16} height={16} />
+                  </span>
+                  )}
+                  <img src={document.url.includes('pdf') ? '/images/pdf.png' : document.url} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                </div>
+              )) : (
                 <p className="text-sm text-slate-600">Belum ada dokumen</p>
               )}
             </div>

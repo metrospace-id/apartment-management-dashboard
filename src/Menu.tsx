@@ -251,7 +251,7 @@ export const MENUS: MenuProp[] = [
     code: 'tenant-unit',
     parent_code: 'tenant',
     name: 'Penghuni Apartmen',
-    url: '/tenant-apartment',
+    url: '/tenant-unit',
     section: 'main',
   },
   {

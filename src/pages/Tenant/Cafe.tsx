@@ -338,6 +338,7 @@ function PageTenantCafe() {
       withAuth: true,
       method: 'GET',
       params: {
+        type: 2,
         page,
         limit: PAGE_SIZE,
         search,
@@ -503,7 +504,7 @@ function PageTenantCafe() {
     name: column.name,
     cafe_name: column.cafe_name,
     phone: column.phone,
-    amount: `Rp ${column.amount.toLocaleString()}`,
+    amount: `Rp ${column.amount?.toLocaleString()}`,
     wide: `${column.unit_length * column.unit_width} M² (${column.unit_length} x ${column.unit_width})`,
     watt: `${column.unit_watt} watt`,
     relation: column.id ? <Badge variant="default">{column.relation}</Badge> : <Badge variant="primary">Pemilik</Badge>,

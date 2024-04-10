@@ -18,7 +18,7 @@ import PageAssetLocation from 'pages/Asset/Location'
 import PageAssetType from 'pages/Asset/Type'
 import PageAssetList from 'pages/Asset/List'
 import PageOwner from 'pages/Owner'
-import PageTenantApartment from 'pages/Tenant/Apartment'
+import PageTenantUnit from 'pages/Tenant/Unit'
 import PageAccessCardUnit from 'pages/AccessCard/Unit'
 import PageAccessCardParking from 'pages/AccessCard/Park'
 import PageAccessCardVehicleList from 'pages/AccessCard/VehicleList'
@@ -136,8 +136,8 @@ const router = createBrowserRouter([
     Component: PageOwner,
   },
   {
-    path: '/tenant-apartment',
-    Component: PageTenantApartment,
+    path: '/tenant-unit',
+    Component: PageTenantUnit,
   },
   {
     path: '/tenant-cafe',

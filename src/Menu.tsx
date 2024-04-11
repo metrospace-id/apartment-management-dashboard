@@ -182,17 +182,17 @@ export const MENUS: MenuProp[] = [
     section: 'master',
   },
   {
-    code: 'asset-location',
-    parent_code: 'asset',
-    name: 'Lokasi Aset',
-    url: '/asset/location',
-    section: 'master',
-  },
-  {
     code: 'asset-type',
     parent_code: 'asset',
     name: 'Jenis Aset',
     url: '/asset/type',
+    section: 'master',
+  },
+  {
+    code: 'asset-location',
+    parent_code: 'asset',
+    name: 'Lokasi Aset',
+    url: '/asset/location',
     section: 'master',
   },
   {

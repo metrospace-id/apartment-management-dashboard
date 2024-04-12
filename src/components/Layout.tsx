@@ -1,15 +1,22 @@
 import {
   ReactNode,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useCookies } from 'react-cookie'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import dayjs from 'dayjs'
 
 import useOutsideClick from 'hooks/useOutsideClick'
 import api from 'utils/api'
+import { truncate } from 'utils/string'
+import packageJson from '../../package.json'
 import SideBar from './SideBar'
+
+dayjs.extend(relativeTime)
 
 const NOTIFICATIONS = Array.from(Array(10).keys()).map((key) => ({
   title: `Notifikasi ke ${key + 1}`,
@@ -32,10 +39,20 @@ function Layout({ children }: LayoutProps) {
     email: '',
     picture: '',
   })
+  const [notifications, setNotifications] = useState<{
+    id: number,
+    title: string,
+    message: string,
+    created_at: string,
+    url: string,
+    is_read: number
+  }[]>([])
   const [theme, setTheme] = useState(localStorage.theme)
 
   const notificationElRef = useRef<HTMLDivElement | null>(null)
   const profileElRef = useRef<HTMLDivElement | null>(null)
+
+  const hasNewNotification = useMemo(() => notifications.some((notification) => notification.is_read === 0), [notifications])
 
   useOutsideClick(notificationElRef, () => setIsNotificationOpen(false))
   useOutsideClick(profileElRef, () => setIsProfileOpen(false))
@@ -80,6 +97,7 @@ function Layout({ children }: LayoutProps) {
       url: '/v1/user/profile',
     }).then(({ data }) => {
       setProfile({
+        ...data.data,
         name: data.data.name,
         email: data.data.email,
         picture: data.data.picture,
@@ -91,6 +109,38 @@ function Layout({ children }: LayoutProps) {
     }).catch(() => {
       removeCookie('token')
       window.location.href = '/login'
+    })
+  }
+
+  const handleGetNotification = () => {
+    api({
+      withAuth: true,
+      url: '/v1/notification',
+    }).then(({ data: responseData }) => {
+      if (responseData.data.data.length > 0) {
+        setNotifications(responseData.data.data)
+      }
+    }).catch((error) => {
+      console.error(error)
+    })
+  }
+
+  const handleClickNotificationDetail = (notification: {
+    id: number,
+    title: string,
+    message: string,
+    created_at: string,
+    url: string,
+    is_read: number
+  }) => {
+    api({
+      withAuth: true,
+      url: `/v1/notification/read/${notification.id}`,
+      method: 'POST',
+    }).then(() => {
+      navigation(notification.url)
+    }).catch((error) => {
+      console.error(error)
     })
   }
 
@@ -109,12 +159,15 @@ function Layout({ children }: LayoutProps) {
 
     if (cookies.token) {
       handleGetProfile()
+      handleGetNotification()
     }
 
     if (window.innerWidth < 640) {
       setIsSideBarOpen(false)
     }
   }, [cookies])
+
+  console.log(notifications)
 
   return (
 
@@ -165,6 +218,10 @@ function Layout({ children }: LayoutProps) {
                 </svg>
               </div>
 
+              {hasNewNotification && (
+                <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              )}
+
               <div className="absolute shadow-lg z-20 top-12 right-[-104px] w-screen overflow-hidden sm:right-0 sm:w-[320px] sm:rounded-md">
                 <div className={`transition-all bg-white ${isNotificationOpen ? 'mt-0' : 'mt-[-200%]'}`}>
                   <div className="bg-primary p-4 dark:bg-black">
@@ -172,18 +229,28 @@ function Layout({ children }: LayoutProps) {
                   </div>
                   <div className="bg-white max-h-[250px] overflow-scroll dark:bg-slate-900">
                     <ul>
-                      {NOTIFICATIONS.map((notification) => (
-                        <li className="p-4 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700" key={notification.title}>
-                          <p className="text-sm text-slate-600 font-medium dark:text-white">{notification.title}</p>
-                          <p className="text-xs text-slate-500 font-normal dark:text-white">{notification.description}</p>
+                      {notifications.length > 0 ? notifications.map((notification) => (
+                        <li className="p-4 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700" key={notification.title} role="presentation" onClick={() => handleClickNotificationDetail(notification)}>
+                          <p className="text-sm text-slate-600 font-medium dark:text-white">
+                            {notification.title}
+                            {notification.is_read === 0 && (
+                              <span className="bg-red-500 text-white text-xxs font-medium px-1 ml-1 rounded-sm">Baru</span>
+
+                            )}
+                          </p>
+                          <p className="text-xs text-slate-500 font-normal dark:text-white">{truncate(notification.message, 100)}</p>
                           <span className="flex gap-1 items-center mt-2 text-slate-400 dark:text-white">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
-                            <p className="text-xs">30 detik yang lalu</p>
+                            <p className="text-xs">{dayjs(notification.created_at).fromNow()}</p>
                           </span>
                         </li>
-                      ))}
+                      )) : (
+                        <li className="p-4 ">
+                          <p className="text-sm text-slate-600 font-medium dark:text-white">Belum ada notifikasi</p>
+                        </li>
+                      )}
                     </ul>
                   </div>
                 </div>
@@ -223,7 +290,8 @@ function Layout({ children }: LayoutProps) {
                 <div className={`transition-all bg-white ${isProfileOpen ? 'mt-0' : 'mt-[-200%]'} dark:bg-slate-900`}>
                   <div className="p-4">
                     <p className="text-xs text-slate-600 font-medium dark:text-white">{`Halo, ${profile.name}`}</p>
-                    <p className="text-xxs text-slate-500 font-regular dark:text-white">{profile.email}</p>
+                    <p className="text-xxs text-slate-600 font-medium ">{profile.email}</p>
+                    <p className="text-micro text-slate-500 font-regular dark:text-white">{`v${packageJson.version}`}</p>
                   </div>
                   <div className="border-b border-slate-200 py-2">
                     <ul>

@@ -91,8 +91,9 @@ function Login() {
         </div>
         <div className="absolute inset-0 z-10 flex justify-center">
           <div className="w-full flex flex-col py-32 items-center px-4 md:w-[500px] md:px-0">
-            <img src="/images/metrospace-logo.png" alt="logo" className="w-[200px]" />
-            <p className="text-md text-slate-50">Apartment Management Dashboard</p>
+            {/* <img src="/images/metrospace-logo.png" alt="logo" className="w-[200px]" /> */}
+            <p className="text-2xl text-slate-50">Apartment Management Dashboard</p>
+            <p className="text-xxs text-slate-50">Powered by MetroSpace</p>
 
             <div className="w-full rounded-lg p-8 bg-white shadow-md flex flex-col my-8">
               <div className="w-full text-center">

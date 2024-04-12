@@ -627,7 +627,7 @@ function PageInquiryWorkOrder() {
     requester_name: column.requester_name,
     requester_phone: column.requester_phone,
     created_by_name: column.created_by_name,
-    status: renderStatus(column.status + 1),
+    status: renderStatus(column.status),
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">

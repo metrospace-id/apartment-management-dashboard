@@ -133,15 +133,19 @@ function Layout({ children }: LayoutProps) {
     url: string,
     is_read: number
   }) => {
-    api({
-      withAuth: true,
-      url: `/v1/notification/read/${notification.id}`,
-      method: 'POST',
-    }).then(() => {
+    if (notification.is_read === 0) {
+      api({
+        withAuth: true,
+        url: `/v1/notification/read/${notification.id}`,
+        method: 'POST',
+      }).then(() => {
+        navigation(notification.url)
+      }).catch((error) => {
+        console.error(error)
+      })
+    } else {
       navigation(notification.url)
-    }).catch((error) => {
-      console.error(error)
-    })
+    }
   }
 
   useEffect(() => {

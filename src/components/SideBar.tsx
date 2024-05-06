@@ -59,13 +59,13 @@ function SideBar({ open }: SideBarProps) {
   }, [])
 
   return (
-    <aside className={`${open ? 'ml-0' : '-ml-[250px]'} transition-all absolute z-30 w-[250px] px-4 bg-sky-900 border-r border-slate-100 shadow-sm dark:bg-black dark:border-slate-900 md:relative flex flex-col max-h-screen`}>
+    <aside className={`${open ? 'ml-0' : '-ml-[250px]'} transition-all absolute z-30 w-[250px] px-4 bg-sky-900 shadow-sm dark:bg-black dark:border-slate-900 md:relative flex flex-col max-h-screen`}>
       <div className="m-auto p-4 text-center shadow-lg -mx-4">
         <img src="/images/metrospace-logo-white.png" alt="logo" className="m-auto w-[150px]" />
         <h1 className="text-xs text-white">{process.env.REACT_APP_APARTMENT_NAME}</h1>
       </div>
 
-      <div className="flex-1 overflow-scroll no-scrollbar ">
+      <div className="flex-1 -mx-4 px-4 overflow-scroll no-scrollbar shadow-lg">
         <ul>
           <li className="">
             <span

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 
+// eslint-disable-next-line import/no-extraneous-dependencies
+import 'formiojs/dist/formio.full.css'
+
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
 import Table from 'components/Table/Table'

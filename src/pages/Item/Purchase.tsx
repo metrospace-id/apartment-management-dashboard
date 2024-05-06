@@ -178,10 +178,10 @@ function PageItemPurchase() {
 
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
-  const subtotalItem = useMemo(() => fields.items.reduce((acc, item) => acc + (+item.price * +item.quantity), 0), [fields.items])
-  const taxAmount = useMemo(() => (+(`${fields.tax}`.replace(/,/g, '.') || 0) / 100) * subtotalItem, [fields.tax, subtotalItem])
-  const discountAmount = useMemo(() => (+(`${fields.discount}`.replace(/,/g, '.') || 0) / 100) * (subtotalItem), [fields.discount, subtotalItem])
-  const grandTotal = useMemo(() => subtotalItem + taxAmount - discountAmount, [subtotalItem, taxAmount, discountAmount])
+  const subtotalItem = useMemo(() => fields.items.reduce((acc, item) => acc + (+item.price * +item.quantity), 0), [fields.items]) || 0
+  const taxAmount = useMemo(() => (+(`${fields.tax}`.replace(/,/g, '.') || 0) / 100) * subtotalItem, [fields.tax, subtotalItem]) || 0
+  const discountAmount = useMemo(() => (+(`${fields.discount}`.replace(/,/g, '.') || 0) / 100) * (subtotalItem), [fields.discount, subtotalItem]) || 0
+  const grandTotal = useMemo(() => subtotalItem + taxAmount - discountAmount, [subtotalItem, taxAmount, discountAmount]) || 0
 
   const statuses = useMemo(() => {
     if (+currentStatus === 2) {

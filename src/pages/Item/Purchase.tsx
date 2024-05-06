@@ -242,8 +242,8 @@ function PageItemPurchase() {
       html2canvas(documentPdfRef.current).then((canvas) => {
         const pdf = new JSPDF()
         const imgProperties = pdf.getImageProperties(canvas)
-        const pdfWidth = pdf.internal.pageSize.getWidth()
-        const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width
+        const pdfWidth = imgProperties.width
+        const pdfHeight = imgProperties.height
 
         pdf.addImage(canvas, 'PNG', 0, 0, pdfWidth, pdfHeight)
         pdf.save(`${PAGE_NAME}.pdf`)
@@ -1165,16 +1165,12 @@ function PageItemPurchase() {
         <div className="flex-3 flex flex-col gap-4">
           <div className="bg-slate-100 rounded-md p-4 overflow-scroll h-full">
             <div className="bg-white p-4 text-slate-600 min-w-[800px] text-pr" ref={documentPdfRef}>
-              <div className="whitespace-pre-line border-b-2 border-black flex items-center gap-4">
+              <div className="whitespace-pre-line border-b-2 border-black flex items-center gap-4 min-h-20">
                 <div className="w-[80px]">
-                  {documentPrint.picture ? (
-                    <div className="relative">
-                      <img src={documentPrint.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
-                    </div>
-                  ) : (
-                    <div className="w-[100px] h-[100px] rounded border border-slate-100 flex flex-col items-center justify-center">
-                      <p className="text-xxs">Logo Apartment</p>
-                    </div>
+                  {documentPrint.picture && (
+                  <div className="relative">
+                    <img src={documentPrint.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                  </div>
                   )}
                 </div>
                 <div className="text-center flex-1">

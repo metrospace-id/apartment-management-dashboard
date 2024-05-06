@@ -3,8 +3,12 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import QRCode from 'react-qr-code'
+import html2canvas from 'html2canvas'
+import JSPDF from 'jspdf'
 
 import Badge from 'components/Badge'
 import Breadcrumb from 'components/Breadcrumb'
@@ -19,6 +23,7 @@ import {
   Edit as IconEdit,
   FileText as IconFile,
   TrashAlt as IconTrash,
+  Book as IconPrint,
 } from 'components/Icons'
 import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
@@ -27,7 +32,7 @@ import Popover from 'components/Popover'
 import type { TableHeaderProps } from 'components/Table/Table'
 import Table from 'components/Table/Table'
 import Toast from 'components/Toast'
-import { MODAL_CONFIRM_TYPE, PAGE_SIZE } from 'constants/form'
+import { MODAL_CONFIRM_TYPE, PAGE_SIZE, DOCUMENT_DEFAULT } from 'constants/form'
 import { ITEM_REQUEST_STATUS, ITEM_REQUEST_TYPE, ITEM_UNITS } from 'constants/item'
 import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
@@ -106,6 +111,9 @@ interface FieldProps {
     quantity: number
     unit: string
   }[]
+  department_name?: string
+  created_by_name?: string
+  created_at?: string
 }
 
 function PageItemRequest() {
@@ -155,6 +163,9 @@ function PageItemRequest() {
   const [isModalDeleteItemOpen, setIsModalDeleteItemOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState({ id: 0, item_stock_id: 0 })
   const [currentStatus, setCurrentStatus] = useState(0)
+  const [documentPrint, setDocumentPrint] = useState<DocumentProps>(DOCUMENT_DEFAULT)
+  const [isModalPrintOpen, setIsModalPrintOpen] = useState(false)
+  const documentPdfRef = useRef<HTMLDivElement | null>(null)
 
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
@@ -179,6 +190,51 @@ function PageItemRequest() {
       open: false,
       message: '',
     })
+  }
+
+  const handleModalPrintOpen = (fieldData: any) => {
+    setIsModalPrintOpen(true)
+    setIsLoadingData(true)
+    api({
+      url: `/v1/item-request/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+        tax: responseData.data.tax ? `${responseData.data.tax}`.replace(/\./g, ',') : 0,
+        discount: responseData.data.discount ? `${responseData.data.discount}`.replace(/\./g, ',') : 0,
+      }))
+      setCurrentStatus(+responseData.data.status)
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleModalPrintClose = () => {
+    setIsModalPrintOpen(false)
+  }
+
+  const handlePrintDocument = () => {
+    if (documentPdfRef.current) {
+      html2canvas(documentPdfRef.current).then((canvas) => {
+        const pdf = new JSPDF()
+        const imgProperties = pdf.getImageProperties(canvas)
+        const pdfWidth = pdf.internal.pageSize.getWidth()
+        const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width
+
+        pdf.addImage(canvas, 'PNG', 0, 0, pdfWidth, pdfHeight)
+        pdf.save(`${PAGE_NAME}.pdf`)
+      })
+    }
   }
 
   const handleModalFormClose = () => {
@@ -486,6 +542,26 @@ function PageItemRequest() {
       })
   }
 
+  const handleGetDocumentPrint = () => {
+    api({
+      url: '/v1/document/5',
+      withAuth: true,
+      method: 'GET',
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.id) {
+          setDocumentPrint(responseData.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
   const apiSubmitCreate = () => api({
     url: '/v1/item-request/create',
     withAuth: true,
@@ -573,6 +649,13 @@ function PageItemRequest() {
           </Button>
         </Popover>
         )}
+        {userPermissions.includes('item-request-print') && (
+        <Popover content="Print">
+          <Button variant="default" size="sm" icon onClick={() => handleModalPrintOpen(column)}>
+            <IconPrint className="w-4 h-4" />
+          </Button>
+        </Popover>
+        )}
         {userPermissions.includes('item-request-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
@@ -598,6 +681,7 @@ function PageItemRequest() {
 
     handleGetAllItems()
     handleGetAllDepartments()
+    handleGetDocumentPrint()
   }, [])
 
   return (
@@ -848,6 +932,92 @@ function PageItemRequest() {
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleClickCancelDeleteItem} variant="default">Kembali</Button>
           <Button onClick={handleClickSubmitDeleteItem}>Ya</Button>
+        </div>
+      </Modal>
+
+      <Modal open={isModalPrintOpen} title={`Print ${PAGE_NAME}`} size="lg">
+        <div className="flex-3 flex flex-col gap-4">
+          <div className="bg-slate-100 rounded-md p-4 overflow-scroll h-full">
+            <div className="bg-white p-4 text-slate-600 min-w-[800px] text-pr" ref={documentPdfRef}>
+              <div className="whitespace-pre-line border-b-2 border-black flex items-center gap-4 min-h-20">
+                <div className="w-[80px]">
+                  {documentPrint.picture && (
+                  <div className="relative">
+                    <img src={documentPrint.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                  </div>
+                  )}
+                </div>
+                <div className="text-center flex-1">
+                  <p className="font-semibold text-lg">{documentPrint.header}</p>
+                  <p className="font-semibold text-xs">{documentPrint.subheader}</p>
+                </div>
+                <div className="w-[100px]" />
+              </div>
+              <div className="py-4 flex flex-col gap-4">
+                <div className="text-center whitespace-pre-line">
+                  <div className="flex justify-between">
+                    <div className="flex flex-col text-left">
+                      <p className="text-xs font-semibold">{documentPrint.name}</p>
+                      <p className="text-xxs font-normal">
+                        Divisi:&nbsp;
+                        {fields.department_name}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col text-right text-xs">
+                      <p className="text-xs font-semibold">Pemohon</p>
+                      <p className="text-xxs font-normal">{fields.created_by_name}</p>
+                      {/* <p className="text-xxs font-normal">081xxxxxxxxx</p> */}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center whitespace-pre-line">
+                  <div className="flex flex-col text-left gap-2">
+
+                    <table className="w-full mb-4">
+                      <thead>
+                        <tr className="border-t-1 border-slate-300">
+                          <td className="text-xxs font-semibold">No.</td>
+                          <td className="text-xxs font-semibold">Nama Barang</td>
+                          <td className="text-xxs font-semibold">Jumlah</td>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fields.items.map((item, index) => (
+                          <tr className="border-t-1 border-slate-300 last:border-b-0" key={item.id}>
+                            <td className="text-xxs">{index + 1}</td>
+                            <td className="text-xxs">{dataItems.find((itemData) => itemData.id === item.item_stock_id)?.name || ''}</td>
+                            <td className="text-xxs">{(+item.quantity).toLocaleString('id')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <p className="text-xxs font-normal">{documentPrint.content}</p>
+                  </div>
+                </div>
+                <div className="text-center whitespace-pre-line">
+                  <div className="flex flex-col text-left gap-2">
+                    <p className="text-xxs font-normal">
+                      Jakarta,&nbsp;
+                      {dayjs(fields.created_at).format('DD MMMM YYYY')}
+                    </p>
+                    <QRCode
+                      style={{ height: 'auto', maxWidth: '50px', width: '50px' }}
+                      size={150}
+                      value={window.location.href}
+                      viewBox="0 0 150 150"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 justify-end p-4">
+          <Button onClick={handleModalPrintClose} variant="default">Tutup</Button>
+          <Button onClick={handlePrintDocument}>Print</Button>
         </div>
       </Modal>
 

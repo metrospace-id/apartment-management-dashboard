@@ -1,7 +1,10 @@
 import {
-  useState, useMemo, useEffect,
+  useState, useRef, useEffect,
 } from 'react'
 import dayjs from 'dayjs'
+import QRCode from 'react-qr-code'
+import html2canvas from 'html2canvas'
+import JSPDF from 'jspdf'
 
 import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
@@ -10,7 +13,9 @@ import Button from 'components/Button'
 import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
 import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
+import {
+  Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile, Book as IconPrint,
+} from 'components/Icons'
 import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
@@ -18,7 +23,7 @@ import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
 import DatePicker from 'components/Form/DatePicker'
 import TextArea from 'components/Form/TextArea'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import { PAGE_SIZE, MODAL_CONFIRM_TYPE, DOCUMENT_DEFAULT } from 'constants/form'
 import { exportToExcel } from 'utils/export'
 import api from 'utils/api'
 
@@ -78,6 +83,7 @@ function PageRenovation() {
   const [fields, setFields] = useState({
     id: 0,
     unit_id: 0,
+    unit_code: '',
     requester_name: '',
     requester_phone: '',
     contractor_name: '',
@@ -90,6 +96,7 @@ function PageRenovation() {
     renovation_description: '',
     start_date: dayjs().format('YYYY-MM-DD'),
     end_date: dayjs().format('YYYY-MM-DD'),
+    created_at: '',
   })
   const [filter, setFilter] = useState({
     start_date: '',
@@ -115,6 +122,9 @@ function PageRenovation() {
     open: false,
   })
   const [submitType, setSubmitType] = useState('create')
+  const [documentPrint, setDocumentPrint] = useState<DocumentProps>(DOCUMENT_DEFAULT)
+  const [isModalPrintOpen, setIsModalPrintOpen] = useState(false)
+  const documentPdfRef = useRef<HTMLDivElement | null>(null)
 
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
@@ -133,6 +143,47 @@ function PageRenovation() {
     })
   }
 
+  const handleModalPrintOpen = (fieldData: any) => {
+    setIsModalPrintOpen(true)
+    setFields((prevState) => ({
+      ...prevState,
+      id: fieldData.id,
+      unit_code: fieldData.unit_code,
+      unit_id: fieldData.unit_id,
+      requester_name: fieldData.requester_name,
+      requester_phone: fieldData.requester_phone,
+      contractor_name: fieldData.contractor_name,
+      total_workers: fieldData.total_workers,
+      pic_name: fieldData.pic_name,
+      pic_phone: fieldData.pic_phone,
+      supervisor_name: fieldData.supervisor_name,
+      supervisor_phone: fieldData.supervisor_phone,
+      renovation_category_id: fieldData.renovation_category_id,
+      renovation_description: fieldData.renovation_description,
+      start_date: fieldData.start_date,
+      end_date: fieldData.end_date,
+      created_at: fieldData.created_at,
+    }))
+  }
+
+  const handleModalPrintClose = () => {
+    setIsModalPrintOpen(false)
+  }
+
+  const handlePrintDocument = () => {
+    if (documentPdfRef.current) {
+      html2canvas(documentPdfRef.current).then((canvas) => {
+        const pdf = new JSPDF()
+        const imgProperties = pdf.getImageProperties(canvas)
+        const pdfWidth = pdf.internal.pageSize.getWidth()
+        const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width
+
+        pdf.addImage(canvas, 'PNG', 0, 0, pdfWidth, pdfHeight)
+        pdf.save(`${PAGE_NAME}.pdf`)
+      })
+    }
+  }
+
   const handleModalFormClose = () => {
     setModalForm({
       title: '',
@@ -146,6 +197,7 @@ function PageRenovation() {
     setFields({
       id: 0,
       unit_id: 0,
+      unit_code: '',
       requester_name: '',
       requester_phone: '',
       contractor_name: '',
@@ -158,6 +210,7 @@ function PageRenovation() {
       renovation_description: '',
       start_date: dayjs().format('YYYY-MM-DD'),
       end_date: dayjs().format('YYYY-MM-DD'),
+      created_at: '',
     })
   }
 
@@ -251,14 +304,6 @@ function PageRenovation() {
       ...prevState,
       id: fieldData.id,
     }))
-  }
-
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
   }
 
   const handleChangeUnitField = (fieldName: string, value: string | number) => {
@@ -377,6 +422,25 @@ function PageRenovation() {
       })
   }
 
+  const handleGetDocumentPrint = () => {
+    api({
+      url: '/v1/document/2',
+      withAuth: true,
+      method: 'GET',
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.id) {
+          setDocumentPrint(responseData.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
   const apiSubmitCreate = () => api({
     url: '/v1/renovation/create',
     withAuth: true,
@@ -455,6 +519,13 @@ function PageRenovation() {
           </Button>
         </Popover>
         )}
+        {userPermissions.includes('unit-permission-renovation-print') && (
+        <Popover content="Print">
+          <Button variant="default" size="sm" icon onClick={() => handleModalPrintOpen(column)}>
+            <IconPrint className="w-4 h-4" />
+          </Button>
+        </Popover>
+        )}
         {userPermissions.includes('unit-permission-renovation-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
@@ -480,6 +551,7 @@ function PageRenovation() {
 
     handleGetAllUnits()
     handleGetAllWorkCategories()
+    handleGetDocumentPrint()
   }, [])
 
   return (
@@ -716,6 +788,72 @@ function PageRenovation() {
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
+        </div>
+      </Modal>
+
+      <Modal open={isModalPrintOpen} title={`Print ${PAGE_NAME}`} size="lg">
+        <div className="flex-3 flex flex-col gap-4">
+          <div className="bg-slate-100 rounded-md p-4 overflow-scroll h-full">
+            <div className="bg-white p-4 text-slate-600 min-w-[800px] text-pr" ref={documentPdfRef}>
+              <div className="whitespace-pre-line border-b-2 border-black flex items-center gap-4 min-h-20">
+                <div className="w-[80px]">
+                  {documentPrint.picture && (
+                    <div className="relative">
+                      <img src={documentPrint.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                    </div>
+                  )}
+                </div>
+                <div className="text-center flex-1">
+                  <p className="font-semibold text-lg">{documentPrint.header}</p>
+                  <p className="font-semibold text-xs">{documentPrint.subheader}</p>
+                </div>
+                <div className="w-[100px]" />
+              </div>
+              <div className="py-4 flex flex-col gap-4">
+                <div className="text-center whitespace-pre-line">
+                  <div className="flex justify-between">
+                    <div className="flex flex-col text-left">
+                      <p className="text-xs font-semibold">{documentPrint.name}</p>
+                      <p className="text-xxs font-normal">{`Unit: ${fields.unit_code}`}</p>
+                      <p className="text-xxs font-normal">{`Tanggal Keluar: ${dayjs(fields.start_date).format('DD MMMM YYYY')}`}</p>
+                    </div>
+
+                    <div className="flex flex-col text-right text-xs">
+                      <p className="text-xs font-semibold">Pemohon</p>
+                      <p className="text-xxs font-normal">{fields.requester_name}</p>
+                      <p className="text-xxs font-normal">{fields.requester_phone}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center whitespace-pre-line">
+                  <div className="flex flex-col text-left gap-2">
+                    <p className="text-xxs font-normal">{`Jenis Renovasi: ${dataCategories.find((itemData) => itemData.id === fields.renovation_category_id)?.name || ''}`}</p>
+
+                    <p className="text-xxs font-normal">{documentPrint.content}</p>
+                  </div>
+                </div>
+                <div className="text-center whitespace-pre-line">
+                  <div className="flex flex-col text-left gap-2">
+                    <p className="text-xxs font-normal">
+                      Jakarta,&nbsp;
+                      {dayjs(fields.created_at).format('DD MMMM YYYY')}
+                    </p>
+                    <QRCode
+                      style={{ height: 'auto', maxWidth: '50px', width: '50px' }}
+                      size={150}
+                      value={window.location.href}
+                      viewBox="0 0 150 150"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 justify-end p-4">
+          <Button onClick={handleModalPrintClose} variant="default">Tutup</Button>
+          <Button onClick={handlePrintDocument}>Print</Button>
         </div>
       </Modal>
 

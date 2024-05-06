@@ -1,7 +1,6 @@
 import {
-  useState, useMemo, useEffect, useRef,
+  useState, useEffect, useRef,
 } from 'react'
-import { fakerID_ID as faker } from '@faker-js/faker'
 import QRCode from 'react-qr-code'
 
 import Layout from 'components/Layout'

@@ -27,3 +27,12 @@ export const MODAL_CONFIRM_TYPE: Record<string, { title: string, description: st
 }
 
 export const PAGE_SIZE = 25
+
+export const DOCUMENT_DEFAULT = {
+  id: 0,
+  name: '',
+  header: '',
+  subheader: '',
+  content: '',
+  picture: null,
+}

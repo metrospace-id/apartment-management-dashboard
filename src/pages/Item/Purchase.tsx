@@ -1,7 +1,10 @@
 import {
-  useState, useMemo, useEffect,
+  useState, useMemo, useEffect, useRef,
 } from 'react'
 import dayjs from 'dayjs'
+import QRCode from 'react-qr-code'
+import html2canvas from 'html2canvas'
+import JSPDF from 'jspdf'
 
 import Toggle from 'components/Form/Toggle'
 import Badge from 'components/Badge'
@@ -13,14 +16,16 @@ import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
 import Popover from 'components/Popover'
 import TextArea from 'components/Form/TextArea'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
+import {
+  Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile, Book as IconPrint,
+} from 'components/Icons'
 import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
 import DatePicker from 'components/Form/DatePicker'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import { PAGE_SIZE, MODAL_CONFIRM_TYPE, DOCUMENT_DEFAULT } from 'constants/form'
 import { exportToExcel } from 'utils/export'
 import { ITEM_PURCHASE_TYPE, ITEM_UNITS, ITEM_PURCHASE_STATUS } from 'constants/item'
 import Select from 'components/Form/Select'
@@ -94,6 +99,7 @@ interface FieldProps {
   vendor_phone?: string
   vendor_sector?: string
   department_id: number | null
+  department_name?: string
   status: string
   notes: string
   items: {
@@ -103,6 +109,14 @@ interface FieldProps {
     price: number
     unit: string
   }[]
+  created_at?: string
+  created_by_name?: string
+  subtotal?: number
+  tax?: number
+  taxAmount?: number
+  discount?: number
+  discountAmount?: number
+  grandTotal?: number
 }
 
 function PageItemPurchase() {
@@ -127,6 +141,8 @@ function PageItemPurchase() {
     status: '',
     notes: '',
     items: [],
+    tax: 11,
+    discount: 0,
   })
   const [filter, setFilter] = useState({
     start_date: '',
@@ -156,8 +172,16 @@ function PageItemPurchase() {
   const [isModalDeleteItemOpen, setIsModalDeleteItemOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState({ id: 0, item_stock_id: 0 })
   const [currentStatus, setCurrentStatus] = useState(0)
+  const [documentPrint, setDocumentPrint] = useState<DocumentProps>(DOCUMENT_DEFAULT)
+  const [isModalPrintOpen, setIsModalPrintOpen] = useState(false)
+  const documentPdfRef = useRef<HTMLDivElement | null>(null)
 
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
+
+  const subtotalItem = useMemo(() => fields.items.reduce((acc, item) => acc + (+item.price * +item.quantity), 0), [fields.items])
+  const taxAmount = useMemo(() => (+(`${fields.tax}`.replace(/,/g, '.') || 0) / 100) * subtotalItem, [fields.tax, subtotalItem])
+  const discountAmount = useMemo(() => (+(`${fields.discount}`.replace(/,/g, '.') || 0) / 100) * (subtotalItem), [fields.discount, subtotalItem])
+  const grandTotal = useMemo(() => subtotalItem + taxAmount - discountAmount, [subtotalItem, taxAmount, discountAmount])
 
   const statuses = useMemo(() => {
     if (+currentStatus === 2) {
@@ -180,6 +204,51 @@ function PageItemPurchase() {
       open: false,
       message: '',
     })
+  }
+
+  const handleModalPrintOpen = (fieldData: any) => {
+    setIsModalPrintOpen(true)
+    setIsLoadingData(true)
+    api({
+      url: `/v1/item-purchase/${fieldData.id}`,
+      withAuth: true,
+    }).then(({ data: responseData }) => {
+      setFields((prevState) => ({
+        ...prevState,
+        ...responseData.data,
+        tax: `${responseData.data.tax}`.replace(/\./g, ','),
+        discount: `${responseData.data.discount}`.replace(/\./g, ','),
+      }))
+      setCurrentStatus(+responseData.data.status)
+      setIsLoadingData(false)
+    })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
+  const handleModalPrintClose = () => {
+    setIsModalPrintOpen(false)
+  }
+
+  const handlePrintDocument = () => {
+    if (documentPdfRef.current) {
+      html2canvas(documentPdfRef.current).then((canvas) => {
+        const pdf = new JSPDF()
+        const imgProperties = pdf.getImageProperties(canvas)
+        const pdfWidth = pdf.internal.pageSize.getWidth()
+        const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width
+
+        pdf.addImage(canvas, 'PNG', 0, 0, pdfWidth, pdfHeight)
+        pdf.save(`${PAGE_NAME}.pdf`)
+      })
+    }
   }
 
   const handleModalFormClose = () => {
@@ -250,6 +319,9 @@ function PageItemPurchase() {
       setFields((prevState) => ({
         ...prevState,
         ...responseData.data,
+        tax: `${responseData.data.tax}`.replace(/\./g, ','),
+        discount: `${responseData.data.discount}`.replace(/\./g, ','),
+
       }))
       setCurrentStatus(+responseData.data.status)
       setIsLoadingData(false)
@@ -276,9 +348,12 @@ function PageItemPurchase() {
       url: `/v1/item-purchase/${fieldData.id}`,
       withAuth: true,
     }).then(({ data: responseData }) => {
+      console.log(`${responseData.data.tax}`.replace(/\./g, ','))
       setFields((prevState) => ({
         ...prevState,
         ...responseData.data,
+        tax: `${responseData.data.tax}`.replace(/\./g, ','),
+        discount: `${responseData.data.discount}`.replace(/\./g, ','),
       }))
       setCurrentStatus(+responseData.data.status)
       setIsLoadingData(false)
@@ -362,6 +437,12 @@ function PageItemPurchase() {
 
   const handleChangeNumericField = (fieldName: string, value: string) => {
     if (/^\d*$/.test(value) || value === '') {
+      handleChangeField(fieldName, value)
+    }
+  }
+
+  const handleChangeNumericDecimalField = (fieldName: string, value: string) => {
+    if (/^(?:\d+(,?(\d+)?))$/.test(value) || value === '') {
       handleChangeField(fieldName, value)
     }
   }
@@ -515,18 +596,46 @@ function PageItemPurchase() {
       })
   }
 
+  const handleGetDocumentPrint = () => {
+    api({
+      url: '/v1/document/6',
+      withAuth: true,
+      method: 'GET',
+    })
+      .then(({ data: responseData }) => {
+        if (responseData.data.id) {
+          setDocumentPrint(responseData.data)
+        }
+      })
+      .catch((error) => {
+        setToast({
+          variant: 'error',
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+  }
+
   const apiSubmitCreate = () => api({
     url: '/v1/item-purchase/create',
     withAuth: true,
     method: 'POST',
-    data: fields,
+    data: {
+      ...fields,
+      tax: +(`${fields.tax}`.replace(/,/g, '.') || 0),
+      discount: +(`${fields.discount}`.replace(/,/g, '.') || 0),
+    },
   })
 
   const apiSubmitUpdate = () => api({
     url: `/v1/item-purchase/${fields.id}`,
     withAuth: true,
     method: 'PUT',
-    data: fields,
+    data: {
+      ...fields,
+      tax: +(`${fields.tax}`.replace(/,/g, '.') || 0),
+      discount: +(`${fields.discount}`.replace(/,/g, '.') || 0),
+    },
   })
 
   const apiSubmitDelete = () => api({
@@ -592,6 +701,13 @@ function PageItemPurchase() {
           </Button>
         </Popover>
         )}
+        {userPermissions.includes('item-purchase-print') && (
+        <Popover content="Print">
+          <Button variant="default" size="sm" icon onClick={() => handleModalPrintOpen(column)}>
+            <IconPrint className="w-4 h-4" />
+          </Button>
+        </Popover>
+        )}
         {userPermissions.includes('item-purchase-delete') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
@@ -618,6 +734,7 @@ function PageItemPurchase() {
     handleGetAllItems()
     handleGetAllDepartments()
     handleGetAllVendors()
+    handleGetDocumentPrint()
   }, [])
 
   useEffect(() => {
@@ -828,7 +945,7 @@ function PageItemPurchase() {
                         <td className="p-2" aria-label="Qty">
                           <Input
                             name="quantity"
-                            value={(+item.quantity).toLocaleString()}
+                            value={(+item.quantity).toLocaleString('id')}
                             onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value.replace(/\W+/g, ''))}
                             readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
@@ -855,7 +972,7 @@ function PageItemPurchase() {
                           <Input
                             leftIcon={<p>Rp</p>}
                             name="price"
-                            value={(+item.price).toLocaleString()}
+                            value={(+item.price).toLocaleString('id')}
                             onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value.replace(/\W+/g, ''))}
                             readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
@@ -888,6 +1005,71 @@ function PageItemPurchase() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          <div className="col-span-2">
+            <Input
+              leftIcon={<p>Rp</p>}
+              placeholder="Subtotal"
+              label="Subtotal"
+              value={(subtotalItem || '').toLocaleString('id')}
+              readOnly
+              fullWidth
+            />
+          </div>
+
+          <Input
+            rightIcon={<p>%</p>}
+            placeholder="Pajak (%)"
+            label="Pajak (%)"
+            name="tax"
+            maxLength={5}
+            value={fields.tax || 11}
+            onChange={(e) => handleChangeNumericDecimalField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly || currentStatus > 1}
+            fullWidth
+          />
+
+          <Input
+            leftIcon={<p>Rp</p>}
+            placeholder="Pajak"
+            label="Pajak"
+            value={(taxAmount).toLocaleString('id')}
+            readOnly
+            fullWidth
+          />
+
+          <Input
+            rightIcon={<p>%</p>}
+            placeholder="Diskon (%)"
+            label="Diskon (%)"
+            name="discount"
+            maxLength={5}
+            value={fields.discount}
+            onChange={(e) => handleChangeNumericDecimalField(e.target.name, e.target.value)}
+            readOnly={modalForm.readOnly || currentStatus > 1}
+            fullWidth
+          />
+
+          <Input
+            leftIcon={<p>Rp</p>}
+            placeholder="Diskon"
+            label="Diskon"
+            value={(discountAmount).toLocaleString('id')}
+            readOnly
+            fullWidth
+          />
+
+          <div className="col-span-2">
+
+            <Input
+              leftIcon={<p>Rp</p>}
+              placeholder="Gran Total"
+              label="Gran Total"
+              value={(fields.grandTotal || grandTotal).toLocaleString('id')}
+              readOnly
+              fullWidth
+            />
           </div>
 
           {!!fields.id && +fields.type === 1 && currentStatus === 2 && (
@@ -977,6 +1159,126 @@ function PageItemPurchase() {
         <div className="flex gap-2 justify-end p-4">
           <Button onClick={handleClickCancelDeleteItem} variant="default">Kembali</Button>
           <Button onClick={handleClickSubmitDeleteItem}>Ya</Button>
+        </div>
+      </Modal>
+
+      <Modal open={isModalPrintOpen} title={`Print ${PAGE_NAME}`} size="lg">
+        <div className="flex-3 flex flex-col gap-4">
+          <div className="bg-slate-100 rounded-md p-4 overflow-scroll h-full">
+            <div className="bg-white p-4 text-slate-600 min-w-[800px] text-pr" ref={documentPdfRef}>
+              <div className="whitespace-pre-line border-b-2 border-black flex items-center gap-4">
+                <div className="w-[80px]">
+                  {documentPrint.picture ? (
+                    <div className="relative">
+                      <img src={documentPrint.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                    </div>
+                  ) : (
+                    <div className="w-[100px] h-[100px] rounded border border-slate-100 flex flex-col items-center justify-center">
+                      <p className="text-xxs">Logo Apartment</p>
+                    </div>
+                  )}
+                </div>
+                <div className="text-center flex-1">
+                  <p className="font-semibold text-lg">{documentPrint.header}</p>
+                  <p className="font-semibold text-xs">{documentPrint.subheader}</p>
+                </div>
+                <div className="w-[100px]" />
+              </div>
+              <div className="py-4 flex flex-col gap-4">
+                <div className="text-center whitespace-pre-line">
+                  <div className="flex justify-between">
+                    <div className="flex flex-col text-left">
+                      <p className="text-xs font-semibold">{documentPrint.name}</p>
+                      <p className="text-xxs font-normal">
+                        Divisi:&nbsp;
+                        {fields.department_name}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col text-right text-xs">
+                      <p className="text-xs font-semibold">Pemohon</p>
+                      <p className="text-xxs font-normal">{fields.created_by_name}</p>
+                      {/* <p className="text-xxs font-normal">081xxxxxxxxx</p> */}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center whitespace-pre-line">
+                  <div className="flex flex-col text-left gap-2">
+
+                    <table className="w-full mb-4">
+                      <thead>
+                        <tr className="border-t-1 border-slate-300">
+                          <td className="text-xxs font-semibold">No.</td>
+                          <td className="text-xxs font-semibold">Nama Barang</td>
+                          <td className="text-xxs font-semibold">Jumlah</td>
+                          <td className="text-xxs font-semibold">Harga</td>
+                          <td className="text-xxs font-semibold">Sub Total</td>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fields.items.map((item, index) => (
+                          <tr className="border-t-1 border-slate-300 last:border-b-0" key={item.id}>
+                            <td className="text-xxs">{index + 1}</td>
+                            <td className="text-xxs">{dataItems.find((itemData) => itemData.id === item.item_stock_id)?.name || ''}</td>
+                            <td className="text-xxs">{(+item.quantity).toLocaleString('id')}</td>
+                            <td className="text-xxs">{`Rp ${(+item.price).toLocaleString('id')}`}</td>
+                            <td className="text-xxs">{`Rp ${(+item.price * +item.quantity).toLocaleString('id')}`}</td>
+                          </tr>
+                        ))}
+                        <tr className="border-t-1 border-slate-300 last:border-b-1">
+                          <td className="text-xxs" colSpan={3} aria-label="total" />
+                          <td className="text-xxs font-semibold">Total</td>
+                          <td className="text-xxs font-semibold">
+                            {`Rp ${subtotalItem.toLocaleString('id')}`}
+                          </td>
+                        </tr>
+                        <tr className="border-t-1 border-slate-300 last:border-b-1">
+                          <td className="text-xxs" colSpan={3} aria-label="total" />
+                          <td className="text-xxs font-semibold">Diskon</td>
+                          <td className="text-xxs font-semibold">
+                            {`Rp ${discountAmount.toLocaleString('id')}`}
+                          </td>
+                        </tr>
+                        <tr className="border-t-1 border-slate-300 last:border-b-1">
+                          <td className="text-xxs" colSpan={3} aria-label="total" />
+                          <td className="text-xxs font-semibold">{`PPN ${fields.tax}%`}</td>
+                          <td className="text-xxs font-semibold">
+                            {`Rp ${taxAmount.toLocaleString('id')}`}
+                          </td>
+                        </tr>
+                        <tr className="border-t-1 border-slate-300 last:border-b-1">
+                          <td className="text-xxs" colSpan={3} aria-label="total" />
+                          <td className="text-xxs font-semibold">Grand Total</td>
+                          <td className="text-xxs font-semibold">{`Rp ${grandTotal.toLocaleString('id')}`}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <p className="text-xxs font-normal">{documentPrint.content}</p>
+                  </div>
+                </div>
+                <div className="text-center whitespace-pre-line">
+                  <div className="flex flex-col text-left gap-2">
+                    <p className="text-xxs font-normal">
+                      Jakarta,&nbsp;
+                      {dayjs(fields.created_at).format('DD MMMM YYYY')}
+                    </p>
+                    <QRCode
+                      style={{ height: 'auto', maxWidth: '50px', width: '50px' }}
+                      size={150}
+                      value={window.location.href}
+                      viewBox="0 0 150 150"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 justify-end p-4">
+          <Button onClick={handleModalPrintClose} variant="default">Tutup</Button>
+          <Button onClick={handlePrintDocument}>Print</Button>
         </div>
       </Modal>
 

@@ -17,6 +17,7 @@ import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import { RELATION } from 'constants/tenant'
 import { exportToExcel } from 'utils/export'
 import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
@@ -27,8 +28,6 @@ import api from 'utils/api'
 import Badge from 'components/Badge'
 
 const PAGE_NAME = 'Penghuni Unit Apartemen'
-
-const RELATION = ['Penyewa', 'Saudara', 'Orang Tua', 'Anak', 'Kerabat']
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {

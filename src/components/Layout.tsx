@@ -166,12 +166,10 @@ function Layout({ children }: LayoutProps) {
       handleGetNotification()
     }
 
-    if (window.innerWidth < 640) {
+    if (window.innerWidth <= 768) {
       setIsSideBarOpen(false)
     }
   }, [cookies])
-
-  console.log(notifications)
 
   return (
 

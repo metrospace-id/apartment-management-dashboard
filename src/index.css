@@ -3,7 +3,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/* @import "~formiojs/dist/formio.full.css"; */
+@import "~formiojs/dist/formio.full.css";
 @import "~@tsed/tailwind-formio/styles/index.css";
 
 @layer utilities {

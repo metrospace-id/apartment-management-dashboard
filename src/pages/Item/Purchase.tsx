@@ -216,8 +216,8 @@ function PageItemPurchase() {
       setFields((prevState) => ({
         ...prevState,
         ...responseData.data,
-        tax: `${responseData.data.tax}`.replace(/\./g, ','),
-        discount: `${responseData.data.discount}`.replace(/\./g, ','),
+        tax: responseData.data.tax ? `${responseData.data.tax}`.replace(/\./g, ',') : 0,
+        discount: responseData.data.discount ? `${responseData.data.discount}`.replace(/\./g, ',') : 0,
       }))
       setCurrentStatus(+responseData.data.status)
       setIsLoadingData(false)
@@ -319,8 +319,8 @@ function PageItemPurchase() {
       setFields((prevState) => ({
         ...prevState,
         ...responseData.data,
-        tax: `${responseData.data.tax}`.replace(/\./g, ','),
-        discount: `${responseData.data.discount}`.replace(/\./g, ','),
+        tax: responseData.data.tax ? `${responseData.data.tax}`.replace(/\./g, ',') : 0,
+        discount: responseData.data.discount ? `${responseData.data.discount}`.replace(/\./g, ',') : 0,
 
       }))
       setCurrentStatus(+responseData.data.status)
@@ -348,12 +348,11 @@ function PageItemPurchase() {
       url: `/v1/item-purchase/${fieldData.id}`,
       withAuth: true,
     }).then(({ data: responseData }) => {
-      console.log(`${responseData.data.tax}`.replace(/\./g, ','))
       setFields((prevState) => ({
         ...prevState,
         ...responseData.data,
-        tax: `${responseData.data.tax}`.replace(/\./g, ','),
-        discount: `${responseData.data.discount}`.replace(/\./g, ','),
+        tax: responseData.data.tax ? `${responseData.data.tax}`.replace(/\./g, ',') : 0,
+        discount: responseData.data.discount ? `${responseData.data.discount}`.replace(/\./g, ',') : 0,
       }))
       setCurrentStatus(+responseData.data.status)
       setIsLoadingData(false)

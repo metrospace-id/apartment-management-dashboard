@@ -333,7 +333,7 @@ function Home() {
 
             <div className="w-full overflow-scroll">
               <table className="border-collapse min-w-full w-max">
-                <thead className="font-semibold bg-sky-50">
+                <thead className="font-semibold bg-sky-50 dark:bg-sky-900">
                   <tr>
                     <td className="text-sm text-slate-600 dark:text-white p-4">
                       No. Unit
@@ -375,7 +375,7 @@ function Home() {
 
             <div className="w-full overflow-scroll">
               <table className="border-collapse min-w-full w-max">
-                <thead className="font-semibold bg-sky-50">
+                <thead className="font-semibold bg-sky-50 dark:bg-sky-900">
                   <tr>
                     <td className="text-sm text-slate-600 dark:text-white p-4">
                       No. Unit
@@ -419,7 +419,7 @@ function Home() {
 
             <div className="w-full overflow-scroll">
               <table className="border-collapse min-w-full w-max">
-                <thead className="font-semibold bg-sky-50">
+                <thead className="font-semibold bg-sky-50 dark:bg-sky-900">
                   <tr>
                     <td className="text-sm text-slate-600 dark:text-white p-4">
                       No. Unit
@@ -457,7 +457,7 @@ function Home() {
 
             <div className="w-full overflow-scroll">
               <table className="border-collapse min-w-full w-max">
-                <thead className="font-semibold bg-sky-50">
+                <thead className="font-semibold bg-sky-50 dark:bg-sky-900">
                   <tr>
                     <td className="text-sm text-slate-600 dark:text-white p-4">
                       No. Unit

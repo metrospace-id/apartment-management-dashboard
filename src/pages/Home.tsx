@@ -85,6 +85,81 @@ const CHART_BAR_JENIS_PENGHUNI = {
   ],
 }
 
+const totalDays = dayjs().daysInMonth()
+const CHART_BAR_MONTHLY_INQUIRIES = {
+  labels: Array.from(Array(totalDays).keys()).map((key) => dayjs().startOf('month').add(key, 'day').format('DD')),
+  datasets: [
+    {
+      fill: true,
+      label: 'Total Inquiry',
+      data: Array.from(Array(totalDays).keys()).map(() => Math.round(Math.random() * 100)),
+      backgroundColor: 'rgba(255, 99, 132, 0.2)',
+      borderColor: 'rgba(255, 99, 132, 1)',
+      borderWidth: 1,
+    },
+  ],
+}
+
+const totalMonths = 12
+const CHART_BAR_INCOMING_FINANCIAL_REPORT = {
+  labels: Array.from(Array(totalMonths).keys()).map((key) => dayjs().startOf('year').add(key, 'month').format('MMM')),
+  datasets: [
+    {
+      fill: true,
+      label: 'Pemasukan Listrik',
+      data: Array.from(Array(totalMonths).keys()).map(() => Math.round(Math.random() * 100000000)),
+      backgroundColor: 'rgba(54, 162, 235, 0.2)',
+      borderColor: 'rgba(54, 162, 235, 1)',
+      borderWidth: 1,
+    },
+    {
+      fill: true,
+      label: 'Pemasukan Air',
+      data: Array.from(Array(totalMonths).keys()).map(() => Math.round(Math.random() * 100000000)),
+      backgroundColor: 'rgba(255, 206, 86, 0.2)',
+      borderColor: 'rgba(255, 206, 86, 1)',
+      borderWidth: 1,
+    },
+    {
+      fill: true,
+      label: 'Pemasukan Service Charge',
+      data: Array.from(Array(totalMonths).keys()).map(() => Math.round(Math.random() * 100000000)),
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      borderColor: 'rgba(75, 192, 192, 1)',
+      borderWidth: 1,
+    },
+  ],
+}
+const CHART_BAR_OUTGOING_FINANCIAL_REPORT = {
+  labels: Array.from(Array(totalMonths).keys()).map((key) => dayjs().startOf('year').add(key, 'month').format('MMM')),
+  datasets: [
+    {
+      fill: true,
+      label: 'Pengeluaran Listrik',
+      data: Array.from(Array(totalMonths).keys()).map(() => Math.round(Math.random() * 100000000)),
+      backgroundColor: 'rgba(54, 162, 235, 0.2)',
+      borderColor: 'rgba(54, 162, 235, 1)',
+      borderWidth: 1,
+    },
+    {
+      fill: true,
+      label: 'Pengeluaran Air',
+      data: Array.from(Array(totalMonths).keys()).map(() => Math.round(Math.random() * 100000000)),
+      backgroundColor: 'rgba(255, 206, 86, 0.2)',
+      borderColor: 'rgba(255, 206, 86, 1)',
+      borderWidth: 1,
+    },
+    {
+      fill: true,
+      label: 'Pengeluaran Service Charge',
+      data: Array.from(Array(totalMonths).keys()).map(() => Math.round(Math.random() * 100000000)),
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      borderColor: 'rgba(75, 192, 192, 1)',
+      borderWidth: 1,
+    },
+  ],
+}
+
 const CHART_DATA = {
   labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
   datasets: [
@@ -166,6 +241,9 @@ function Home() {
   const navigate = useNavigate()
 
   const periodMonth = dayjs().startOf('month').format('MMM YYYY')
+
+  const isMobile = window.innerWidth < 768
+
   return (
     <Layout>
       <Breadcrumb title={PAGE_NAME} />
@@ -299,29 +377,76 @@ function Home() {
             <p className="text-sm sm:text-md text-slate-600 dark:text-white font-semibold">Jenis Penghuni</p>
             <Bar data={CHART_BAR_JENIS_PENGHUNI} options={{ ...chartOptions, indexAxis: 'y' as const }} />
           </div>
-
-          {/* <div className="p-4 flex flex-col gap-4 bg-white rounded-lg dark:bg-slate-950">
-            <p className="text-sm sm:text-md text-slate-600 dark:text-white font-semibold">Chart Pie</p>
-            <Pie data={CHART_DATA} options={chartOptions} />
-          </div>
-
-          <div className="p-4 flex flex-col gap-4 bg-white rounded-lg dark:bg-slate-950">
-            <p className="text-sm sm:text-md text-slate-600 dark:text-white font-semibold">Chart Radar</p>
-            <Radar data={CHART_DATA} options={chartOptions} />
-          </div> */}
         </div>
 
-        {/* <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="w-full grid grid-cols-1 sm:grid-cols-1 gap-6">
           <div className="p-4 flex flex-col gap-4 bg-white rounded-lg dark:bg-slate-950">
-            <p className="text-sm sm:text-md text-slate-600 dark:text-white font-semibold">Chart Bar</p>
-            <Bar data={CHART_DATA} options={{ ...chartOptions, indexAxis: 'y' as const }} />
+            <p className="text-sm sm:text-md text-slate-600 dark:text-white font-semibold">
+              {`Inquiry Bulan Ini (${dayjs().format('MMMM YYYY')})`}
+            </p>
+            <Bar
+              data={CHART_BAR_MONTHLY_INQUIRIES}
+              height={100}
+              options={{
+                ...chartOptions,
+                plugins: {
+                  legend: chartOptions.plugins.legend,
+                  tooltip: {
+                    callbacks: {
+                      title(context) {
+                        const title = context[0].label || ''
+                        return `Tanggal ${title}`
+                      },
+                    },
+                  },
+                },
+              }}
+            />
           </div>
+        </div>
 
+        <div className="w-full grid grid-cols-1 sm:grid-cols-1 gap-6">
           <div className="p-4 flex flex-col gap-4 bg-white rounded-lg dark:bg-slate-950">
-            <p className="text-sm sm:text-md text-slate-600 dark:text-white font-semibold">Chart Line</p>
-            <Line data={CHART_LINE_DATA} options={chartOptions} />
+            <p className="text-sm sm:text-md text-slate-600 dark:text-white font-semibold">
+              {`Financial Report Tahun Ini (${dayjs().format('YYYY')})`}
+            </p>
+            <Bar
+              data={CHART_BAR_INCOMING_FINANCIAL_REPORT}
+              height={isMobile ? 'auto' : 100}
+              options={{
+                ...chartOptions,
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      title(context) {
+                        const title = context[0].label || ''
+                        return `Bulan ${title}`
+                      },
+                    },
+                  },
+                },
+              }}
+            />
+
+            <Bar
+              data={CHART_BAR_OUTGOING_FINANCIAL_REPORT}
+              height={isMobile ? 'auto' : 100}
+              options={{
+                ...chartOptions,
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      title(context) {
+                        const title = context[0].label || ''
+                        return `Bulan ${title}`
+                      },
+                    },
+                  },
+                },
+              }}
+            />
           </div>
-        </div> */}
+        </div>
 
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-6">
 

@@ -57,6 +57,7 @@ interface FieldProps {
 }
 
 function PageRole() {
+  const [currentUser, setCurrentUser] = useState<any>({})
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
@@ -431,6 +432,13 @@ function PageRole() {
             )}
           </>
         )}
+        {currentUser.id === 1 && column.id === 1 && userPermissions.includes('role-edit') && (
+          <Popover content="Ubah">
+            <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
+        )}
       </div>
     ),
   }))
@@ -448,6 +456,7 @@ function PageRole() {
     setTimeout(() => {
       const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}')
       if (localStorageUser.permissions) {
+        setCurrentUser(localStorageUser)
         setUserPermissions(localStorageUser.permissions)
       }
     }, 500)

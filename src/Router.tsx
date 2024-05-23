@@ -49,6 +49,7 @@ import PageAreaList from 'pages/Area/List'
 import PageNews from 'pages/News'
 import PageUnitPermissionFacility from 'pages/UnitPermission/Facility'
 import PageTenantCafe from 'pages/Tenant/Cafe'
+import PageFinancialReport from 'pages/FinancialReport'
 
 const router = createBrowserRouter([
   {
@@ -218,6 +219,10 @@ const router = createBrowserRouter([
   {
     path: '/news',
     Component: PageNews,
+  },
+  {
+    path: '/financial-report',
+    Component: PageFinancialReport,
   },
   {
     path: '/app-calendar',

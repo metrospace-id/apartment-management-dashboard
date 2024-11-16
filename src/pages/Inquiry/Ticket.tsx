@@ -165,7 +165,7 @@ function PageInquiryTenant() {
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
   const dataUserDepartmentAdmin = useMemo(() => dataUsers.filter((user) => user.roles.find((role) => (role.level === '1' || role.level === '2') && role.department_id === fields.department_id)), [dataUsers, fields.department_id])
-  const dataUserDepartmentEmployee = useMemo(() => dataUsers.filter((user) => user.roles.find((role) => role.level === '3' && role.department_id === fields.department_admin_id)), [dataUsers, fields.department_admin_id])
+  const dataUserDepartmentEmployee = useMemo(() => dataUsers.filter((user) => user.roles.find((role) => role.level === '3' && role.department_id === fields.department_id)), [dataUsers, fields.department_id])
 
   const handleExportExcel = () => {
     setIsLoadingSubmit(true)

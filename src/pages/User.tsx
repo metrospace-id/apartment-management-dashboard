@@ -16,6 +16,7 @@ import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import api from 'utils/api'
+import { time } from 'console'
 
 const PAGE_NAME = 'User'
 
@@ -81,6 +82,8 @@ function PageUser() {
     open: false,
   })
   const [submitType, setSubmitType] = useState('create')
+  const [userType, setUserType] = useState(1)
+  const [isModalResetPasswordOpen, setIsModalResetPasswordOpen] = useState(false)
 
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
@@ -245,6 +248,7 @@ function PageUser() {
         page,
         limit: PAGE_SIZE,
         search,
+        type: userType,
       },
     }).then(({ data: responseData }) => {
       setData(responseData.data)
@@ -268,7 +272,8 @@ function PageUser() {
       },
     }).then(({ data: responseData }) => {
       if (responseData.data?.data?.length) {
-        setDataRoles(responseData.data.data)
+        const filterRoles = responseData.data.data.filter((role: any) => role.id !== +(process.env.REACT_APP_RESIDENT_ROLE_ID || ''))
+        setDataRoles(filterRoles)
       }
     })
       .catch((error) => {
@@ -287,6 +292,7 @@ function PageUser() {
       name: fields.name,
       email: fields.email,
       role_ids: fields.role_ids,
+      type: 1,
     },
   })
 
@@ -315,13 +321,15 @@ function PageUser() {
       apiSubmit = apiSubmitDelete
     }
 
+    const additionalMessage = submitType === 'create' ? 'Username dan password akan dikirimkan ke email user.' : ''
+
     apiSubmit()
       .then(() => {
         handleGetUsers()
         handleModalFormClose()
         setToast({
           open: true,
-          message: MODAL_CONFIRM_TYPE[submitType].message,
+          message: `${MODAL_CONFIRM_TYPE[submitType].message} ${additionalMessage}`,
         })
       })
       .catch((error) => {
@@ -332,6 +340,34 @@ function PageUser() {
         })
       })
       .finally(() => {
+        setIsLoadingSubmit(false)
+      })
+  }
+
+  const handleResetPassword = () => {
+    setIsLoadingSubmit(true)
+    api({
+      url: '/v1/user/reset-password',
+      withAuth: true,
+      method: 'POST',
+      data: {
+        id: fields.id,
+      },
+    })
+      .then(() => {
+        setToast({
+          open: true,
+          message: 'Password telah direset dan dikirimkan ke email user.',
+        })
+      })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      })
+      .finally(() => {
+        setIsModalResetPasswordOpen(false)
         setIsLoadingSubmit(false)
       })
   }
@@ -380,7 +416,7 @@ function PageUser() {
 
   useEffect(() => {
     handleGetUsers()
-  }, [debounceSearch, page])
+  }, [debounceSearch, page, userType])
 
   useEffect(() => {
     handleGetAllRoles()
@@ -406,6 +442,23 @@ function PageUser() {
               <Input placeholder="Cari nama, email" onChange={(e) => setSearch(e.target.value)} fullWidth />
             </div>
             <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
+          </div>
+
+          <div className="flex gap-2 mb-4">
+            <Button
+              onClick={() => setUserType(1)}
+              variant={userType === 1 ? 'primary' : 'secondary'}
+              size="sm"
+            >
+              User Admin
+            </Button>
+            <Button
+              onClick={() => setUserType(2)}
+              variant={userType === 2 ? 'primary' : 'secondary'}
+              size="sm"
+            >
+              User Resident
+            </Button>
           </div>
 
           <Table
@@ -455,11 +508,19 @@ function PageUser() {
             </div>
           </div>
         </form>
-        <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
-          {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+        <div className="flex gap-2 justify-between p-4">
+          {modalForm.readOnly ? (
+            <Button onClick={() => setIsModalResetPasswordOpen(true)} variant="danger">Reset Password</Button>
+          ) : (
+            <div />
           )}
+
+          <div className="flex gap-2">
+            <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+            {!modalForm.readOnly && (
+            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            )}
+          </div>
         </div>
       </Modal>
 
@@ -473,11 +534,21 @@ function PageUser() {
         </div>
       </Modal>
 
+      <Modal open={isModalResetPasswordOpen} title="Reset Password" size="sm">
+        <div className="p-6">
+          <p className="text-sm text-slate-600 dark:text-white">Apakah Anda yakin ingin mereset password user ini?</p>
+        </div>
+        <div className="flex gap-2 justify-end p-4">
+          <Button onClick={() => setIsModalResetPasswordOpen(false)} variant="default">Kembali</Button>
+          <Button onClick={handleResetPassword}>Kirim</Button>
+        </div>
+      </Modal>
+
       {isLoadingSubmit && (
         <LoadingOverlay />
       )}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
+      <Toast open={toast.open} message={toast.message} timeout={5000} onClose={handleCloseToast} />
 
     </Layout>
   )

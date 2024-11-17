@@ -21,6 +21,7 @@ import { exportToExcel } from 'utils/export'
 import TextArea from 'components/Form/TextArea'
 import { toBase64 } from 'utils/file'
 import api from 'utils/api'
+import { s } from '@fullcalendar/core/internal-common'
 
 const PAGE_NAME = 'Pemilik'
 
@@ -110,6 +111,8 @@ function PageOwner() {
   const [selectedDocument, setSelectedDocument] = useState({ id: 0, picture: '' })
   const cameraRef = useRef<any>(null)
   const uploadRef = useRef<any>(null)
+  const [isModalCreateAccountOpen, setIsModalCreateAccountOpen] = useState(false)
+  const [isOwnerHasAccount, setIsOwnerHasAccount] = useState(false)
 
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
@@ -173,6 +176,31 @@ function PageOwner() {
     })
   }
 
+  const handleCheckUsersByOwnerId = (owner_id?: number) => {
+    api({
+      url: '/v1/user',
+      withAuth: true,
+      params: {
+        page,
+        limit: PAGE_SIZE,
+        owner_id,
+        type: 2,
+      },
+    }).then(({ data: responseData }) => {
+      if (responseData.data.data.length > 0) {
+        setIsOwnerHasAccount(true)
+      }
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsLoadingData(false)
+      })
+  }
+
   const handleModalDetailOpen = (fieldData: any) => {
     setIsLoadingData(true)
     setModalForm({
@@ -180,6 +208,9 @@ function PageOwner() {
       open: true,
       readOnly: true,
     })
+
+    handleCheckUsersByOwnerId(fieldData.id)
+
     api({
       url: `/v1/owner/${fieldData.id}`,
       withAuth: true,
@@ -207,6 +238,7 @@ function PageOwner() {
       open: true,
       readOnly: false,
     })
+
     api({
       url: `/v1/owner/${fieldData.id}`,
       withAuth: true,
@@ -329,7 +361,10 @@ function PageOwner() {
     url: `/v1/owner/${fields.id}`,
     withAuth: true,
     method: 'PUT',
-    data: fields,
+    data: {
+      ...fields,
+      email: isOwnerHasAccount ? undefined : fields.email,
+    },
   })
 
   const apiSubmitDelete = () => api({
@@ -337,6 +372,40 @@ function PageOwner() {
     withAuth: true,
     method: 'DELETE',
   })
+
+  const apiSubmitCreateAccount = () => api({
+    url: '/v1/user/create',
+    withAuth: true,
+    method: 'POST',
+    data: {
+      name: fields.name,
+      email: fields.email,
+      type: 2,
+      owner_id: fields.id,
+      role_ids: [process.env.REACT_APP_RESIDENT_ROLE_ID],
+    },
+  })
+
+  const handleClickSubmitCreateAccount = () => {
+    setIsLoadingSubmit(true)
+    apiSubmitCreateAccount().then(() => {
+      setToast({
+        open: true,
+        message: 'Berhasil menambahkan akun. Username dan password akan dikirimkan ke email user.',
+      })
+
+      handleCheckUsersByOwnerId(fields.id)
+    })
+      .catch((error) => {
+        setToast({
+          open: true,
+          message: error.response?.data?.message,
+        })
+      }).finally(() => {
+        setIsModalCreateAccountOpen(false)
+        setIsLoadingSubmit(false)
+      })
+  }
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -563,6 +632,8 @@ function PageOwner() {
             value={fields.email}
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
+            disabled={isOwnerHasAccount}
+            helperText={isOwnerHasAccount ? 'Silakan hubungi admin untuk mengubah email pemilik.' : ''}
             fullWidth
           />
 
@@ -663,11 +734,17 @@ function PageOwner() {
           </div>
 
         </form>
-        <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
-          {!modalForm.readOnly && (
+        <div className="flex justify-between p-4">
+          {modalForm.readOnly && !isOwnerHasAccount ? (
+            <Button onClick={() => setIsModalCreateAccountOpen(true)} variant="warning" disabled={isOwnerHasAccount}>+ Akun Pengguna</Button>
+          ) : <div />}
+
+          <div className="flex gap-2 justify-end ">
+            <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+            {!modalForm.readOnly && (
             <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
-          )}
+            )}
+          </div>
         </div>
       </Modal>
 
@@ -691,11 +768,21 @@ function PageOwner() {
         </div>
       </Modal>
 
+      <Modal open={isModalCreateAccountOpen} title="Tambah Pengguna">
+        <div className="p-6">
+          <p className="text-sm text-slate-600 dark:text-white">Apakah anda ingin menambahkan akun pengguna untuk pemilik ini?</p>
+        </div>
+        <div className="flex gap-2 justify-end p-4">
+          <Button onClick={() => setIsModalCreateAccountOpen(false)} variant="default">Tidak</Button>
+          <Button onClick={handleClickSubmitCreateAccount}>Ya</Button>
+        </div>
+      </Modal>
+
       {isLoadingSubmit && (
         <LoadingOverlay />
       )}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
+      <Toast open={toast.open} message={toast.message} timeout={5000} onClose={handleCloseToast} />
 
     </Layout>
   )

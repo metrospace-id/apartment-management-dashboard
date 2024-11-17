@@ -951,7 +951,7 @@ function PageInquiryTenant() {
                 Note Pengerjaan
               </p>
               <div className="">
-                {fields.progress_notes.map((note: any) => (
+                {fields.progress_notes.length ? fields.progress_notes.map((note: any) => (
                   <div key={note.id} className="relative flex gap-4 dark:text-white text-slate-600 dark:last:text-sky-600 last:text-sky-600 last:after:border-sky-600 after:border-slate-600 after:border-l-2 after:content-[''] after:absolute after:top-[14px] after:left-[5px] after:right-0 after:bottom-0 pb-4">
                     <div className="font-medium text-xs w-[150px]">
                       <p>
@@ -964,7 +964,9 @@ function PageInquiryTenant() {
                       <p>{note.notes}</p>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-sm text-slate-600">Belum ada note</p>
+                )}
               </div>
               {!modalForm.readOnly && (
                 <div className="flex gap-4">

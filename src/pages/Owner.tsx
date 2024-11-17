@@ -10,7 +10,9 @@ import Button from 'components/Button'
 import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
 import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
+import {
+  Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile, UserPlus as IconUser,
+} from 'components/Icons'
 import type { TableHeaderProps } from 'components/Table/Table'
 import useDebounce from 'hooks/useDebounce'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
@@ -203,6 +205,7 @@ function PageOwner() {
 
   const handleModalDetailOpen = (fieldData: any) => {
     setIsLoadingData(true)
+    setIsOwnerHasAccount(false)
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
@@ -518,6 +521,13 @@ function PageOwner() {
           </Button>
         </Popover>
         )}
+        {/* {userPermissions.includes('owner-create') && (
+        <Popover content="+ Akun">
+          <Button variant="warning" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+            <IconUser className="w-4 h-4" />
+          </Button>
+        </Popover>
+        )} */}
         {userPermissions.includes('owner-edit') && (
         <Popover content="Hapus">
           <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>

@@ -25,16 +25,22 @@ export default function Autocomplete({
   onChange,
   disabled,
   readOnly,
+  className,
   ...props
 }: AutocompleteProps) {
   const [autocompleteText, setAutocompleteText] = useState('')
+  const [valueLabel, setValueLabel] = useState('')
   const [filteredItems, setFilteredItems] = useState<AutocompleteItemProps[]>([])
   const [isSuggestionBoxShow, setIsSuggestionBoxShow] = useState(false)
+
+  const autocompleteFieldRef = useRef<HTMLDivElement>(null)
+  const inputFieldRef = useRef<HTMLInputElement>(null)
 
   const handleClickMenu = (selectedMenu: AutocompleteProps['value']) => {
     if (selectedMenu) {
       onChange?.(selectedMenu)
-      setAutocompleteText(selectedMenu.label)
+      setAutocompleteText('')
+      setValueLabel(selectedMenu.label)
       setIsSuggestionBoxShow(false)
     }
   }
@@ -43,18 +49,15 @@ export default function Autocomplete({
     setAutocompleteText(text)
   }
 
-  const autocompleteFieldRef = useRef<HTMLDivElement>(null)
-  const inputFieldRef = useRef<HTMLInputElement>(null)
-
   const customStyles = {
     overlay: {
       backgroundColor: 'transparent',
       zIndex: 9999,
-      top: autocompleteFieldRef.current?.getBoundingClientRect()?.top,
     },
     content: {
       left: autocompleteFieldRef.current?.getBoundingClientRect()?.left,
       width: autocompleteFieldRef.current?.clientWidth,
+      top: autocompleteFieldRef.current?.getBoundingClientRect()?.top,
     },
   }
 
@@ -67,7 +70,7 @@ export default function Autocomplete({
 
   useEffect(() => {
     if (value) {
-      setAutocompleteText(value.label)
+      setValueLabel(value.label)
     }
   }, [value])
 
@@ -90,7 +93,6 @@ export default function Autocomplete({
   return (
     <div className="w-full relative">
       <Input
-        leftIcon={<IconSearch className="text-neutral-400 w-4 h-4 lg:w-5 lg:h-5" />}
         rightIcon={(
           <IconChevronDown
             className={`text-neutral-40 ${isSuggestionBoxShow ? 'rotate-180' : ''} w-4 h-4 lg:w-5 lg:h-5 cursor-pointer`}
@@ -99,13 +101,12 @@ export default function Autocomplete({
             onClick={disabled || readOnly ? () => null : () => setIsSuggestionBoxShow((prevState) => (!prevState))}
           />
         )}
-        value={autocompleteText || ''}
-        onChange={(e) => handleChangeAutocompleteText(e.target.value)}
+        value={valueLabel}
         onClick={disabled || readOnly ? () => null : handleOpenAutocomplete}
         autoComplete="off"
         disabled={disabled}
-        readOnly={readOnly}
-        InputRef={inputFieldRef}
+        readOnly
+        className={`${className} cursor-pointer`}
         {...props}
       />
 
@@ -115,11 +116,23 @@ export default function Autocomplete({
           style={customStyles}
           shouldCloseOnEsc
           shouldCloseOnOverlayClick
-          onRequestClose={() => setIsSuggestionBoxShow(false)}
-          className={`mt-1 max-h-[calc(36px*5)] overflow-scroll border border-slate-200 focus-visible:outline-none
+          onRequestClose={() => {
+            setIsSuggestionBoxShow(false)
+          }}
+          className={`mt-1  border border-slate-200 focus-visible:outline-none
           shadow-sm p-2 rounded-xl absolute z-50 bg-white dark:bg-slate-900 dark:border-slate-600`}
         >
-          <ol>
+          <Input
+            leftIcon={<IconSearch className="text-neutral-400 w-4 h-4 lg:w-5 lg:h-5" />}
+            value={autocompleteText || ''}
+            onChange={(e) => handleChangeAutocompleteText(e.target.value)}
+            onClick={disabled || readOnly ? () => null : handleOpenAutocomplete}
+            autoComplete="off"
+            fullWidth
+            InputRef={inputFieldRef}
+            className="mb-2"
+          />
+          <ol className="max-h-[calc(36px*5)] overflow-scroll">
             {filteredItems.length ? filteredItems.map((menu) => (
               <li
                 className="px-4 py-[6px]

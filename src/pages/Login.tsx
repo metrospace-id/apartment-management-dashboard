@@ -54,9 +54,16 @@ function Login() {
         url: '/v1/user/login',
         data: fields,
       }).then(({ data }) => {
-        setCookie('token', data.data.token, { expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), path: '/' })
-        localStorage.setItem('user', JSON.stringify(data.data))
-        navigation('/')
+        if (data.data.type === 1) {
+          setCookie('token', data.data.token, { expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), path: '/' })
+          localStorage.setItem('user', JSON.stringify(data.data))
+          navigation('/')
+        } else {
+          setToast({
+            open: true,
+            message: 'Anda tidak memiliki akses ke halaman ini',
+          })
+        }
       }).catch((e) => {
         setToast({
           open: true,

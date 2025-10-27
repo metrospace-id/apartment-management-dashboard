@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import QRCode from 'react-qr-code'
 
 import Breadcrumb from 'components/Breadcrumb'

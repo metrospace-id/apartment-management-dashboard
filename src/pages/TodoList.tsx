@@ -114,19 +114,19 @@ const PageTodoList = () => {
     }))
   }
 
-  const handleModalUpdateOpen = (fieldData: any) => {
-    setModalForm({
-      title: `Ubah ${PAGE_NAME}`,
-      open: true,
-      readOnly: false
-    })
-    setFields((prevState) => ({
-      ...prevState,
-      id: fieldData.id,
-      title: fieldData.title,
-      description: fieldData.description
-    }))
-  }
+  // const handleModalUpdateOpen = (fieldData: any) => {
+  //   setModalForm({
+  //     title: `Ubah ${PAGE_NAME}`,
+  //     open: true,
+  //     readOnly: false
+  //   })
+  //   setFields((prevState) => ({
+  //     ...prevState,
+  //     id: fieldData.id,
+  //     title: fieldData.title,
+  //     description: fieldData.description
+  //   }))
+  // }
 
   const handleModalDeleteOpen = (fieldData: any) => {
     setModalConfirm({

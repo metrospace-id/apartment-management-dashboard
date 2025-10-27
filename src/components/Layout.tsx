@@ -14,17 +14,17 @@ import SideBar from './SideBar'
 
 dayjs.extend(relativeTime)
 
-const NOTIFICATIONS = Array.from(Array(10).keys()).map((key) => ({
-  title: `Notifikasi ke ${key + 1}`,
-  description: `Deskipsi notifikasi ke ${key + 1}. Isinya deskripsi notifikasi singkat padat.`
-}))
+// const NOTIFICATIONS = Array.from(Array(10).keys()).map((key) => ({
+//   title: `Notifikasi ke ${key + 1}`,
+//   description: `Deskipsi notifikasi ke ${key + 1}. Isinya deskripsi notifikasi singkat padat.`
+// }))
 
 interface LayoutProps {
   children: ReactNode
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  const [cookies, setCookie, removeCookie] = useCookies(['token'])
+  const [cookies, _, removeCookie] = useCookies(['token'])
   const location = useLocation()
   const navigation = useNavigate()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)

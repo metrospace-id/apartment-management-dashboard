@@ -11,13 +11,13 @@ interface ModalProps {
   children?: React.ReactNode
 }
 
-export default function Modal({
+const Modal = ({
   open = false,
   size = 'md',
   onClose,
   children,
   title
-}: ModalProps) {
+}: ModalProps) => {
   let maxWidth = 'max-w-[90%] md:max-w-[50%]'
   if (size === 'md') {
     maxWidth = 'max-w-[90%] md:max-w-[70%]'
@@ -55,3 +55,5 @@ export default function Modal({
     </ReactModal>
   )
 }
+
+export default Modal

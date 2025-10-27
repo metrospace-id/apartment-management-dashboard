@@ -26,13 +26,13 @@ interface ToastProps {
   onClose?: () => void
 }
 
-export default function Toast({
+const Toast = ({
   open,
   onClose,
   message,
   timeout = 3000,
   variant = 'default'
-}: ToastProps) {
+}: ToastProps) => {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleClose = () => {
@@ -83,3 +83,5 @@ export default function Toast({
   }
   return null
 }
+
+export default Toast

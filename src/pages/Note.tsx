@@ -17,7 +17,7 @@ import api from 'utils/api'
 const PAGE_NAME = 'Catatan'
 
 const PageNote = () => {
-  const [currentUser, setCurrentUser] = useState<{
+  const [_currentUser, setCurrentUser] = useState<{
     id: number
     name: string
   } | null>(null)

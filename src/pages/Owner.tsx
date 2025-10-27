@@ -1,4 +1,3 @@
-import { s } from '@fullcalendar/core/internal-common'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Webcam from 'react-webcam'
 
@@ -10,8 +9,7 @@ import TextArea from 'components/Form/TextArea'
 import {
   Edit as IconEdit,
   TrashAlt as IconTrash,
-  FileText as IconFile,
-  UserPlus as IconUser
+  FileText as IconFile
 } from 'components/Icons'
 import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'

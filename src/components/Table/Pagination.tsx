@@ -66,12 +66,12 @@ interface PaginationProps {
   onChangePage?: (page: number) => void
 }
 
-export default function Pagination({
+const Pagination = ({
   total = 0,
   page = 1,
   limit = 1,
   onChangePage
-}: PaginationProps) {
+}: PaginationProps) => {
   const paginate = paginationRange({
     totalCount: total,
     pageSize: limit,
@@ -110,7 +110,6 @@ export default function Pagination({
         </button>
         {paginate.map((pageNumber, index) => (
           <button
-            // eslint-disable-next-line react/no-array-index-key
             key={index}
             className={`w-8 h-8 rounded-full font-normal ${pageNumber === page ? 'bg-primary text-white hover:bg-primary' : 'bg-transparent text-slate-600'} hover:bg-sky-100 text-sm dark:text-white dark:hover:bg-slate-700`}
             type="button"
@@ -138,3 +137,5 @@ export default function Pagination({
     </div>
   )
 }
+
+export default Pagination

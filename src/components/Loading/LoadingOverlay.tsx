@@ -20,12 +20,12 @@ const customStyles = {
   }
 }
 
-export default function LoadingOverlay() {
-  return (
-    <Modal isOpen style={customStyles} contentLabel="Example Modal">
-      <div className="flex justify-center items-center h-full pointer-events-none">
-        <IconSpinner className="animate-spin text-primary" />
-      </div>
-    </Modal>
-  )
-}
+const LoadingOverlay = () => (
+  <Modal isOpen style={customStyles} contentLabel="Example Modal">
+    <div className="flex justify-center items-center h-full pointer-events-none">
+      <IconSpinner className="animate-spin text-primary" />
+    </div>
+  </Modal>
+)
+
+export default LoadingOverlay

@@ -50,7 +50,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 ]
 
 const PageItemHistory = () => {
-  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [_userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,

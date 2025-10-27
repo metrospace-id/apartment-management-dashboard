@@ -6,6 +6,7 @@ import {
 } from '@tsed/react-formio'
 import tailwind from '@tsed/tailwind-formio'
 
+// eslint-disable-next-line react-hooks/rules-of-hooks
 Formio.use(tailwind)
 Templates.framework = 'tailwind'
 
@@ -23,21 +24,24 @@ export const FormBuilder = ({
   readOnly,
   disabled,
   submission
-}: FormBuilderProps) => (
-  <div
-    className={`w-full ${readOnly || disabled ? 'pointer-events-none' : ''}`}
-  >
-    <FormioBuilder
-      components={JSON.parse(formComponent || '[]')}
-      options={{
-        noDefaultSubmitButton: true,
-        template: 'tailwind',
-        iconset: 'bx'
-      }}
-      onChange={(value) => onChange?.(value)}
-    />
-  </div>
-)
+}: FormBuilderProps) => {
+  console.log(submission)
+  return (
+    <div
+      className={`w-full ${readOnly || disabled ? 'pointer-events-none' : ''}`}
+    >
+      <FormioBuilder
+        components={JSON.parse(formComponent || '[]')}
+        options={{
+          noDefaultSubmitButton: true,
+          template: 'tailwind',
+          iconset: 'bx'
+        }}
+        onChange={(value) => onChange?.(value)}
+      />
+    </div>
+  )
+}
 
 export const Form = ({
   formComponent,

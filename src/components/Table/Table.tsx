@@ -40,7 +40,7 @@ interface TableProps {
   isLoading?: boolean
 }
 
-export default function Table({
+const Table = ({
   tableHeaders,
   tableData,
   isStripped = true,
@@ -53,7 +53,7 @@ export default function Table({
   onClickCheckBox,
   checkedIds,
   isLoading
-}: TableProps) {
+}: TableProps) => {
   const [selectedIds, setSelectedIds] = useState<number[]>([])
 
   const handleCheckAll = () => {
@@ -164,7 +164,6 @@ export default function Table({
               <tbody>
                 {tableData.map((data, index) => (
                   <tr
-                    // eslint-disable-next-line react/no-array-index-key
                     key={index}
                     className={`${isStripped ? 'odd:bg-sky-50 dark:odd:bg-sky-900' : ''} bg-white text-sm leading-6 text-slate-500 ${onClickRow ? 'hover:bg-sky-50 cursor-pointer' : ''} dark:bg-slate-800 dark:text-white`}
                     onClick={() => onClickRow?.(data.id)}
@@ -225,3 +224,5 @@ export default function Table({
     </div>
   )
 }
+
+export default Table

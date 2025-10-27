@@ -3,13 +3,10 @@ import { useState, useEffect } from 'react'
 
 import Breadcrumb from 'components/Breadcrumb'
 import Button from 'components/Button'
-import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { exportToExcel } from 'utils/export'
-import Select from 'components/Form/Select'
 import DatePicker from 'components/Form/DatePicker'
 import Input from 'components/Form/Input'
+import Select from 'components/Form/Select'
 import { FileText as IconFile } from 'components/Icons'
 import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
@@ -17,9 +14,12 @@ import Modal from 'components/Modal'
 import Popover from 'components/Popover'
 import type { TableHeaderProps } from 'components/Table/Table'
 import Table from 'components/Table/Table'
+import Toast from 'components/Toast'
 import { VEHICLE_TYPE } from 'constants/accessCard'
+import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
+import { exportToExcel } from 'utils/export'
 
 const PAGE_NAME = 'List Kendaraan'
 
@@ -80,7 +80,7 @@ const TABLE_HEADERS: TableHeaderProps[] = [
 ]
 
 const PageAccessCardVehicleList = () => {
-  const [userPermissions, setUserPermissions] = useState<string[]>([])
+  const [_userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
@@ -119,12 +119,12 @@ const PageAccessCardVehicleList = () => {
     open: false,
     readOnly: false
   })
-  const [modalConfirm, setModalConfirm] = useState({
+  const [_modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
     open: false
   })
-  const [submitType, setSubmitType] = useState('create')
+  const [_submitType, setSubmitType] = useState('create')
 
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
@@ -164,18 +164,18 @@ const PageAccessCardVehicleList = () => {
     })
   }
 
-  const handleModalConfirmClose = () => {
-    if (submitType !== 'delete') {
-      setModalForm((prevState) => ({
-        ...prevState,
-        open: true
-      }))
-    }
-    setModalConfirm((prevState) => ({
-      ...prevState,
-      open: false
-    }))
-  }
+  // const handleModalConfirmClose = () => {
+  //   if (submitType !== 'delete') {
+  //     setModalForm((prevState) => ({
+  //       ...prevState,
+  //       open: true
+  //     }))
+  //   }
+  //   setModalConfirm((prevState) => ({
+  //     ...prevState,
+  //     open: false
+  //   }))
+  // }
 
   const handleModalFilterOpen = () => {
     setIsModalFilterOpen(true)

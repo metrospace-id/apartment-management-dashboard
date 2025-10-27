@@ -68,7 +68,7 @@ interface DatepickerProps extends Omit<InputProps, 'onChange' | 'value'> {
   disableFuture?: boolean
 }
 
-export default function DatePicker({
+const DatePicker = ({
   id,
   onChange,
   value,
@@ -77,7 +77,7 @@ export default function DatePicker({
   disabled,
   readOnly,
   ...props
-}: DatepickerProps) {
+}: DatepickerProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [localValue, setLocalValue] = useState('')
   const calendarWrapperRef = useRef<HTMLDivElement>(null)
@@ -151,3 +151,5 @@ export default function DatePicker({
     </div>
   )
 }
+
+export default DatePicker

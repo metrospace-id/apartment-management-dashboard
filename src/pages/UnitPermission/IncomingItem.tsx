@@ -11,8 +11,10 @@ import DatePicker from 'components/Form/DatePicker'
 import Input from 'components/Form/Input'
 import TextArea from 'components/Form/TextArea'
 import {
-  Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile,
-  Book as IconPrint,
+  Edit as IconEdit,
+  TrashAlt as IconTrash,
+  FileText as IconFile,
+  Book as IconPrint
 } from 'components/Icons'
 import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'

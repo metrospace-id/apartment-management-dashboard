@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 import Breadcrumb from 'components/Breadcrumb'
 import Button from 'components/Button'
@@ -7,7 +7,11 @@ import Autocomplete from 'components/Form/Autocomplete'
 import DatePicker from 'components/Form/DatePicker'
 import Input from 'components/Form/Input'
 import TextArea from 'components/Form/TextArea'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
+import {
+  Edit as IconEdit,
+  TrashAlt as IconTrash,
+  FileText as IconFile
+} from 'components/Icons'
 import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Modal from 'components/Modal'
@@ -226,13 +230,13 @@ const PageUnitPermissionFacility = () => {
     }))
   }
 
-  const handleChangePage = (pageNumber: number) => {
-    setIsLoadingData(true)
-    setTimeout(() => {
-      setIsLoadingData(false)
-      setPage(pageNumber - 1)
-    }, 500)
-  }
+  // const handleChangePage = (pageNumber: number) => {
+  //   setIsLoadingData(true)
+  //   setTimeout(() => {
+  //     setIsLoadingData(false)
+  //     setPage(pageNumber - 1)
+  //   }, 500)
+  // }
 
   const handleChangeUnitField = (value: string | number) => {
     const facility = dataUnits.find((unit) => unit.id === value)

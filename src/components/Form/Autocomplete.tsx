@@ -20,7 +20,7 @@ interface AutocompleteProps extends Omit<InputProps, 'value' | 'onChange'> {
   onChange?: (item: AutocompleteItemProps) => void
 }
 
-export default function Autocomplete({
+const Autocomplete = ({
   value,
   items,
   onChange,
@@ -28,7 +28,7 @@ export default function Autocomplete({
   readOnly,
   className,
   ...props
-}: AutocompleteProps) {
+}: AutocompleteProps) => {
   const [autocompleteText, setAutocompleteText] = useState('')
   const [valueLabel, setValueLabel] = useState('')
   const [filteredItems, setFilteredItems] = useState<AutocompleteItemProps[]>(
@@ -171,3 +171,5 @@ export default function Autocomplete({
     </div>
   )
 }
+
+export default Autocomplete

@@ -1,71 +1,73 @@
-import {
-  useState, useEffect, useRef,
-} from 'react'
+import { useState, useEffect, useRef } from 'react'
 import 'react-quill/dist/quill.snow.css'
 import dayjs from 'dayjs'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
 import DatePicker from 'components/Form/DatePicker'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
+import Input from 'components/Form/Input'
+import {
+  Edit as IconEdit,
+  TrashAlt as IconTrash,
+  FileText as IconFile
+} from 'components/Icons'
+import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { toBase64 } from 'utils/file'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
+import { toBase64 } from 'utils/file'
 
 const PAGE_NAME = 'Financial Report'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Tanggal',
-    key: 'date',
+    key: 'date'
   },
   {
     label: 'Penerimaan Iuran Listrik',
-    key: 'incoming_electricity_charge',
+    key: 'incoming_electricity_charge'
   },
   {
     label: 'Pengeluaran Iuran Listrik',
-    key: 'outgoing_electricity_charge',
+    key: 'outgoing_electricity_charge'
   },
   {
     label: 'Penerimaan Iuran Air',
-    key: 'incoming_water_charge',
+    key: 'incoming_water_charge'
   },
   {
     label: 'Pengeluaran Iuran Air',
-    key: 'outgoing_water_charge',
+    key: 'outgoing_water_charge'
   },
   {
     label: 'Penerimaan Service Charge',
-    key: 'incoming_service_charge',
+    key: 'incoming_service_charge'
   },
   {
     label: 'Pengeluaran Service Charge',
-    key: 'outgoing_service_charge',
+    key: 'outgoing_service_charge'
   },
   {
     label: 'Sinking Fund',
-    key: 'sinking_fund',
+    key: 'sinking_fund'
   },
   {
     label: 'Pendapatan Lainnya',
-    key: 'other_income',
+    key: 'other_income'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
 interface FieldProps {
@@ -85,13 +87,13 @@ interface FieldProps {
   }[]
 }
 
-function PageFinancialReport() {
+const PageFinancialReport = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState<FieldProps>({
@@ -105,30 +107,35 @@ function PageFinancialReport() {
     outgoing_electricity_charge: 0,
     sinking_fund: 0,
     other_income: 0,
-    documents: [],
+    documents: []
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     variant: 'default',
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
-  const [isModalDeletePictureOpen, setIsModalDeletePictureOpen] = useState(false)
-  const [isModalDeleteDocumentOpen, setIsModalDeleteDocumentOpen] = useState(false)
+  const [isModalDeletePictureOpen, setIsModalDeletePictureOpen] =
+    useState(false)
+  const [isModalDeleteDocumentOpen, setIsModalDeleteDocumentOpen] =
+    useState(false)
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
-  const [selectedDocument, setSelectedDocument] = useState({ id: 0, picture: '' })
+  const [selectedDocument, setSelectedDocument] = useState({
+    id: 0,
+    picture: ''
+  })
   const uploadRef = useRef<any>(null)
 
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
@@ -137,7 +144,7 @@ function PageFinancialReport() {
     setToast({
       variant: 'default',
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -145,11 +152,11 @@ function PageFinancialReport() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
@@ -162,7 +169,7 @@ function PageFinancialReport() {
       outgoing_electricity_charge: 0,
       sinking_fund: 0,
       other_income: 0,
-      documents: [],
+      documents: []
     })
   }
 
@@ -170,12 +177,12 @@ function PageFinancialReport() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -183,7 +190,7 @@ function PageFinancialReport() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
   }
 
@@ -192,25 +199,27 @@ function PageFinancialReport() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     api({
       url: `/v1/financial-report/${fieldData.id}`,
-      withAuth: true,
-    }).then(({ data: responseData }) => {
-      setFields((prevState) => ({
-        ...prevState,
-        ...responseData.data,
-      }))
-      setIsLoadingData(false)
+      withAuth: true
     })
+      .then(({ data: responseData }) => {
+        setFields((prevState) => ({
+          ...prevState,
+          ...responseData.data
+        }))
+        setIsLoadingData(false)
+      })
       .catch((error) => {
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -220,25 +229,27 @@ function PageFinancialReport() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     api({
       url: `/v1/financial-report/${fieldData.id}`,
-      withAuth: true,
-    }).then(({ data: responseData }) => {
-      setFields((prevState) => ({
-        ...prevState,
-        ...responseData.data,
-      }))
-      setIsLoadingData(false)
+      withAuth: true
     })
+      .then(({ data: responseData }) => {
+        setFields((prevState) => ({
+          ...prevState,
+          ...responseData.data
+        }))
+        setIsLoadingData(false)
+      })
       .catch((error) => {
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -247,12 +258,12 @@ function PageFinancialReport() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
-      id: fieldData.id,
+      id: fieldData.id
     }))
   }
 
@@ -264,7 +275,7 @@ function PageFinancialReport() {
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -272,19 +283,19 @@ function PageFinancialReport() {
     const numericValue = value.replace(/\D/g, '')
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: +numericValue,
+      [fieldName]: +numericValue
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -298,8 +309,8 @@ function PageFinancialReport() {
       params: {
         page,
         limit: PAGE_SIZE,
-        search,
-      },
+        search
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -308,32 +319,36 @@ function PageFinancialReport() {
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/financial-report/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/financial-report/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/financial-report/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/financial-report/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/financial-report/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/financial-report/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -344,23 +359,25 @@ function PageFinancialReport() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetNews()
-      handleModalFormClose()
-      setToast({
-        variant: 'default',
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetNews()
+        handleModalFormClose()
+        setToast({
+          variant: 'default',
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -374,17 +391,19 @@ function PageFinancialReport() {
     handleClickCancelDeleteDocument()
     setIsLoadingSubmit(true)
 
-    const newDocument = fields.documents.filter((document: any) => document.id !== selectedDocument.id)
+    const newDocument = fields.documents.filter(
+      (document: any) => document.id !== selectedDocument.id
+    )
     setTimeout(() => {
       setIsLoadingSubmit(false)
       setToast({
         variant: 'default',
         open: true,
-        message: 'Berhasil menghapus dokumen.',
+        message: 'Berhasil menghapus dokumen.'
       })
       setFields((prevState) => ({
         ...prevState,
-        documents: newDocument,
+        documents: newDocument
       }))
     }, 500)
   }
@@ -401,11 +420,11 @@ function PageFinancialReport() {
       setToast({
         variant: 'default',
         open: true,
-        message: 'Berhasil menghapus foto.',
+        message: 'Berhasil menghapus foto.'
       })
       setFields((prevState) => ({
         ...prevState,
-        picture: '',
+        picture: ''
       }))
     }, 500)
   }
@@ -417,24 +436,36 @@ function PageFinancialReport() {
   const handleDocumentUpload = (files: FileList | null) => {
     if (files) {
       const file = files[0]
-      if ((file.type.includes('image') || file.type.includes('pdf') || file.type.includes('csv') || file.type.includes('application/vnd.openxmlformats')) && file.size < 500000) {
+      if (
+        (file.type.includes('image') ||
+          file.type.includes('pdf') ||
+          file.type.includes('csv') ||
+          file.type.includes('application/vnd.openxmlformats')) &&
+        file.size < 500000
+      ) {
         toBase64(file).then((result) => {
           uploadRef.current.value = null
           // console.log(result)
           setFields((prevState) => ({
             ...prevState,
-            documents: [...prevState.documents, {
-              id: `temp-${prevState.documents.length}`,
-              url: result as string,
-            }],
+            documents: [
+              ...prevState.documents,
+              {
+                id: `temp-${prevState.documents.length}`,
+                url: result as string
+              }
+            ]
           }))
         })
       } else {
-        const message = file.size > 500000 ? 'Ukuran file terlalu besar, silakan pilih file dibawah 500kb.' : 'Dokumen format tidak sesuai, silakan pilih format image, pdf, excel, atau csv.'
+        const message =
+          file.size > 500000
+            ? 'Ukuran file terlalu besar, silakan pilih file dibawah 500kb.'
+            : 'Dokumen format tidak sesuai, silakan pilih format image, pdf, excel, atau csv.'
         setToast({
           variant: 'error',
           open: true,
-          message,
+          message
         })
       }
     }
@@ -443,7 +474,12 @@ function PageFinancialReport() {
   const handleGetDocumentFile = (documentUrl: string) => {
     if (documentUrl.includes('pdf')) {
       return '/images/pdf.png'
-    } if (documentUrl.includes('csv') || documentUrl.includes('xls') || documentUrl.includes('xlsx')) {
+    }
+    if (
+      documentUrl.includes('csv') ||
+      documentUrl.includes('xls') ||
+      documentUrl.includes('xlsx')
+    ) {
       return '/images/xls.png'
     }
     return documentUrl
@@ -463,26 +499,41 @@ function PageFinancialReport() {
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
         {userPermissions.includes('news-edit') && (
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Ubah">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('news-delete') && (
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Hapus">
+            <Button
+              variant="danger"
+              size="sm"
+              icon
+              onClick={() => handleModalDeleteOpen(column)}
+            >
+              <IconTrash className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   console.log(fields)
@@ -508,9 +559,15 @@ function PageFinancialReport() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari judul" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari judul"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
+            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>
+              Tambah
+            </Button>
           </div>
 
           <Table
@@ -526,14 +583,22 @@ function PageFinancialReport() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title} size="lg">
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
-
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <DatePicker
             label="Tanggal Report"
             placeholder="Tanggal Report"
             name="date"
             value={fields.date ? dayjs(fields.date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            onChange={(selectedDate) =>
+              handleChangeField(
+                'date',
+                dayjs(selectedDate).format('YYYY-MM-DD')
+              )
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -546,7 +611,9 @@ function PageFinancialReport() {
             name="incoming_electricity_charge"
             value={(+fields.incoming_electricity_charge).toLocaleString()}
             leftIcon="Rp"
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -557,7 +624,9 @@ function PageFinancialReport() {
             name="outgoing_electricity_charge"
             value={(+fields.outgoing_electricity_charge).toLocaleString()}
             leftIcon="Rp"
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -568,7 +637,9 @@ function PageFinancialReport() {
             name="incoming_water_charge"
             value={(+fields.incoming_water_charge).toLocaleString()}
             leftIcon="Rp"
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -579,7 +650,9 @@ function PageFinancialReport() {
             name="outgoing_water_charge"
             value={(+fields.outgoing_water_charge).toLocaleString()}
             leftIcon="Rp"
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -590,7 +663,9 @@ function PageFinancialReport() {
             name="incoming_service_charge"
             value={(+fields.incoming_service_charge).toLocaleString()}
             leftIcon="Rp"
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -601,7 +676,9 @@ function PageFinancialReport() {
             name="outgoing_service_charge"
             value={(+fields.outgoing_service_charge).toLocaleString()}
             leftIcon="Rp"
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -612,7 +689,9 @@ function PageFinancialReport() {
             name="sinking_fund"
             value={(+fields.sinking_fund).toLocaleString()}
             leftIcon="Rp"
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -623,7 +702,9 @@ function PageFinancialReport() {
             name="other_income"
             value={(+fields.other_income).toLocaleString()}
             leftIcon="Rp"
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -633,77 +714,121 @@ function PageFinancialReport() {
               Dokumen Tambahan
             </p>
             {!modalForm.readOnly && (
-            <div>
-              <Button onClick={handleClickDocumentUpload} size="sm" variant="secondary">
-                Upload Dokumen
-              </Button>
-              <input ref={uploadRef} type="file" hidden onChange={(e) => handleDocumentUpload(e.target.files)} />
-            </div>
+              <div>
+                <Button
+                  onClick={handleClickDocumentUpload}
+                  size="sm"
+                  variant="secondary"
+                >
+                  Upload Dokumen
+                </Button>
+                <input
+                  ref={uploadRef}
+                  type="file"
+                  hidden
+                  onChange={(e) => handleDocumentUpload(e.target.files)}
+                />
+              </div>
             )}
             <div className="flex gap-2">
-              {fields.documents.length ? fields.documents.map((document: any) => (
-                <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
-                  {!modalForm.readOnly && (
-                  <span
-                    className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
-                    onClick={() => handleModalDeleteDocumentOpen(document)}
-                    role="presentation"
+              {fields.documents.length ? (
+                fields.documents.map((document: any) => (
+                  <div
+                    key={document.id}
+                    className="border border-slate-200 rounded hover:border-primary relative"
                   >
-                    <IconTrash className="text-white" width={16} height={16} />
-                  </span>
-                  )}
-                  <img src={handleGetDocumentFile(document.url)} alt="doc" className="w-[100px] h-[100px] object-contain" />
-                </div>
-              )) : (
+                    {!modalForm.readOnly && (
+                      <span
+                        className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
+                        onClick={() => handleModalDeleteDocumentOpen(document)}
+                        role="presentation"
+                      >
+                        <IconTrash
+                          className="text-white"
+                          width={16}
+                          height={16}
+                        />
+                      </span>
+                    )}
+                    <img
+                      src={handleGetDocumentFile(document.url)}
+                      alt="doc"
+                      className="w-[100px] h-[100px] object-contain"
+                    />
+                  </div>
+                ))
+              ) : (
                 <p className="text-sm text-slate-600">Belum ada dokumen</p>
               )}
             </div>
           </div>
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Kembali
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
       <Modal open={isModalDeleteDocumentOpen} title="Hapus Dokumen" size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">Apa anda yakin ingin menghapus dokumen?</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            Apa anda yakin ingin menghapus dokumen?
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleClickCancelDeleteDocument} variant="default">Kembali</Button>
+          <Button onClick={handleClickCancelDeleteDocument} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmitDeleteDocument}>Ya</Button>
         </div>
       </Modal>
 
       <Modal open={isModalDeletePictureOpen} title="Hapus Foto" size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">Apa anda yakin ingin menghapus foto?</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            Apa anda yakin ingin menghapus foto?
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleClickCancelDeletePicture} variant="default">Kembali</Button>
+          <Button onClick={handleClickCancelDeletePicture} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmitDeletePicture}>Ya</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} variant={toast.variant} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

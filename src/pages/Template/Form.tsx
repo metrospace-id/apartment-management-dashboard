@@ -1,21 +1,25 @@
 import { useState, useEffect } from 'react'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import Select from 'components/Form/Select'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { FORM_ASSET_TYPE } from 'constants/asset'
 import FormBuilder from 'components/Form/FormBuilder'
+import Input from 'components/Form/Input'
+import Select from 'components/Form/Select'
+import {
+  Edit as IconEdit,
+  TrashAlt as IconTrash,
+  FileText as IconFile
+} from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import Table from 'components/Table/Table'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Toast from 'components/Toast'
+import { FORM_ASSET_TYPE } from 'constants/asset'
+import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
 
 const PAGE_NAME = 'Template Form'
@@ -23,51 +27,51 @@ const PAGE_NAME = 'Template Form'
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Nama Form',
-    key: 'name',
+    key: 'name'
   },
   {
     label: 'Jenis Form',
-    key: 'type',
+    key: 'type'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
-function PageTemplateForm() {
+const PageTemplateForm = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     name: '',
     type: '',
-    form: '',
+    form: ''
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
 
@@ -76,7 +80,7 @@ function PageTemplateForm() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -84,17 +88,17 @@ function PageTemplateForm() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
       name: '',
       type: '',
-      form: '',
+      form: ''
     })
   }
 
@@ -102,12 +106,12 @@ function PageTemplateForm() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -115,7 +119,7 @@ function PageTemplateForm() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
   }
 
@@ -123,13 +127,13 @@ function PageTemplateForm() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     setFields({
       id: fieldData.id,
       name: fieldData.name,
       type: fieldData.type,
-      form: fieldData.form,
+      form: fieldData.form
     })
   }
 
@@ -137,13 +141,13 @@ function PageTemplateForm() {
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     setFields({
       id: fieldData.id,
       name: fieldData.name,
       type: fieldData.type,
-      form: fieldData.form,
+      form: fieldData.form
     })
   }
 
@@ -151,31 +155,31 @@ function PageTemplateForm() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
-      id: fieldData.id,
+      id: fieldData.id
     }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -189,8 +193,8 @@ function PageTemplateForm() {
       params: {
         page,
         limit: PAGE_SIZE,
-        search,
-      },
+        search
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -198,32 +202,36 @@ function PageTemplateForm() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/form/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/form/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/form/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/form/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/form/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/form/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -234,21 +242,23 @@ function PageTemplateForm() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetForms()
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetForms()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -256,30 +266,46 @@ function PageTemplateForm() {
   const tableDatas = data.data.map((column) => ({
     id: column.id,
     name: column.name,
-    type: FORM_ASSET_TYPE.find((type) => type.id === +column.type)?.label || '-',
+    type:
+      FORM_ASSET_TYPE.find((type) => type.id === +column.type)?.label || '-',
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
         {userPermissions.includes('template-form-edit') && (
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Ubah">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('template-form-delete') && (
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Hapus">
+            <Button
+              variant="danger"
+              size="sm"
+              icon
+              onClick={() => handleModalDeleteOpen(column)}
+            >
+              <IconTrash className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -303,9 +329,15 @@ function PageTemplateForm() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
+            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>
+              Tambah
+            </Button>
           </div>
 
           <Table
@@ -321,7 +353,11 @@ function PageTemplateForm() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title} size="lg">
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <Input
             placeholder="Nama Form"
             label="Nama Form"
@@ -340,47 +376,69 @@ function PageTemplateForm() {
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
-            options={[{
-              label: 'Pilih Jenis Form',
-              value: '',
-              disabled: true,
-            },
-            ...FORM_ASSET_TYPE.map((type) => ({ value: type.id, label: type.label }))]}
+            options={[
+              {
+                label: 'Pilih Jenis Form',
+                value: '',
+                disabled: true
+              },
+              ...FORM_ASSET_TYPE.map((type) => ({
+                value: type.id,
+                label: type.label
+              }))
+            ]}
           />
 
           <div className="sm:col-span-2">
-            <p className="text-sm font-medium text-slate-600 dark:text-white mb-2">Buat Form</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-white mb-2">
+              Buat Form
+            </p>
             <FormBuilder
               formComponent={fields.form}
-              onChange={(value) => handleChangeField('form', JSON.stringify(value))}
+              onChange={(value) =>
+                handleChangeField('form', JSON.stringify(value))
+              }
               readOnly={modalForm.readOnly}
             />
           </div>
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Kembali
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

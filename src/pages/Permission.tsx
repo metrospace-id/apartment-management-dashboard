@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
 import TextArea from 'components/Form/TextArea'
+import { Edit as IconEdit, FileText as IconFile } from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
+import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
 
 const PAGE_NAME = 'Permission'
@@ -21,55 +21,55 @@ const PAGE_NAME = 'Permission'
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Nama',
-    key: 'name',
+    key: 'name'
   },
   {
     label: 'Description',
-    key: 'description',
+    key: 'description'
   },
   {
     label: 'Parent',
-    key: 'parent',
+    key: 'parent'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
-function PagePermission() {
+const PagePermission = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     name: '',
     description: '',
-    parent: '',
+    parent: ''
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
 
@@ -78,7 +78,7 @@ function PagePermission() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -86,17 +86,17 @@ function PagePermission() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
       name: '',
       description: '',
-      parent: '',
+      parent: ''
     })
   }
 
@@ -104,12 +104,12 @@ function PagePermission() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -117,13 +117,13 @@ function PagePermission() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     setFields({
       id: fieldData.id,
       name: fieldData.name,
       description: fieldData.description,
-      parent: fieldData.parent,
+      parent: fieldData.parent
     })
   }
 
@@ -131,13 +131,13 @@ function PagePermission() {
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     setFields({
       id: fieldData.id,
       name: fieldData.name,
       description: fieldData.description,
-      parent: fieldData.parent,
+      parent: fieldData.parent
     })
   }
 
@@ -148,19 +148,19 @@ function PagePermission() {
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -174,8 +174,8 @@ function PagePermission() {
       params: {
         page,
         limit: PAGE_SIZE,
-        search,
-      },
+        search
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -183,9 +183,10 @@ function PagePermission() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -196,20 +197,20 @@ function PagePermission() {
       withAuth: true,
       method: 'PUT',
       data: {
-        description: fields.description,
-      },
+        description: fields.description
+      }
     })
       .then(() => {
         handleGetPermissions()
         setToast({
           open: true,
-          message: MODAL_CONFIRM_TYPE[submitType].message,
+          message: MODAL_CONFIRM_TYPE[submitType].message
         })
       })
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
       .finally(() => {
@@ -233,19 +234,29 @@ function PagePermission() {
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
         {userPermissions.includes('permission-edit') && (
           <Popover content="Ubah">
-            <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
               <IconEdit className="w-4 h-4" />
             </Button>
           </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -269,7 +280,11 @@ function PagePermission() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => handleSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama"
+                onChange={(e) => handleSearch(e.target.value)}
+                fullWidth
+              />
             </div>
           </div>
 
@@ -286,7 +301,11 @@ function PagePermission() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <Input
             placeholder="Nama Permission"
             label="Nama Permission"
@@ -312,32 +331,44 @@ function PagePermission() {
             readOnly={modalForm.readOnly}
             fullWidth
           />
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

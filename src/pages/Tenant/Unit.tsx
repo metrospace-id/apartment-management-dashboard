@@ -1,69 +1,71 @@
-import {
-  useState, useEffect, useRef, useCallback,
-} from 'react'
+import dayjs from 'dayjs'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Webcam from 'react-webcam'
 
-import Layout from 'components/Layout'
+import Badge from 'components/Badge'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
+import DatePicker from 'components/Form/DatePicker'
+import Input from 'components/Form/Input'
+import Select from 'components/Form/Select'
+import TextArea from 'components/Form/TextArea'
+import {
+  Edit as IconEdit,
+  TrashAlt as IconTrash,
+  FileText as IconFile
+} from 'components/Icons'
+import Layout from 'components/Layout'
+import Table from 'components/Table/Table'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
 import { RELATION } from 'constants/tenant'
-import { exportToExcel } from 'utils/export'
-import TextArea from 'components/Form/TextArea'
-import { toBase64 } from 'utils/file'
-import dayjs from 'dayjs'
-import Select from 'components/Form/Select'
-import DatePicker from 'components/Form/DatePicker'
+import useDebounce from 'hooks/useDebounce'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import api from 'utils/api'
-import Badge from 'components/Badge'
+import { exportToExcel } from 'utils/export'
+import { toBase64 } from 'utils/file'
 
 const PAGE_NAME = 'Penghuni Unit Apartemen'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'No Unit',
-    key: 'unit_code',
+    key: 'unit_code'
   },
   {
     label: 'Nama Penghuni',
-    key: 'name',
+    key: 'name'
   },
   {
     label: 'No. Telepon',
-    key: 'phone',
+    key: 'phone'
   },
   {
     label: 'Nama Pemilik',
-    key: 'owner_name',
+    key: 'owner_name'
   },
   {
     label: 'Hub. Dengan Pemilik',
-    key: 'relation',
+    key: 'relation'
   },
   {
     label: 'Tanggal Masuk',
-    key: 'start_date',
+    key: 'start_date'
   },
   {
     label: 'Tanggal Keluar',
-    key: 'end_date',
+    key: 'end_date'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
 interface FieldProps {
@@ -85,15 +87,17 @@ interface FieldProps {
   }[]
 }
 
-function PageTenantUnit() {
+const PageTenantUnit = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
-  const [dataUnits, setDataUnits] = useState<{ id: number, unit_code: string }[]>([])
+  const [dataUnits, setDataUnits] = useState<
+    { id: number; unit_code: string }[]
+  >([])
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState<FieldProps>({
     id: 0,
@@ -108,35 +112,39 @@ function PageTenantUnit() {
     relation: '',
     start_date: '',
     end_date: '',
-    documents: [],
+    documents: []
   })
   const [filter, setFilter] = useState({
     relation: '',
     start_date: '',
-    end_date: '',
+    end_date: ''
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [isWebcamOpen, setIsWebcamOpen] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false)
-  const [isModalDeleteDocumentOpen, setIsModalDeleteDocumentOpen] = useState(false)
+  const [isModalDeleteDocumentOpen, setIsModalDeleteDocumentOpen] =
+    useState(false)
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
-  const [selectedDocument, setSelectedDocument] = useState({ id: 0, picture: '' })
+  const [selectedDocument, setSelectedDocument] = useState({
+    id: 0,
+    picture: ''
+  })
   const cameraRef = useRef<any>(null)
   const uploadRef = useRef<any>(null)
 
@@ -153,7 +161,7 @@ function PageTenantUnit() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -161,11 +169,11 @@ function PageTenantUnit() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
@@ -180,7 +188,7 @@ function PageTenantUnit() {
       documents: [],
       relation: '',
       start_date: '',
-      end_date: '',
+      end_date: ''
     })
   }
 
@@ -188,12 +196,12 @@ function PageTenantUnit() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -201,7 +209,7 @@ function PageTenantUnit() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
   }
 
@@ -218,24 +226,26 @@ function PageTenantUnit() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     api({
       url: `/v1/tenant/${fieldData.id}`,
-      withAuth: true,
-    }).then(({ data: responseData }) => {
-      setFields((prevState) => ({
-        ...prevState,
-        ...responseData.data,
-      }))
-      setIsLoadingData(false)
+      withAuth: true
     })
+      .then(({ data: responseData }) => {
+        setFields((prevState) => ({
+          ...prevState,
+          ...responseData.data
+        }))
+        setIsLoadingData(false)
+      })
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -245,24 +255,26 @@ function PageTenantUnit() {
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     api({
       url: `/v1/tenant/${fieldData.id}`,
-      withAuth: true,
-    }).then(({ data: responseData }) => {
-      setFields((prevState) => ({
-        ...prevState,
-        ...responseData.data,
-      }))
-      setIsLoadingData(false)
+      withAuth: true
     })
+      .then(({ data: responseData }) => {
+        setFields((prevState) => ({
+          ...prevState,
+          ...responseData.data
+        }))
+        setIsLoadingData(false)
+      })
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -271,12 +283,12 @@ function PageTenantUnit() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
-      id: fieldData.id,
+      id: fieldData.id
     }))
   }
 
@@ -288,7 +300,7 @@ function PageTenantUnit() {
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -298,22 +310,25 @@ function PageTenantUnit() {
     }
   }
 
-  const handleChangeFilterField = (fieldName: string, value: string | number) => {
+  const handleChangeFilterField = (
+    fieldName: string,
+    value: string | number
+  ) => {
     setFilter((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -330,8 +345,8 @@ function PageTenantUnit() {
         search,
         relation: filter.relation,
         start_date: filter.start_date,
-        end_date: filter.end_date,
-      },
+        end_date: filter.end_date
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -339,9 +354,10 @@ function PageTenantUnit() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -352,8 +368,8 @@ function PageTenantUnit() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -363,30 +379,33 @@ function PageTenantUnit() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/tenant/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/tenant/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/tenant/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/tenant/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/tenant/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/tenant/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -397,21 +416,23 @@ function PageTenantUnit() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetTenants()
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetTenants()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -430,16 +451,18 @@ function PageTenantUnit() {
     handleClickCancelDeleteDocument()
     setIsLoadingSubmit(true)
 
-    const newDocument = fields.documents.filter((document: any) => document.id !== selectedDocument.id)
+    const newDocument = fields.documents.filter(
+      (document: any) => document.id !== selectedDocument.id
+    )
     setTimeout(() => {
       setIsLoadingSubmit(false)
       setToast({
         open: true,
-        message: 'Berhasil menghapus dokumen.',
+        message: 'Berhasil menghapus dokumen.'
       })
       setFields((prevState) => ({
         ...prevState,
-        documents: newDocument,
+        documents: newDocument
       }))
     }, 500)
   }
@@ -450,7 +473,7 @@ function PageTenantUnit() {
 
     setFields((prevState) => ({
       ...prevState,
-      picture: imageSrc,
+      picture: imageSrc
     }))
   }, [cameraRef])
 
@@ -462,23 +485,32 @@ function PageTenantUnit() {
     if (files) {
       const file = files[0]
       // console.log(file)
-      if ((file.type.includes('image') || file.type.includes('pdf')) && file.size < 500000) {
+      if (
+        (file.type.includes('image') || file.type.includes('pdf')) &&
+        file.size < 500000
+      ) {
         toBase64(file).then((result) => {
           uploadRef.current.value = null
           // console.log(result)
           setFields((prevState) => ({
             ...prevState,
-            documents: [...prevState.documents, {
-              id: `temp-${prevState.documents.length}`,
-              url: result as string,
-            }],
+            documents: [
+              ...prevState.documents,
+              {
+                id: `temp-${prevState.documents.length}`,
+                url: result as string
+              }
+            ]
           }))
         })
       } else {
-        const message = file.size > 500000 ? 'Ukuran file terlalu besar, silakan pilih file dibawah 500kb.' : 'Dokumen format tidak sesuai, silakan pilih format image atau pdf.'
+        const message =
+          file.size > 500000
+            ? 'Ukuran file terlalu besar, silakan pilih file dibawah 500kb.'
+            : 'Dokumen format tidak sesuai, silakan pilih format image atau pdf.'
         setToast({
           open: true,
-          message,
+          message
         })
       }
     }
@@ -490,34 +522,57 @@ function PageTenantUnit() {
     name: column.id ? column.name : column.owner_name,
     phone: column.id ? column.phone : column.owner_phone,
     owner_name: column.id ? column.owner_name : '-',
-    relation: column.id ? <Badge variant="default">{column.relation}</Badge> : <Badge variant="primary">Pemilik</Badge>,
-    start_date: column.start_date ? dayjs(column.start_date).format('YYYY-MM-DD') : '-',
-    end_date: column.end_date ? dayjs(column.end_date).format('YYYY-MM-DD') : '-',
+    relation: column.id ? (
+      <Badge variant="default">{column.relation}</Badge>
+    ) : (
+      <Badge variant="primary">Pemilik</Badge>
+    ),
+    start_date: column.start_date
+      ? dayjs(column.start_date).format('YYYY-MM-DD')
+      : '-',
+    end_date: column.end_date
+      ? dayjs(column.end_date).format('YYYY-MM-DD')
+      : '-',
     action: (
       <div className="flex items-center gap-1">
         {column.id && (
-        <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
-            <IconFile className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Detail">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalDetailOpen(column)}
+            >
+              <IconFile className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('tenant-unit-edit') && column.id && (
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Ubah">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('tenant-unit-delete') && column.id && (
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Hapus">
+            <Button
+              variant="danger"
+              size="sm"
+              icon
+              onClick={() => handleModalDeleteOpen(column)}
+            >
+              <IconTrash className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -543,11 +598,19 @@ function PageTenantUnit() {
         <div className="p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama, no. unit" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama, no. unit"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
+            <Button onClick={handleModalFilterOpen} variant="secondary">
+              Filter
+            </Button>
             <div className="sm:ml-auto flex gap-1">
-              <Button onClick={handleExportExcel} variant="warning">Export</Button>
+              <Button onClick={handleExportExcel} variant="warning">
+                Export
+              </Button>
               <Button onClick={handleModalCreateOpen}>Tambah</Button>
             </div>
           </div>
@@ -565,18 +628,26 @@ function PageTenantUnit() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <Autocomplete
             placeholder="Nomor Unit"
             label="Nomor Unit"
             name="unit_id"
             items={dataUnits.map((itemData) => ({
               label: itemData.unit_code,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
-              value: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.id || '',
+              label:
+                dataUnits.find((itemData) => itemData.id === fields.unit_id)
+                  ?.unit_code || '',
+              value:
+                dataUnits.find((itemData) => itemData.id === fields.unit_id)
+                  ?.id || ''
             }}
             onChange={(value) => handleChangeField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
@@ -597,8 +668,15 @@ function PageTenantUnit() {
             label="Tanggal Masuk"
             placeholder="Tanggal Masuk"
             name="start_date"
-            value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            value={
+              fields.start_date ? dayjs(fields.start_date).toDate() : undefined
+            }
+            onChange={(selectedDate) =>
+              handleChangeField(
+                'start_date',
+                dayjs(selectedDate).format('YYYY-MM-DD')
+              )
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -607,8 +685,15 @@ function PageTenantUnit() {
             label="Tanggal Keluar"
             placeholder="Tanggal Keluar"
             name="end_date"
-            value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            value={
+              fields.end_date ? dayjs(fields.end_date).toDate() : undefined
+            }
+            onChange={(selectedDate) =>
+              handleChangeField(
+                'end_date',
+                dayjs(selectedDate).format('YYYY-MM-DD')
+              )
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -621,15 +706,17 @@ function PageTenantUnit() {
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
-            options={[{
-              label: 'Pilih Hubungan',
-              value: '',
-              disabled: true,
-            },
-            ...RELATION.map((item) => ({
-              label: item,
-              value: item,
-            }))]}
+            options={[
+              {
+                label: 'Pilih Hubungan',
+                value: '',
+                disabled: true
+              },
+              ...RELATION.map((item) => ({
+                label: item,
+                value: item
+              }))
+            ]}
           />
 
           <TextArea
@@ -648,7 +735,9 @@ function PageTenantUnit() {
             name="phone"
             type="tel"
             value={fields.phone}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -670,7 +759,9 @@ function PageTenantUnit() {
             name="identity_no"
             type="tel"
             value={fields.identity_no}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -681,7 +772,9 @@ function PageTenantUnit() {
             name="kk_no"
             type="tel"
             value={fields.kk_no}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -693,35 +786,56 @@ function PageTenantUnit() {
 
             <div>
               {isWebcamOpen && (
-              <Webcam
-                ref={cameraRef}
-                videoConstraints={{
-                  width: 300,
-                  height: 300,
-                  facingMode: 'user',
-                }}
-                audio={false}
-                width={300}
-                height={300}
-                screenshotFormat="image/jpeg"
-                className="mb-2"
-              />
+                <Webcam
+                  ref={cameraRef}
+                  videoConstraints={{
+                    width: 300,
+                    height: 300,
+                    facingMode: 'user'
+                  }}
+                  audio={false}
+                  width={300}
+                  height={300}
+                  screenshotFormat="image/jpeg"
+                  className="mb-2"
+                />
               )}
 
-              {!isWebcamOpen && fields.picture && <img src={fields.picture} alt="profile" className="mb-2" width={300} />}
+              {!isWebcamOpen && fields.picture && (
+                <img
+                  src={fields.picture}
+                  alt="profile"
+                  className="mb-2"
+                  width={300}
+                />
+              )}
 
               {!modalForm.readOnly && (
                 <div className="flex gap-1">
                   {!isWebcamOpen && (
-                  <Button onClick={() => setIsWebcamOpen((prevState) => !prevState)} size="sm" variant="secondary">
-                    {fields.picture ? 'Ambil Ulang Gambar' : 'Buka Kamera'}
-                  </Button>
+                    <Button
+                      onClick={() => setIsWebcamOpen((prevState) => !prevState)}
+                      size="sm"
+                      variant="secondary"
+                    >
+                      {fields.picture ? 'Ambil Ulang Gambar' : 'Buka Kamera'}
+                    </Button>
                   )}
                   {isWebcamOpen && (
-                  <>
-                    <Button onClick={() => setIsWebcamOpen((prevState) => !prevState)} size="sm" variant="secondary">Tutup Kamera</Button>
-                    <Button onClick={handleGetPicture} size="sm">Ambil Gambar</Button>
-                  </>
+                    <>
+                      <Button
+                        onClick={() =>
+                          setIsWebcamOpen((prevState) => !prevState)
+                        }
+                        size="sm"
+                        variant="secondary"
+                      >
+                        Tutup Kamera
+                      </Button>
+                      <Button onClick={handleGetPicture} size="sm">
+                        Ambil Gambar
+                      </Button>
+                    </>
                   )}
                 </div>
               )}
@@ -734,50 +848,89 @@ function PageTenantUnit() {
             </p>
             {!modalForm.readOnly && (
               <div>
-                <Button onClick={handleClickDocumentUpload} size="sm" variant="secondary">
+                <Button
+                  onClick={handleClickDocumentUpload}
+                  size="sm"
+                  variant="secondary"
+                >
                   Upload Dokumen
                 </Button>
-                <input ref={uploadRef} type="file" hidden onChange={(e) => handleDocumentUpload(e.target.files)} />
+                <input
+                  ref={uploadRef}
+                  type="file"
+                  hidden
+                  onChange={(e) => handleDocumentUpload(e.target.files)}
+                />
               </div>
             )}
             <div className="flex gap-2">
-              {fields.documents.length ? fields.documents.map((document: any) => (
-                <div key={document.id} className="border border-slate-200 rounded hover:border-primary relative">
-                  {!modalForm.readOnly && (
-                  <span
-                    className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
-                    onClick={() => handleModalDeleteDocumentOpen(document)}
-                    role="presentation"
+              {fields.documents.length ? (
+                fields.documents.map((document: any) => (
+                  <div
+                    key={document.id}
+                    className="border border-slate-200 rounded hover:border-primary relative"
                   >
-                    <IconTrash className="text-white" width={16} height={16} />
-                  </span>
-                  )}
-                  <img src={document.url.includes('pdf') ? '/images/pdf.png' : document.url} alt="doc" className="w-[100px] h-[100px] object-contain" />
-                </div>
-              )) : (
+                    {!modalForm.readOnly && (
+                      <span
+                        className="rounded-full bg-red-500 absolute right-1 top-1 cursor-pointer p-2"
+                        onClick={() => handleModalDeleteDocumentOpen(document)}
+                        role="presentation"
+                      >
+                        <IconTrash
+                          className="text-white"
+                          width={16}
+                          height={16}
+                        />
+                      </span>
+                    )}
+                    <img
+                      src={
+                        document.url.includes('pdf')
+                          ? '/images/pdf.png'
+                          : document.url
+                      }
+                      alt="doc"
+                      className="w-[100px] h-[100px] object-contain"
+                    />
+                  </div>
+                ))
+              ) : (
                 <p className="text-sm text-slate-600">Belum ada dokumen</p>
               )}
             </div>
           </div>
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={isModalFilterOpen} title="Filter" size="xs">
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
-
           <DatePicker
             label="Tanggal Masuk"
             placeholder="Tanggal Masuk"
             name="start_date"
-            value={filter.start_date ? dayjs(filter.start_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            value={
+              filter.start_date ? dayjs(filter.start_date).toDate() : undefined
+            }
+            onChange={(selectedDate) =>
+              handleChangeFilterField(
+                'start_date',
+                dayjs(selectedDate).format('YYYY-MM-DD')
+              )
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -786,8 +939,15 @@ function PageTenantUnit() {
             label="Tanggal Keluar"
             placeholder="Tanggal Keluar"
             name="end_date"
-            value={filter.end_date ? dayjs(filter.end_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            value={
+              filter.end_date ? dayjs(filter.end_date).toDate() : undefined
+            }
+            onChange={(selectedDate) =>
+              handleChangeFilterField(
+                'end_date',
+                dayjs(selectedDate).format('YYYY-MM-DD')
+              )
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -797,52 +957,67 @@ function PageTenantUnit() {
             label="Hubungan Dengan Pemilik"
             name="relation"
             value={filter.relation}
-            onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeFilterField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
-            options={[{
-              label: 'Pilih Hubungan',
-              value: '',
-              disabled: true,
-            },
-            ...RELATION.map((item) => ({
-              label: item,
-              value: item,
-            }))]}
+            options={[
+              {
+                label: 'Pilih Hubungan',
+                value: '',
+                disabled: true
+              },
+              ...RELATION.map((item) => ({
+                label: item,
+                value: item
+              }))
+            ]}
           />
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFilterClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFilterClose} variant="default">
+            Tutup
+          </Button>
           <Button onClick={handleSubmitFilter}>Kirim</Button>
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
       <Modal open={isModalDeleteDocumentOpen} title="Hapus Dokumen" size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">Apa anda yakin ingin menghapus dokumen?</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            Apa anda yakin ingin menghapus dokumen?
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleClickCancelDeleteDocument} variant="default">Kembali</Button>
+          <Button onClick={handleClickCancelDeleteDocument} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmitDeleteDocument}>Ya</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

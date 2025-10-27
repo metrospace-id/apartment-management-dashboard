@@ -6,11 +6,7 @@ interface PopoverProps {
   trigger?: 'click' | 'hover'
 }
 
-function Popover({
-  children,
-  content,
-  trigger = 'hover',
-}: PopoverProps) {
+const Popover = ({ children, content, trigger = 'hover' }: PopoverProps) => {
   const [show, setShow] = useState(false)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
 
@@ -54,10 +50,7 @@ function Popover({
       onMouseLeave={handleMouseLeft}
       className="w-fit h-fit relative flex justify-center"
     >
-      <div
-        role="presentation"
-        onClick={() => setShow(!show)}
-      >
+      <div role="presentation" onClick={() => setShow(!show)}>
         {children}
       </div>
       <div

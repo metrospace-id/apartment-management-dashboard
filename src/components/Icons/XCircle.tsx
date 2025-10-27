@@ -33,11 +33,7 @@ export default function XCircle({ className, ...props }: IconProps) {
       </g>
       <defs>
         <clipPath id="clip0_4_922">
-          <rect
-            width="20"
-            height="20"
-            fill="white"
-          />
+          <rect width="20" height="20" fill="white" />
         </clipPath>
       </defs>
     </svg>

@@ -1,6 +1,6 @@
 import {
   ChevronLeft as IconChevronLeft,
-  ChevronRight as IconChevronRight,
+  ChevronRight as IconChevronRight
 } from '../Icons'
 
 const range = (start: number, end: number) => {
@@ -12,8 +12,13 @@ const paginationRange = ({
   totalCount,
   pageSize,
   siblingCount = 1,
-  currentPage,
-}: { totalCount: number, pageSize: number, siblingCount?: number, currentPage: number}) => {
+  currentPage
+}: {
+  totalCount: number
+  pageSize: number
+  siblingCount?: number
+  currentPage: number
+}) => {
   const totalPageCount = Math.ceil(totalCount / pageSize)
 
   const totalPageNumbers = siblingCount + 5
@@ -23,10 +28,7 @@ const paginationRange = ({
   }
 
   const leftSiblingIndex = Math.max(currentPage - siblingCount, 1)
-  const rightSiblingIndex = Math.min(
-    currentPage + siblingCount,
-    totalPageCount,
-  )
+  const rightSiblingIndex = Math.min(currentPage + siblingCount, totalPageCount)
 
   const shouldShowLeftDots = leftSiblingIndex > 2
   const shouldShowRightDots = rightSiblingIndex < totalPageCount - 2
@@ -45,7 +47,7 @@ const paginationRange = ({
     const rightItemCount = 3 + 2 * siblingCount
     const rightRange = range(
       totalPageCount - rightItemCount + 1,
-      totalPageCount,
+      totalPageCount
     )
     return [firstPageIndex, '...', ...rightRange]
   }
@@ -68,9 +70,13 @@ export default function Pagination({
   total = 0,
   page = 1,
   limit = 1,
-  onChangePage,
+  onChangePage
 }: PaginationProps) {
-  const paginate = paginationRange({ totalCount: total, pageSize: limit, currentPage: page })
+  const paginate = paginationRange({
+    totalCount: total,
+    pageSize: limit,
+    currentPage: page
+  })
 
   const handleChangePage = (pageNumber: number) => {
     onChangePage?.(pageNumber)
@@ -84,8 +90,8 @@ export default function Pagination({
     onChangePage?.(page - 1)
   }
 
-  const firstNumber = (limit * (page - 1)) + 1
-  const lastNumber = (limit * (page - 1)) + limit
+  const firstNumber = limit * (page - 1) + 1
+  const lastNumber = limit * (page - 1) + limit
 
   return (
     <div className="flex flex-col justify-between w-full px-6 py-4 border-t border-slate-100 bg-white dark:bg-slate-900 gap-2 sm:items-center dark:border-slate-600 sm:flex-row">
@@ -110,7 +116,11 @@ export default function Pagination({
             type="button"
             aria-label="page"
             disabled={typeof pageNumber !== 'number'}
-            onClick={typeof pageNumber !== 'number' ? () => undefined : () => handleChangePage(pageNumber)}
+            onClick={
+              typeof pageNumber !== 'number'
+                ? () => undefined
+                : () => handleChangePage(pageNumber)
+            }
           >
             {pageNumber}
           </button>

@@ -11,7 +11,15 @@ export default function Minus({ className, ...props }: IconProps) {
       className={`fill-current ${className}`}
       {...props}
     >
-      <rect x="1.5" y="7.5" width="15" height="3" rx="1" fill="white" className="fill-inherit" />
+      <rect
+        x="1.5"
+        y="7.5"
+        width="15"
+        height="3"
+        rx="1"
+        fill="white"
+        className="fill-inherit"
+      />
     </svg>
   )
 }

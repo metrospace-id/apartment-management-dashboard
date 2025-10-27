@@ -1,71 +1,71 @@
-import {
-  useState, useMemo, useEffect,
-} from 'react'
 import dayjs from 'dayjs'
+import { useState, useMemo, useEffect } from 'react'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
 import DatePicker from 'components/Form/DatePicker'
+import Input from 'components/Form/Input'
 import TextArea from 'components/Form/TextArea'
+import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
+import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { exportToExcel } from 'utils/export'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
+import { exportToExcel } from 'utils/export'
 
 const PAGE_NAME = 'Izin Pemakaian Fasilitas'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'No Unit',
-    key: 'unit_code',
+    key: 'unit_code'
   },
   {
     label: 'Nama Fasilitas',
-    key: 'name',
+    key: 'name'
   },
   {
     label: 'Nama Pemohon',
-    key: 'requester_name',
+    key: 'requester_name'
   },
   {
     label: 'Tanggal Mulai Pemakaian',
-    key: 'start_date',
+    key: 'start_date'
   },
   {
     label: 'Tanggal Selesai Pemakaian',
-    key: 'end_date',
+    key: 'end_date'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
-function PageUnitPermissionFacility() {
+const PageUnitPermissionFacility = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
-  const [dataUnits, setDataUnits] = useState<{
-    id: number,
-    unit_code: string,
-    name: string,
-  }[]>([])
+  const [dataUnits, setDataUnits] = useState<
+    {
+      id: number
+      unit_code: string
+      name: string
+    }[]
+  >([])
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
@@ -76,30 +76,30 @@ function PageUnitPermissionFacility() {
     requester_phone: '',
     requester_address: '',
     start_date: dayjs().format('YYYY-MM-DD'),
-    end_date: dayjs().format('YYYY-MM-DD'),
+    end_date: dayjs().format('YYYY-MM-DD')
   })
   const [filter, setFilter] = useState({
     start_date: '',
     end_date: '',
-    item_category_id: 0,
+    item_category_id: 0
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false)
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
 
@@ -116,7 +116,7 @@ function PageUnitPermissionFacility() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -124,11 +124,11 @@ function PageUnitPermissionFacility() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
@@ -139,7 +139,7 @@ function PageUnitPermissionFacility() {
       requester_phone: '',
       requester_address: '',
       start_date: dayjs().format('YYYY-MM-DD'),
-      end_date: dayjs().format('YYYY-MM-DD'),
+      end_date: dayjs().format('YYYY-MM-DD')
     })
   }
 
@@ -155,12 +155,12 @@ function PageUnitPermissionFacility() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -168,7 +168,7 @@ function PageUnitPermissionFacility() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
   }
 
@@ -176,7 +176,7 @@ function PageUnitPermissionFacility() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
 
     setFields((prevState) => ({
@@ -189,7 +189,7 @@ function PageUnitPermissionFacility() {
       requester_phone: fieldData.requester_phone,
       requester_address: fieldData.requester_address,
       start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
-      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
+      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD')
     }))
   }
 
@@ -197,7 +197,7 @@ function PageUnitPermissionFacility() {
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     setFields((prevState) => ({
       ...prevState,
@@ -209,7 +209,7 @@ function PageUnitPermissionFacility() {
       requester_phone: fieldData.requester_phone,
       requester_address: fieldData.requester_address,
       start_date: dayjs(fieldData.start_date).format('YYYY-MM-DD'),
-      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD'),
+      end_date: dayjs(fieldData.end_date).format('YYYY-MM-DD')
     }))
   }
 
@@ -217,12 +217,12 @@ function PageUnitPermissionFacility() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
-      id: fieldData.id,
+      id: fieldData.id
     }))
   }
 
@@ -240,14 +240,14 @@ function PageUnitPermissionFacility() {
       ...prevState,
       name: facility?.name || '',
       unit_code: facility?.unit_code || '',
-      unit_id: facility?.id || 0,
+      unit_id: facility?.id || 0
     }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -257,22 +257,25 @@ function PageUnitPermissionFacility() {
     }
   }
 
-  const handleChangeFilterField = (fieldName: string, value: string | number) => {
+  const handleChangeFilterField = (
+    fieldName: string,
+    value: string | number
+  ) => {
     setFilter((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -288,8 +291,8 @@ function PageUnitPermissionFacility() {
         page,
         limit: PAGE_SIZE,
         search,
-        ...filter,
-      },
+        ...filter
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -297,9 +300,10 @@ function PageUnitPermissionFacility() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -311,8 +315,8 @@ function PageUnitPermissionFacility() {
       method: 'GET',
       params: {
         type: 3,
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -322,30 +326,33 @@ function PageUnitPermissionFacility() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/rent-facility/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/rent-facility/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/rent-facility/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/rent-facility/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/rent-facility/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/rent-facility/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -356,21 +363,23 @@ function PageUnitPermissionFacility() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetRentFacilities()
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetRentFacilities()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -390,26 +399,41 @@ function PageUnitPermissionFacility() {
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
         {userPermissions.includes('unit-permission-facility-edit') && (
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Ubah">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('unit-permission-facility-delete') && (
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Hapus">
+            <Button
+              variant="danger"
+              size="sm"
+              icon
+              onClick={() => handleModalDeleteOpen(column)}
+            >
+              <IconTrash className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -435,11 +459,19 @@ function PageUnitPermissionFacility() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama, no. unit" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama, no. unit"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
+            <Button onClick={handleModalFilterOpen} variant="secondary">
+              Filter
+            </Button>
             <div className="sm:ml-auto flex gap-1">
-              <Button onClick={handleExportExcel} variant="warning">Export</Button>
+              <Button onClick={handleExportExcel} variant="warning">
+                Export
+              </Button>
               <Button onClick={handleModalCreateOpen}>Tambah</Button>
             </div>
           </div>
@@ -457,16 +489,30 @@ function PageUnitPermissionFacility() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
-
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <div>
-            <p className="text-sm font-medium text-slate-600 dark:text-white mb-2">Tanggal Pemakaian</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-white mb-2">
+              Tanggal Pemakaian
+            </p>
             <div className="flex flex-col sm:flex-row gap-2">
               <DatePicker
                 placeholder="Tanggal Mulai"
                 name="start_date"
-                value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                value={
+                  fields.start_date
+                    ? dayjs(fields.start_date).toDate()
+                    : undefined
+                }
+                onChange={(selectedDate) =>
+                  handleChangeField(
+                    'start_date',
+                    dayjs(selectedDate).format('YYYY-MM-DD')
+                  )
+                }
                 readOnly={modalForm.readOnly}
                 fullWidth
               />
@@ -474,8 +520,15 @@ function PageUnitPermissionFacility() {
               <DatePicker
                 placeholder="Tanggal Selesai"
                 name="end_date"
-                value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                value={
+                  fields.end_date ? dayjs(fields.end_date).toDate() : undefined
+                }
+                onChange={(selectedDate) =>
+                  handleChangeField(
+                    'end_date',
+                    dayjs(selectedDate).format('YYYY-MM-DD')
+                  )
+                }
                 readOnly={modalForm.readOnly}
                 fullWidth
               />
@@ -487,11 +540,15 @@ function PageUnitPermissionFacility() {
             label="Nama Fasilitas"
             items={dataUnits.map((itemData) => ({
               label: itemData.name,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.name || '',
-              value: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.id || '',
+              label:
+                dataUnits.find((itemData) => itemData.id === fields.unit_id)
+                  ?.name || '',
+              value:
+                dataUnits.find((itemData) => itemData.id === fields.unit_id)
+                  ?.id || ''
             }}
             onChange={(value) => handleChangeUnitField(value.value)}
             readOnly={modalForm.readOnly}
@@ -522,7 +579,9 @@ function PageUnitPermissionFacility() {
             name="requester_phone"
             type="tel"
             value={fields.requester_phone}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -536,27 +595,44 @@ function PageUnitPermissionFacility() {
             readOnly={modalForm.readOnly}
             fullWidth
           />
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={isModalFilterOpen} title="Filter" size="xs">
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
-
           <div className="flex flex-col gap-2 w-full">
-            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Pemakaian</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-white">
+              Tanggal Pemakaian
+            </p>
             <div className="flex flex-col gap-1">
               <DatePicker
                 placeholder="Tanggal Awal"
                 name="start_date"
-                value={filter.start_date ? dayjs(filter.start_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                value={
+                  filter.start_date
+                    ? dayjs(filter.start_date).toDate()
+                    : undefined
+                }
+                onChange={(selectedDate) =>
+                  handleChangeFilterField(
+                    'start_date',
+                    dayjs(selectedDate).format('YYYY-MM-DD')
+                  )
+                }
                 readOnly={modalForm.readOnly}
                 fullWidth
               />
@@ -564,37 +640,50 @@ function PageUnitPermissionFacility() {
               <DatePicker
                 placeholder="Tanggal Akhir"
                 name="end_date"
-                value={filter.end_date ? dayjs(filter.end_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                value={
+                  filter.end_date ? dayjs(filter.end_date).toDate() : undefined
+                }
+                onChange={(selectedDate) =>
+                  handleChangeFilterField(
+                    'end_date',
+                    dayjs(selectedDate).format('YYYY-MM-DD')
+                  )
+                }
                 readOnly={modalForm.readOnly}
                 fullWidth
               />
             </div>
           </div>
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFilterClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFilterClose} variant="default">
+            Tutup
+          </Button>
           <Button onClick={handleSubmitFilter}>Kirim</Button>
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

@@ -2,13 +2,14 @@ import { useEffect, useState, useRef } from 'react'
 import ReactModal from 'react-modal'
 
 import { ChevronDown as IconChevronDown, Search as IconSearch } from '../Icons'
+
 import Input from './Input'
 import type { InputProps } from './Input'
 
 ReactModal.setAppElement('#body-app')
 
 interface AutocompleteItemProps {
-  label: string,
+  label: string
   element?: React.ReactNode
   value: string | number
 }
@@ -30,7 +31,9 @@ export default function Autocomplete({
 }: AutocompleteProps) {
   const [autocompleteText, setAutocompleteText] = useState('')
   const [valueLabel, setValueLabel] = useState('')
-  const [filteredItems, setFilteredItems] = useState<AutocompleteItemProps[]>([])
+  const [filteredItems, setFilteredItems] = useState<AutocompleteItemProps[]>(
+    []
+  )
   const [isSuggestionBoxShow, setIsSuggestionBoxShow] = useState(false)
 
   const autocompleteFieldRef = useRef<HTMLDivElement>(null)
@@ -52,13 +55,13 @@ export default function Autocomplete({
   const customStyles = {
     overlay: {
       backgroundColor: 'transparent',
-      zIndex: 9999,
+      zIndex: 9999
     },
     content: {
       left: autocompleteFieldRef.current?.getBoundingClientRect()?.left,
       width: autocompleteFieldRef.current?.clientWidth,
-      top: autocompleteFieldRef.current?.getBoundingClientRect()?.top,
-    },
+      top: autocompleteFieldRef.current?.getBoundingClientRect()?.top
+    }
   }
 
   const handleOpenAutocomplete = () => {
@@ -80,9 +83,11 @@ export default function Autocomplete({
 
   useEffect(() => {
     if (autocompleteText) {
-      const filterItems = items
-        .filter((menu) => menu.label.toLocaleLowerCase()
-          .includes(autocompleteText.toLocaleLowerCase()))
+      const filterItems = items.filter((menu) =>
+        menu.label
+          .toLocaleLowerCase()
+          .includes(autocompleteText.toLocaleLowerCase())
+      )
 
       setFilteredItems(filterItems)
     } else {
@@ -93,14 +98,18 @@ export default function Autocomplete({
   return (
     <div className="w-full relative">
       <Input
-        rightIcon={(
+        rightIcon={
           <IconChevronDown
             className={`text-neutral-40 ${isSuggestionBoxShow ? 'rotate-180' : ''} w-4 h-4 lg:w-5 lg:h-5 cursor-pointer`}
             width={20}
             height={20}
-            onClick={disabled || readOnly ? () => null : () => setIsSuggestionBoxShow((prevState) => (!prevState))}
+            onClick={
+              disabled || readOnly
+                ? () => null
+                : () => setIsSuggestionBoxShow((prevState) => !prevState)
+            }
           />
-        )}
+        }
         value={valueLabel}
         onClick={disabled || readOnly ? () => null : handleOpenAutocomplete}
         autoComplete="off"
@@ -110,7 +119,11 @@ export default function Autocomplete({
         {...props}
       />
 
-      <div className="relative" id="form-autocomplete" ref={autocompleteFieldRef}>
+      <div
+        className="relative"
+        id="form-autocomplete"
+        ref={autocompleteFieldRef}
+      >
         <ReactModal
           isOpen={isSuggestionBoxShow}
           style={customStyles}
@@ -123,7 +136,9 @@ export default function Autocomplete({
           shadow-sm p-2 rounded-xl absolute z-50 bg-white dark:bg-slate-900 dark:border-slate-600`}
         >
           <Input
-            leftIcon={<IconSearch className="text-neutral-400 w-4 h-4 lg:w-5 lg:h-5" />}
+            leftIcon={
+              <IconSearch className="text-neutral-400 w-4 h-4 lg:w-5 lg:h-5" />
+            }
             value={autocompleteText || ''}
             onChange={(e) => handleChangeAutocompleteText(e.target.value)}
             onClick={disabled || readOnly ? () => null : handleOpenAutocomplete}
@@ -133,18 +148,22 @@ export default function Autocomplete({
             className="mb-2"
           />
           <ol className="max-h-[calc(36px*5)] overflow-scroll">
-            {filteredItems.length ? filteredItems.map((menu) => (
-              <li
-                className="px-4 py-[6px]
+            {filteredItems.length ? (
+              filteredItems.map((menu) => (
+                <li
+                  className="px-4 py-[6px]
                 text-md text-slate-600 hover:bg-sky-100 rounded-xl mb-1 cursor-pointer dark:text-white dark:hover:bg-primary"
-                onClick={() => handleClickMenu(menu)}
-                role="presentation"
-                key={menu.value}
-              >
-                {menu.element || menu.label}
-              </li>
-            )) : (
-              <p className="px-4 py-[6px] text-md text-slate-600 dark:text-white">Data tidak ditemukan</p>
+                  onClick={() => handleClickMenu(menu)}
+                  role="presentation"
+                  key={menu.value}
+                >
+                  {menu.element || menu.label}
+                </li>
+              ))
+            ) : (
+              <p className="px-4 py-[6px] text-md text-slate-600 dark:text-white">
+                Data tidak ditemukan
+              </p>
             )}
           </ol>
         </ReactModal>

@@ -1,55 +1,55 @@
 export const ACCESS_CARD_TYPE = [
   {
     id: 1,
-    label: 'Akses Masuk',
+    label: 'Akses Masuk'
   },
   {
     id: 2,
-    label: 'Akses Parkir',
+    label: 'Akses Parkir'
   },
   {
     id: 3,
-    label: 'Akses Masuk dan Parkir',
-  },
+    label: 'Akses Masuk dan Parkir'
+  }
 ]
 
 export const VEHICLE_TYPE = [
   {
     id: 1,
-    label: 'Mobil',
+    label: 'Mobil'
   },
   {
     id: 2,
-    label: 'Motor',
-  },
+    label: 'Motor'
+  }
 ]
 
 export const ACCESS_CARD_DURATION = [
   {
     id: 1,
-    label: 'Tahun',
+    label: 'Tahun'
   },
   {
     id: 2,
-    label: 'Bulan',
-  },
+    label: 'Bulan'
+  }
 ]
 
 export const ACCESS_CARD_STATUS = [
   {
     id: 1,
-    label: 'Pending',
+    label: 'Pending'
   },
   {
     id: 2,
-    label: 'Menunggu Pembayaran',
+    label: 'Menunggu Pembayaran'
   },
   {
     id: 3,
-    label: 'Aktif',
+    label: 'Aktif'
   },
   {
     id: 4,
-    label: 'Expired',
-  },
+    label: 'Expired'
+  }
 ]

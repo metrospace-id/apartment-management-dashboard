@@ -1,54 +1,57 @@
 import { useEffect, useState } from 'react'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Modal from 'components/Modal'
 import Button from 'components/Button'
+import Checkbox from 'components/Form/Checkbox'
 import Input from 'components/Form/Input'
 import TextArea from 'components/Form/TextArea'
-import Checkbox from 'components/Form/Checkbox'
-import useDebounce from 'hooks/useDebounce'
+import Layout from 'components/Layout'
 import LoadingContent from 'components/Loading/LoadingContent'
-import { MODAL_CONFIRM_TYPE } from 'constants/form'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
 import Toast from 'components/Toast'
+import { MODAL_CONFIRM_TYPE } from 'constants/form'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
 
 const PAGE_NAME = 'To Do List'
 
-function PageTodoList() {
-  const [currentUser, setCurrentUser] = useState<{ id: number; name: string } | null>(null)
+const PageTodoList = () => {
+  const [currentUser, setCurrentUser] = useState<{
+    id: number
+    name: string
+  } | null>(null)
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
   const [filter, setFilter] = useState({
     is_deleted: 0,
-    is_done: 0,
+    is_done: 0
   })
   const [fields, setFields] = useState({
     id: 0,
     title: '',
     description: '',
     is_done: 0,
-    status: 0,
+    status: 0
   })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
@@ -61,21 +64,21 @@ function PageTodoList() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     setFields({
       id: 0,
       title: '',
       description: '',
       is_done: 0,
-      status: 1,
+      status: 1
     })
   }
 
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -83,18 +86,18 @@ function PageTodoList() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
       title: '',
       description: '',
       is_done: 0,
-      status: 0,
+      status: 0
     })
   }
 
@@ -102,12 +105,12 @@ function PageTodoList() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -115,13 +118,13 @@ function PageTodoList() {
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
       title: fieldData.title,
-      description: fieldData.description,
+      description: fieldData.description
     }))
   }
 
@@ -129,21 +132,24 @@ function PageTodoList() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
       title: fieldData.title,
-      description: fieldData.description,
+      description: fieldData.description
     }))
   }
 
-  const handleChangeField = (fieldName: string, value: string | number | boolean) => {
+  const handleChangeField = (
+    fieldName: string,
+    value: string | number | boolean
+  ) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -151,17 +157,17 @@ function PageTodoList() {
     if (menuIndex === 1) {
       setFilter(() => ({
         is_deleted: 0,
-        is_done: 1,
+        is_done: 1
       }))
     } else if (menuIndex === 2) {
       setFilter(() => ({
         is_deleted: 1,
-        is_done: 0,
+        is_done: 0
       }))
     } else {
       setFilter(() => ({
         is_deleted: 0,
-        is_done: 0,
+        is_done: 0
       }))
     }
   }
@@ -174,35 +180,38 @@ function PageTodoList() {
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/todo/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/todo/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/todo/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/todo/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/todo/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/todo/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleGetTodos = () => {
     setIsLoadingData(true)
@@ -213,8 +222,8 @@ function PageTodoList() {
       params: {
         limit: 9999,
         search,
-        ...filter,
-      },
+        ...filter
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -222,9 +231,10 @@ function PageTodoList() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -233,7 +243,7 @@ function PageTodoList() {
     api({
       url: `/v1/todo/done/${id}`,
       withAuth: true,
-      method: 'POST',
+      method: 'POST'
     })
       .then(() => {
         handleGetTodos()
@@ -241,9 +251,10 @@ function PageTodoList() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -257,21 +268,23 @@ function PageTodoList() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetTodos()
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetTodos()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -297,26 +310,75 @@ function PageTodoList() {
         <div className="w-full flex p-4 bg-white rounded-lg dark:bg-black flex-col sm:flex-row gap-6 sm:gap-0">
           <div className="sm:w-[250px] sm:pr-4 sm:border-r-1 border-slate-200">
             <div className="flex flex-col gap-4">
-              <Input placeholder="Cari judul" onChange={(e) => setSearch(e.target.value)} fullWidth />
-              <div className={`flex gap-2 items-center ${selectedMenu === 0 ? 'bg-sky-500 text-white' : ''} hover:bg-sky-100 dark:hover:bg-sky-800 cursor-pointer p-2 text-slate-600 dark:text-white`} role="presentation" onClick={() => handleChangeMenu(0)}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+              <Input
+                placeholder="Cari judul"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
+              <div
+                className={`flex gap-2 items-center ${selectedMenu === 0 ? 'bg-sky-500 text-white' : ''} hover:bg-sky-100 dark:hover:bg-sky-800 cursor-pointer p-2 text-slate-600 dark:text-white`}
+                role="presentation"
+                onClick={() => handleChangeMenu(0)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                  />
                 </svg>
 
                 <p className="font-medium text-sm flex-1">List</p>
               </div>
 
-              <div className={`flex gap-2 items-center ${selectedMenu === 1 ? 'bg-sky-500 text-white' : ''} hover:bg-sky-100 dark:hover:bg-sky-800 cursor-pointer p-2 text-slate-600 dark:text-white`} role="presentation" onClick={() => handleChangeMenu(1)}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              <div
+                className={`flex gap-2 items-center ${selectedMenu === 1 ? 'bg-sky-500 text-white' : ''} hover:bg-sky-100 dark:hover:bg-sky-800 cursor-pointer p-2 text-slate-600 dark:text-white`}
+                role="presentation"
+                onClick={() => handleChangeMenu(1)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
                 </svg>
 
                 <p className="font-medium text-sm flex-1">Done</p>
               </div>
 
-              <div className={`flex gap-2 items-center ${selectedMenu === 2 ? 'bg-sky-500 text-white' : ''} hover:bg-sky-100 dark:hover:bg-sky-800 cursor-pointer p-2 text-slate-600 dark:text-white`} role="presentation" onClick={() => handleChangeMenu(2)}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              <div
+                className={`flex gap-2 items-center ${selectedMenu === 2 ? 'bg-sky-500 text-white' : ''} hover:bg-sky-100 dark:hover:bg-sky-800 cursor-pointer p-2 text-slate-600 dark:text-white`}
+                role="presentation"
+                onClick={() => handleChangeMenu(2)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                  />
                 </svg>
 
                 <p className="font-medium text-sm flex-1">Trash</p>
@@ -326,24 +388,48 @@ function PageTodoList() {
             </div>
           </div>
           <div className="flex-1 sm:px-4 flex gap-2 flex-col">
-            {(isLoadingData) && <LoadingContent />}
-            {(!isLoadingData) && data.data.map((todo) => (
-              <div className="p-2 border-1 rounded-lg flex gap-2 items-center text-slate-600 dark:text-white" key={todo.id}>
-                {!todo.deleted_at && todo.created_by !== currentUser?.id && (
-                  <Checkbox checked={!!todo.is_done} onClick={() => handleCheckTodo(todo.id)} />
-                )}
-                <p className={`text-sm  font-semibold ${todo.is_done ? 'line-through' : ''} flex-1`}>
-                  {todo.title}
-                </p>
-                {!todo.deleted_at && todo.created_by !== currentUser?.id && (
-                  <div role="presentation" className="cursor-pointer hover:text-red-500" onClick={() => handleModalDeleteOpen(todo)}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            ))}
+            {isLoadingData && <LoadingContent />}
+            {!isLoadingData &&
+              data.data.map((todo) => (
+                <div
+                  className="p-2 border-1 rounded-lg flex gap-2 items-center text-slate-600 dark:text-white"
+                  key={todo.id}
+                >
+                  {!todo.deleted_at && todo.created_by !== currentUser?.id && (
+                    <Checkbox
+                      checked={!!todo.is_done}
+                      onClick={() => handleCheckTodo(todo.id)}
+                    />
+                  )}
+                  <p
+                    className={`text-sm  font-semibold ${todo.is_done ? 'line-through' : ''} flex-1`}
+                  >
+                    {todo.title}
+                  </p>
+                  {!todo.deleted_at && todo.created_by !== currentUser?.id && (
+                    <div
+                      role="presentation"
+                      className="cursor-pointer hover:text-red-500"
+                      onClick={() => handleModalDeleteOpen(todo)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="w-4 h-4"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              ))}
           </div>
         </div>
       </div>
@@ -370,26 +456,38 @@ function PageTodoList() {
           />
         </form>
         <div className="p-4 flex items-center gap-2 justify-end">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
-          <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
+          <Button
+            onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+          >
+            Kirim
+          </Button>
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

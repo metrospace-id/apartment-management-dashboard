@@ -1,12 +1,12 @@
-import Modal from 'react-modal'
 import { useEffect, useState } from 'react'
+import Modal from 'react-modal'
 
 Modal.setAppElement('#body-app')
 const customStyles = {
   overlay: {
     backgroundColor: 'transparent',
     zIndex: 9999,
-    top: 'calc(80vh)',
+    top: 'calc(80vh)'
   },
   content: {
     inset: 0,
@@ -14,8 +14,8 @@ const customStyles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'end',
-    background: 'transparent',
-  },
+    background: 'transparent'
+  }
 }
 
 interface ToastProps {
@@ -27,8 +27,11 @@ interface ToastProps {
 }
 
 export default function Toast({
-  open, onClose, message, timeout = 3000,
-  variant = 'default',
+  open,
+  onClose,
+  message,
+  timeout = 3000,
+  variant = 'default'
 }: ToastProps) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -60,12 +63,10 @@ export default function Toast({
 
   if (isOpen) {
     return (
-      <Modal
-        isOpen
-        style={customStyles}
-        contentLabel="Example Modal"
-      >
-        <div className={`margin-auto flex gap-4 items-center w-full max-w-[90vh] py-2 px-4 text-white ${bgColor} rounded-lg shadow-medium`}>
+      <Modal isOpen style={customStyles} contentLabel="Example Modal">
+        <div
+          className={`margin-auto flex gap-4 items-center w-full max-w-[90vh] py-2 px-4 text-white ${bgColor} rounded-lg shadow-medium`}
+        >
           <div className="text-sm font-medium">{message}</div>
           <button
             onClick={handleClose}

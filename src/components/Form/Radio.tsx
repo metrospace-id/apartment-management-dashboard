@@ -1,10 +1,9 @@
-export interface RadioProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface RadioProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
 }
 
-function Radio({
-  className, label, disabled, ...props
-}: RadioProps) {
+const Radio = ({ className, label, disabled, ...props }: RadioProps) => {
   let pointerClass = 'cursor-pointer'
   if (disabled) {
     pointerClass = 'cursor-not-allowed'
@@ -18,7 +17,9 @@ function Radio({
         className={`w-4 h-4 bg-gray-100 border-gray-300 outline-none dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 ${pointerClass} ${className}`}
         {...props}
       />
-      <label className="ms-2 text-md font-medium text-slate-600 dark:text-white">{label}</label>
+      <label className="ms-2 text-md font-medium text-slate-600 dark:text-white">
+        {label}
+      </label>
     </div>
   )
 }

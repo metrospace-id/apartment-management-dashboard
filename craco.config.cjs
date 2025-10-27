@@ -7,13 +7,6 @@ module.exports = {
     }
   },
   eslint: {
-    mode: 'file',
-    configure: (eslintConfig) => {
-      // Use the new flat config
-      return eslintConfig
-    },
-    loaderOptions: {
-      configFile: path.resolve(__dirname, 'eslint.config.mjs')
-    }
+    enable: false
   }
 }

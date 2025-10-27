@@ -1,75 +1,77 @@
-import {
-  useState, useMemo, useEffect, useRef,
-} from 'react'
+import { useState, useEffect, useRef } from 'react'
 import QRCode from 'react-qr-code'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
+import TextArea from 'components/Form/TextArea'
+import {
+  Edit as IconEdit,
+  TrashAlt as IconTrash,
+  FileText as IconFile
+} from 'components/Icons'
+import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import Table from 'components/Table/Table'
+import type { TableHeaderProps } from 'components/Table/Table'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import TextArea from 'components/Form/TextArea'
-import { svgToImage } from 'utils/file'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
+import { svgToImage } from 'utils/file'
 
 const PAGE_NAME = 'List Area'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Kode',
-    key: 'code',
+    key: 'code'
   },
   {
     label: 'Nama',
-    key: 'name',
+    key: 'name'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
-function PageAreaList() {
+const PageAreaList = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
     code: '',
     name: '',
-    notes: '',
+    notes: ''
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
   const qrCodeRef = useRef<any>(null)
@@ -79,7 +81,7 @@ function PageAreaList() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -87,17 +89,17 @@ function PageAreaList() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
       code: '',
       name: '',
-      notes: '',
+      notes: ''
     })
   }
 
@@ -105,12 +107,12 @@ function PageAreaList() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -118,7 +120,7 @@ function PageAreaList() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
   }
 
@@ -126,13 +128,13 @@ function PageAreaList() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     setFields({
       id: fieldData.id,
       code: fieldData.code,
       name: fieldData.name,
-      notes: fieldData.notes,
+      notes: fieldData.notes
     })
   }
 
@@ -140,13 +142,13 @@ function PageAreaList() {
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     setFields({
       id: fieldData.id,
       code: fieldData.code,
       name: fieldData.name,
-      notes: fieldData.notes,
+      notes: fieldData.notes
     })
   }
 
@@ -154,31 +156,31 @@ function PageAreaList() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
-      id: fieldData.id,
+      id: fieldData.id
     }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -192,8 +194,8 @@ function PageAreaList() {
       params: {
         page,
         limit: PAGE_SIZE,
-        search,
-      },
+        search
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -201,32 +203,36 @@ function PageAreaList() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/area/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/area/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/area/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/area/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/area/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/area/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -237,21 +243,23 @@ function PageAreaList() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetAreas()
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetAreas()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -267,26 +275,41 @@ function PageAreaList() {
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
         {userPermissions.includes('area-list-edit') && (
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Ubah">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('area-list-delete') && (
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Hapus">
+            <Button
+              variant="danger"
+              size="sm"
+              icon
+              onClick={() => handleModalDeleteOpen(column)}
+            >
+              <IconTrash className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -310,9 +333,15 @@ function PageAreaList() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
+            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>
+              Tambah
+            </Button>
           </div>
 
           <Table
@@ -328,7 +357,11 @@ function PageAreaList() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <Input
             placeholder="Nama Area"
             label="Nama Area"
@@ -363,49 +396,61 @@ function PageAreaList() {
           )}
 
           {!!fields.id && (
-          <div className="">
-            <p className="text-sm text-slate-600 font-medium mb-2">QR Code</p>
+            <div className="">
+              <p className="text-sm text-slate-600 font-medium mb-2">QR Code</p>
 
-            <div className="w-full sm:w-[50%]">
-              <QRCode
-                ref={qrCodeRef}
-                style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-                size={150}
-                value={fields.code}
-                viewBox="0 0 150 150"
-              />
+              <div className="w-full sm:w-[50%]">
+                <QRCode
+                  ref={qrCodeRef}
+                  style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+                  size={150}
+                  value={fields.code}
+                  viewBox="0 0 150 150"
+                />
+              </div>
             </div>
-          </div>
           )}
-
         </form>
         <div className="flex gap-2 justify-end p-4">
           {modalForm.readOnly && (
             <Button onClick={handleSaveQR}>Save QR Code</Button>
           )}
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

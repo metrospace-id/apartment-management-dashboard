@@ -4,7 +4,11 @@ import Breadcrumb from 'components/Breadcrumb'
 import Button from 'components/Button'
 import Autocomplete from 'components/Form/Autocomplete'
 import Input from 'components/Form/Input'
-import { Edit as IconEdit, FileText as IconFile, TrashAlt as IconTrash } from 'components/Icons'
+import {
+  Edit as IconEdit,
+  FileText as IconFile,
+  TrashAlt as IconTrash
+} from 'components/Icons'
 import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
 import Modal from 'components/Modal'
@@ -21,22 +25,22 @@ const PAGE_NAME = 'Stok Barang'
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Nama',
-    key: 'name',
+    key: 'name'
   },
   {
     label: 'Kategori Barang',
-    key: 'item_category_name',
+    key: 'item_category_name'
   },
   {
     label: 'Jumlah',
-    key: 'quantity',
+    key: 'quantity'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
 interface FieldProps {
@@ -46,39 +50,41 @@ interface FieldProps {
   quantity: number
 }
 
-function PageItemStock() {
+const PageItemStock = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
-  const [dataCategories, setDataCategories] = useState<{ id: number, name: string }[]>([])
+  const [dataCategories, setDataCategories] = useState<
+    { id: number; name: string }[]
+  >([])
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState<FieldProps>({
     id: 0,
     name: '',
     item_category_id: null,
-    quantity: 0,
+    quantity: 0
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
     message: '',
-    variant: 'default',
+    variant: 'default'
   })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
 
@@ -88,7 +94,7 @@ function PageItemStock() {
     setToast({
       variant: 'default',
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -96,17 +102,17 @@ function PageItemStock() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
       name: '',
       item_category_id: 0,
-      quantity: 0,
+      quantity: 0
     })
   }
 
@@ -114,12 +120,12 @@ function PageItemStock() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -127,7 +133,7 @@ function PageItemStock() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
   }
 
@@ -135,14 +141,14 @@ function PageItemStock() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
       name: fieldData.name,
       item_category_id: fieldData.item_category_id,
-      quantity: fieldData.quantity,
+      quantity: fieldData.quantity
     }))
   }
 
@@ -150,14 +156,14 @@ function PageItemStock() {
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     setFields((prevState) => ({
       ...prevState,
       id: fieldData.id,
       name: fieldData.name,
       item_category_id: fieldData.item_category_id,
-      quantity: fieldData.quantity,
+      quantity: fieldData.quantity
     }))
   }
 
@@ -165,19 +171,19 @@ function PageItemStock() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
-      id: fieldData.id,
+      id: fieldData.id
     }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -190,12 +196,12 @@ function PageItemStock() {
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -209,8 +215,8 @@ function PageItemStock() {
       params: {
         page,
         limit: PAGE_SIZE,
-        search,
-      },
+        search
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -219,9 +225,10 @@ function PageItemStock() {
         setToast(() => ({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         }))
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -232,8 +239,8 @@ function PageItemStock() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -244,30 +251,33 @@ function PageItemStock() {
         setToast(() => ({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         }))
       })
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/item-stock/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/item-stock/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/item-stock/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/item-stock/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/item-stock/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/item-stock/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -278,23 +288,25 @@ function PageItemStock() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetItemStocks()
-      handleModalFormClose()
-      setToast(() => ({
-        variant: 'default',
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
-      }))
-    })
+    apiSubmit()
+      .then(() => {
+        handleGetItemStocks()
+        handleModalFormClose()
+        setToast(() => ({
+          variant: 'default',
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        }))
+      })
       .catch((error) => {
         handleModalConfirmClose()
         setToast(() => ({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         }))
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -307,26 +319,41 @@ function PageItemStock() {
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
         {userPermissions.includes('item-stock-edit') && (
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Ubah">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('item-stock-delete') && (
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Hapus">
+            <Button
+              variant="danger"
+              size="sm"
+              icon
+              onClick={() => handleModalDeleteOpen(column)}
+            >
+              <IconTrash className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -352,9 +379,15 @@ function PageItemStock() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
+            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>
+              Tambah
+            </Button>
           </div>
 
           <Table
@@ -370,7 +403,11 @@ function PageItemStock() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <Input
             placeholder="Nama Barang"
             label="Nama Barang"
@@ -387,13 +424,21 @@ function PageItemStock() {
             name="item_category_id"
             items={dataCategories.map((itemData) => ({
               label: itemData.name,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataCategories.find((itemData) => itemData.id === fields.item_category_id)?.name || '',
-              value: dataCategories.find((itemData) => itemData.id === fields.item_category_id)?.id || '',
+              label:
+                dataCategories.find(
+                  (itemData) => itemData.id === fields.item_category_id
+                )?.name || '',
+              value:
+                dataCategories.find(
+                  (itemData) => itemData.id === fields.item_category_id
+                )?.id || ''
             }}
-            onChange={(value) => handleChangeField('item_category_id', value.value)}
+            onChange={(value) =>
+              handleChangeField('item_category_id', value.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -403,36 +448,54 @@ function PageItemStock() {
             label="Jumlah"
             name="quantity"
             value={(+fields.quantity).toLocaleString()}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value.replace(/\W+/g, ''))}
+            onChange={(e) =>
+              handleChangeNumericField(
+                e.target.name,
+                e.target.value.replace(/\W+/g, '')
+              )
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} variant={toast.variant} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

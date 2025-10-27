@@ -1,47 +1,49 @@
-import {
-  useState, useEffect, useRef,
-} from 'react'
+import { useState, useEffect, useRef } from 'react'
 import QRCode from 'react-qr-code'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
 import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, FileText as IconFile, TrashAlt as IconTrash } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
+import TextArea from 'components/Form/TextArea'
+import {
+  Edit as IconEdit,
+  FileText as IconFile,
+  TrashAlt as IconTrash
+} from 'components/Icons'
+import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import Table from 'components/Table/Table'
+import type { TableHeaderProps } from 'components/Table/Table'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import TextArea from 'components/Form/TextArea'
-import { toBase64 } from 'utils/file'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
+import { toBase64 } from 'utils/file'
 
 const PAGE_NAME = 'Template Dokumen'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Nama',
-    key: 'name',
+    key: 'name'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
-function PageTemplateDocument() {
+const PageTemplateDocument = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
@@ -50,27 +52,28 @@ function PageTemplateDocument() {
     header: '',
     subheader: '',
     content: '',
-    picture: '',
+    picture: ''
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
-  const [isModalDeletePictureOpen, setIsModalDeletePictureOpen] = useState(false)
+  const [isModalDeletePictureOpen, setIsModalDeletePictureOpen] =
+    useState(false)
 
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
   const pictureRef = useRef<any>(null)
@@ -78,7 +81,7 @@ function PageTemplateDocument() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -86,11 +89,11 @@ function PageTemplateDocument() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
@@ -98,7 +101,7 @@ function PageTemplateDocument() {
       header: '',
       subheader: '',
       content: '',
-      picture: '',
+      picture: ''
     })
   }
 
@@ -106,12 +109,12 @@ function PageTemplateDocument() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -119,7 +122,7 @@ function PageTemplateDocument() {
     setModalForm({
       title: `Detail ${fieldData.name}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     setFields((prevState) => ({
       ...prevState,
@@ -128,7 +131,7 @@ function PageTemplateDocument() {
       header: fieldData.header,
       subheader: fieldData.subheader,
       content: fieldData.content,
-      picture: fieldData.picture,
+      picture: fieldData.picture
     }))
   }
 
@@ -136,7 +139,7 @@ function PageTemplateDocument() {
     setModalForm({
       title: `Ubah ${fieldData.name}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     setFields((prevState) => ({
       ...prevState,
@@ -145,26 +148,26 @@ function PageTemplateDocument() {
       header: fieldData.header,
       subheader: fieldData.subheader,
       content: fieldData.content,
-      picture: fieldData.picture,
+      picture: fieldData.picture
     }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -178,8 +181,8 @@ function PageTemplateDocument() {
       params: {
         page,
         limit: PAGE_SIZE,
-        search,
-      },
+        search
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -187,39 +190,43 @@ function PageTemplateDocument() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/document/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/document/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
     const apiSubmit = apiSubmitUpdate
 
-    apiSubmit().then(() => {
-      handleGetDocuments()
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetDocuments()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -239,11 +246,11 @@ function PageTemplateDocument() {
       setIsLoadingSubmit(false)
       setToast({
         open: true,
-        message: 'Berhasil menghapus foto.',
+        message: 'Berhasil menghapus foto.'
       })
       setFields((prevState) => ({
         ...prevState,
-        picture: '',
+        picture: ''
       }))
     }, 500)
   }
@@ -256,19 +263,25 @@ function PageTemplateDocument() {
     if (files) {
       const file = files[0]
       // console.log(file)
-      if ((file.type.includes('image') || file.type.includes('pdf')) && file.size < 500000) {
+      if (
+        (file.type.includes('image') || file.type.includes('pdf')) &&
+        file.size < 500000
+      ) {
         toBase64(file).then((result) => {
           pictureRef.current.value = null
           setFields((prevState) => ({
             ...prevState,
-            picture: result as string,
+            picture: result as string
           }))
         })
       } else {
-        const message = file.size > 500000 ? 'Ukuran file terlalu besar, silakan pilih file dibawah 500kb.' : 'Dokumen format tidak sesuai, silakan pilih format image atau pdf.'
+        const message =
+          file.size > 500000
+            ? 'Ukuran file terlalu besar, silakan pilih file dibawah 500kb.'
+            : 'Dokumen format tidak sesuai, silakan pilih format image atau pdf.'
         setToast({
           open: true,
-          message,
+          message
         })
       }
     }
@@ -280,19 +293,29 @@ function PageTemplateDocument() {
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
         {userPermissions.includes('template-document-edit') && (
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Ubah">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -316,7 +339,11 @@ function PageTemplateDocument() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
           </div>
 
@@ -333,7 +360,10 @@ function PageTemplateDocument() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title} size="lg">
-        <form autoComplete="off" className="flex flex-col lg:flex-row gap-6 p-6">
+        <form
+          autoComplete="off"
+          className="flex flex-col lg:flex-row gap-6 p-6"
+        >
           <div className="flex-1 flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold text-slate-600">
@@ -342,26 +372,43 @@ function PageTemplateDocument() {
 
               {!modalForm.readOnly && !fields.picture && (
                 <div>
-                  <Button onClick={handleClickPictureUpload} size="sm" variant="secondary">
+                  <Button
+                    onClick={handleClickPictureUpload}
+                    size="sm"
+                    variant="secondary"
+                  >
                     Upload Foto
                   </Button>
 
-                  <input ref={pictureRef} type="file" hidden onChange={(e) => handlePictureUpload(e.target.files)} />
+                  <input
+                    ref={pictureRef}
+                    type="file"
+                    hidden
+                    onChange={(e) => handlePictureUpload(e.target.files)}
+                  />
                 </div>
               )}
               <div className="flex gap-2">
                 {fields.picture && (
                   <div className="border border-slate-200 rounded hover:border-primary relative">
                     {!modalForm.readOnly && (
-                    <span
-                      className="rounded-full bg-red-500 absolute right-0 top-0 cursor-pointer p-2"
-                      onClick={handleModalDeletePictureOpen}
-                      role="presentation"
-                    >
-                      <IconTrash className="text-white" width={16} height={16} />
-                    </span>
+                      <span
+                        className="rounded-full bg-red-500 absolute right-0 top-0 cursor-pointer p-2"
+                        onClick={handleModalDeletePictureOpen}
+                        role="presentation"
+                      >
+                        <IconTrash
+                          className="text-white"
+                          width={16}
+                          height={16}
+                        />
+                      </span>
                     )}
-                    <img src={fields.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                    <img
+                      src={fields.picture}
+                      alt="doc"
+                      className="w-[100px] h-[100px] object-contain"
+                    />
                   </div>
                 )}
               </div>
@@ -405,7 +452,11 @@ function PageTemplateDocument() {
                   <div className="w-[80px]">
                     {fields.picture ? (
                       <div className="relative">
-                        <img src={fields.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                        <img
+                          src={fields.picture}
+                          alt="doc"
+                          className="w-[100px] h-[100px] object-contain"
+                        />
                       </div>
                     ) : (
                       <div className="w-[100px] h-[100px] rounded border border-slate-100 flex flex-col items-center justify-center">
@@ -427,24 +478,34 @@ function PageTemplateDocument() {
                         {(fields.id === 1 || fields.id === 2) && (
                           <>
                             <p className="text-xxs font-normal">Unit: 0000</p>
-                            <p className="text-xxs font-normal">Tanggal Mulai: 01 Jan 2024</p>
-                            <p className="text-xxs font-normal">Tanggal Selesai: 01 Jan 2024</p>
+                            <p className="text-xxs font-normal">
+                              Tanggal Mulai: 01 Jan 2024
+                            </p>
+                            <p className="text-xxs font-normal">
+                              Tanggal Selesai: 01 Jan 2024
+                            </p>
                           </>
                         )}
-                        {(fields.id === 3) && (
+                        {fields.id === 3 && (
                           <>
                             <p className="text-xxs font-normal">Unit: 0000</p>
-                            <p className="text-xxs font-normal">Tanggal Masuk: 01 Jan 2024</p>
+                            <p className="text-xxs font-normal">
+                              Tanggal Masuk: 01 Jan 2024
+                            </p>
                           </>
                         )}
-                        {(fields.id === 4) && (
+                        {fields.id === 4 && (
                           <>
                             <p className="text-xxs font-normal">Unit: 0000</p>
-                            <p className="text-xxs font-normal">Tanggal Keluar: 01 Jan 2024</p>
+                            <p className="text-xxs font-normal">
+                              Tanggal Keluar: 01 Jan 2024
+                            </p>
                           </>
                         )}
                         {(fields.id === 5 || fields.id === 6) && (
-                          <p className="text-xxs font-normal">Divisi: Nama Divisi</p>
+                          <p className="text-xxs font-normal">
+                            Divisi: Nama Divisi
+                          </p>
                         )}
                       </div>
 
@@ -458,18 +519,24 @@ function PageTemplateDocument() {
                   <div className="text-center whitespace-pre-line">
                     <div className="flex flex-col text-left gap-2">
                       {(fields.id === 1 || fields.id === 2) && (
-                        <p className="text-xxs font-normal">Jenis Pekerjaan: Lorem Ipsum</p>
+                        <p className="text-xxs font-normal">
+                          Jenis Pekerjaan: Lorem Ipsum
+                        </p>
                       )}
                       {(fields.id === 3 || fields.id === 4) && (
-                        <p className="text-xxs font-normal">Jenis Barang: Lorem Ipsum</p>
+                        <p className="text-xxs font-normal">
+                          Jenis Barang: Lorem Ipsum
+                        </p>
                       )}
 
-                      {(fields.id === 5) && (
+                      {fields.id === 5 && (
                         <table className="w-full mb-4">
                           <thead>
                             <tr className="border-t-1 border-slate-300">
                               <td className="text-xxs font-semibold">No.</td>
-                              <td className="text-xxs font-semibold">Nama Barang</td>
+                              <td className="text-xxs font-semibold">
+                                Nama Barang
+                              </td>
                               <td className="text-xxs font-semibold">Jumlah</td>
                             </tr>
                           </thead>
@@ -488,15 +555,19 @@ function PageTemplateDocument() {
                         </table>
                       )}
 
-                      {(fields.id === 6) && (
+                      {fields.id === 6 && (
                         <table className="w-full mb-4">
                           <thead>
                             <tr className="border-t-1 border-slate-300">
                               <td className="text-xxs font-semibold">No.</td>
-                              <td className="text-xxs font-semibold">Nama Barang</td>
+                              <td className="text-xxs font-semibold">
+                                Nama Barang
+                              </td>
                               <td className="text-xxs font-semibold">Jumlah</td>
                               <td className="text-xxs font-semibold">Harga</td>
-                              <td className="text-xxs font-semibold">Sub Total</td>
+                              <td className="text-xxs font-semibold">
+                                Sub Total
+                              </td>
                             </tr>
                           </thead>
                           <tbody>
@@ -515,23 +586,43 @@ function PageTemplateDocument() {
                               <td className="text-xxs">Rp 2</td>
                             </tr>
                             <tr className="border-t-1 border-slate-300 last:border-b-1">
-                              <td className="text-xxs" colSpan={3} aria-label="total" />
+                              <td
+                                className="text-xxs"
+                                colSpan={3}
+                                aria-label="total"
+                              />
                               <td className="text-xxs font-semibold">Total</td>
                               <td className="text-xxs font-semibold">Rp 3</td>
                             </tr>
                             <tr className="border-t-1 border-slate-300 last:border-b-1">
-                              <td className="text-xxs" colSpan={3} aria-label="total" />
+                              <td
+                                className="text-xxs"
+                                colSpan={3}
+                                aria-label="total"
+                              />
                               <td className="text-xxs font-semibold">Diskon</td>
                               <td className="text-xxs font-semibold">Rp 0</td>
                             </tr>
                             <tr className="border-t-1 border-slate-300 last:border-b-1">
-                              <td className="text-xxs" colSpan={3} aria-label="total" />
-                              <td className="text-xxs font-semibold">PPN 11%</td>
+                              <td
+                                className="text-xxs"
+                                colSpan={3}
+                                aria-label="total"
+                              />
+                              <td className="text-xxs font-semibold">
+                                PPN 11%
+                              </td>
                               <td className="text-xxs font-semibold">Rp 0</td>
                             </tr>
                             <tr className="border-t-1 border-slate-300 last:border-b-1">
-                              <td className="text-xxs" colSpan={3} aria-label="total" />
-                              <td className="text-xxs font-semibold">Grand Total</td>
+                              <td
+                                className="text-xxs"
+                                colSpan={3}
+                                aria-label="total"
+                              />
+                              <td className="text-xxs font-semibold">
+                                Grand Total
+                              </td>
                               <td className="text-xxs font-semibold">Rp 3</td>
                             </tr>
                           </tbody>
@@ -543,9 +634,15 @@ function PageTemplateDocument() {
                   </div>
                   <div className="text-center whitespace-pre-line">
                     <div className="flex flex-col text-left gap-2">
-                      <p className="text-xxs font-normal">Jakarta, 01 Jan 2024</p>
+                      <p className="text-xxs font-normal">
+                        Jakarta, 01 Jan 2024
+                      </p>
                       <QRCode
-                        style={{ height: 'auto', maxWidth: '50px', width: '50px' }}
+                        style={{
+                          height: 'auto',
+                          maxWidth: '50px',
+                          width: '50px'
+                        }}
                         size={150}
                         value="contoh"
                         viewBox="0 0 150 150"
@@ -556,42 +653,58 @@ function PageTemplateDocument() {
               </div>
             </div>
           </div>
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
       <Modal open={isModalDeletePictureOpen} title="Hapus Foto" size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">Apa anda yakin ingin menghapus foto?</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            Apa anda yakin ingin menghapus foto?
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleClickCancelDeletePicture} variant="default">Kembali</Button>
+          <Button onClick={handleClickCancelDeletePicture} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmitDeletePicture}>Ya</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

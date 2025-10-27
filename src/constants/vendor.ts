@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/prefer-default-export
-export const VENDOR_SECTORS = ['Jasa Pengangkutan Sampah',
+export const VENDOR_SECTORS = [
+  'Jasa Pengangkutan Sampah',
   'Jasa Cleaning Service',
   'Jasa Pengolahan Limbah',
   'Jasa Pemeliharaan Lift',
@@ -13,4 +14,5 @@ export const VENDOR_SECTORS = ['Jasa Pengangkutan Sampah',
   'Peralatan Listrik',
   'Peralatan Teknik',
   'Peralatan Bangunan',
-  'Lainnya']
+  'Lainnya'
+]

@@ -7,13 +7,17 @@ interface ModalProps {
   title?: string
   open?: boolean
   onClose?: () => void
-  size?: 'xs'|'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
   children?: React.ReactNode
 }
 
-export default function Modal({
-  open = false, size = 'md', onClose, children, title,
-}: ModalProps) {
+const Modal = ({
+  open = false,
+  size = 'md',
+  onClose,
+  children,
+  title
+}: ModalProps) => {
   let maxWidth = 'max-w-[90%] md:max-w-[50%]'
   if (size === 'md') {
     maxWidth = 'max-w-[90%] md:max-w-[70%]'
@@ -26,8 +30,8 @@ export default function Modal({
   const customStyles = {
     overlay: {
       backgroundColor: 'rgba(0, 0, 0, 0.3)',
-      zIndex: 9999,
-    },
+      zIndex: 9999
+    }
   }
 
   return (
@@ -41,7 +45,9 @@ export default function Modal({
       <div className="h-full border rounded bg-white border-slate-100 focus-visible:outline-none dark:bg-black dark:border-slate-800">
         {title && (
           <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-            <p className="text-xl font-semibold text-slate-600 dark:text-white">{title}</p>
+            <p className="text-xl font-semibold text-slate-600 dark:text-white">
+              {title}
+            </p>
           </div>
         )}
         {children}
@@ -49,3 +55,5 @@ export default function Modal({
     </ReactModal>
   )
 }
+
+export default Modal

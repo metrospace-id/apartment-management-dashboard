@@ -1,95 +1,95 @@
-import {
-  useState, useEffect,
-} from 'react'
-
-import Layout from 'components/Layout'
-import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
-import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
-import Autocomplete from 'components/Form/Autocomplete'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import { exportToExcel } from 'utils/export'
 import dayjs from 'dayjs'
-import Select from 'components/Form/Select'
+import { useState, useEffect } from 'react'
+
+import Breadcrumb from 'components/Breadcrumb'
+import Button from 'components/Button'
+import Autocomplete from 'components/Form/Autocomplete'
 import DatePicker from 'components/Form/DatePicker'
+import Input from 'components/Form/Input'
+import Select from 'components/Form/Select'
+import { FileText as IconFile } from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
+import Toast from 'components/Toast'
 import { VEHICLE_TYPE } from 'constants/accessCard'
+import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
+import { exportToExcel } from 'utils/export'
 
 const PAGE_NAME = 'List Kendaraan'
 
 const REQUESTER_TYPE = [
   {
     label: 'Penghuni',
-    value: '1',
+    value: '1'
   },
   {
     label: 'Penyewa',
-    value: '2',
-  },
+    value: '2'
+  }
 ]
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'No. Unit',
-    key: 'unit_code',
+    key: 'unit_code'
   },
   {
     label: 'No. Kartu',
-    key: 'card_no',
+    key: 'card_no'
   },
   {
     label: 'No. RFID',
-    key: 'rfid_no',
+    key: 'rfid_no'
   },
   {
     label: 'Jenis Kendaraan',
-    key: 'type',
+    key: 'type'
   },
   {
     label: 'Merk Kendaraan',
-    key: 'brand',
+    key: 'brand'
   },
   {
     label: 'Warna Kendaraan',
-    key: 'color',
+    key: 'color'
   },
   {
     label: 'Nopol Kendaraan',
-    key: 'license_plate',
+    key: 'license_plate'
   },
   {
     label: 'Nama Pemohon',
-    key: 'requester_name',
+    key: 'requester_name'
   },
   {
     label: 'Status Pemohon',
-    key: 'requester_type',
+    key: 'requester_type'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
-function PageAccessCardVehicleList() {
-  const [userPermissions, setUserPermissions] = useState<string[]>([])
+const PageAccessCardVehicleList = () => {
+  const [_userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
-  const [dataUnits, setDataUnits] = useState<{ id: number, unit_code: string }[]>([])
+  const [dataUnits, setDataUnits] = useState<
+    { id: number; unit_code: string }[]
+  >([])
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
@@ -98,33 +98,33 @@ function PageAccessCardVehicleList() {
     rfid_no: '',
     requester_name: '',
     requester_type: '',
-    request_date: dayjs().format('YYYY-MM-DD'),
+    request_date: dayjs().format('YYYY-MM-DD')
   })
   const [filter, setFilter] = useState({
     requester_type: '',
     vehicle_type: '',
     active_start_date: '',
-    active_end_date: '',
+    active_end_date: ''
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false)
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
-  const [modalConfirm, setModalConfirm] = useState({
+  const [_modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
-  const [submitType, setSubmitType] = useState('create')
+  const [_submitType, setSubmitType] = useState('create')
 
   const debounceSearch = useDebounce(search, 500, () => setPage(1))
 
@@ -139,7 +139,7 @@ function PageAccessCardVehicleList() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -147,11 +147,11 @@ function PageAccessCardVehicleList() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
@@ -160,22 +160,22 @@ function PageAccessCardVehicleList() {
       rfid_no: '',
       requester_name: '',
       requester_type: '',
-      request_date: dayjs().format('YYYY-MM-DD'),
+      request_date: dayjs().format('YYYY-MM-DD')
     })
   }
 
-  const handleModalConfirmClose = () => {
-    if (submitType !== 'delete') {
-      setModalForm((prevState) => ({
-        ...prevState,
-        open: true,
-      }))
-    }
-    setModalConfirm((prevState) => ({
-      ...prevState,
-      open: false,
-    }))
-  }
+  // const handleModalConfirmClose = () => {
+  //   if (submitType !== 'delete') {
+  //     setModalForm((prevState) => ({
+  //       ...prevState,
+  //       open: true
+  //     }))
+  //   }
+  //   setModalConfirm((prevState) => ({
+  //     ...prevState,
+  //     open: false
+  //   }))
+  // }
 
   const handleModalFilterOpen = () => {
     setIsModalFilterOpen(true)
@@ -189,7 +189,7 @@ function PageAccessCardVehicleList() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     setFields((prevState) => ({
       ...prevState,
@@ -199,14 +199,14 @@ function PageAccessCardVehicleList() {
       rfid_no: fieldData.rfid_no,
       requester_name: fieldData.requester_name,
       requester_type: fieldData.requester_type,
-      request_date: fieldData.request_date,
+      request_date: fieldData.request_date
     }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -216,22 +216,25 @@ function PageAccessCardVehicleList() {
     }
   }
 
-  const handleChangeFilterField = (fieldName: string, value: string | number) => {
+  const handleChangeFilterField = (
+    fieldName: string,
+    value: string | number
+  ) => {
     setFilter((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -247,8 +250,8 @@ function PageAccessCardVehicleList() {
         search,
         requester_type: filter.requester_type,
         active_start_date: filter.active_start_date,
-        active_end_date: filter.active_end_date,
-      },
+        active_end_date: filter.active_end_date
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -256,9 +259,10 @@ function PageAccessCardVehicleList() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -269,8 +273,8 @@ function PageAccessCardVehicleList() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -280,7 +284,7 @@ function PageAccessCardVehicleList() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
@@ -298,21 +302,31 @@ function PageAccessCardVehicleList() {
     unit_code: column.unit_code,
     card_no: column.card_no,
     rfid_no: column.rfid_no,
-    type: VEHICLE_TYPE.find((itemData) => itemData.id === +column.type)?.label || '',
+    type:
+      VEHICLE_TYPE.find((itemData) => itemData.id === +column.type)?.label ||
+      '',
     brand: column.brand,
     color: column.color,
     license_plate: column.license_plate,
     requester_name: column.requester_name,
-    requester_type: REQUESTER_TYPE.find((itemData) => itemData.value === column.requester_type)?.label || '',
+    requester_type:
+      REQUESTER_TYPE.find(
+        (itemData) => itemData.value === column.requester_type
+      )?.label || '',
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -338,11 +352,19 @@ function PageAccessCardVehicleList() {
         <div className="p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari no. unit, no. kartu, nopol" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari no. unit, no. kartu, nopol"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
+            <Button onClick={handleModalFilterOpen} variant="secondary">
+              Filter
+            </Button>
             <div className="sm:ml-auto flex gap-1">
-              <Button onClick={handleExportExcel} variant="warning">Export</Button>
+              <Button onClick={handleExportExcel} variant="warning">
+                Export
+              </Button>
             </div>
           </div>
 
@@ -359,13 +381,26 @@ function PageAccessCardVehicleList() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <DatePicker
             label="Tanggal Permohonan"
             placeholder="Tanggal Permohonan"
             name="request_date"
-            value={fields.request_date ? dayjs(fields.request_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('request_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            value={
+              fields.request_date
+                ? dayjs(fields.request_date).toDate()
+                : undefined
+            }
+            onChange={(selectedDate) =>
+              handleChangeField(
+                'request_date',
+                dayjs(selectedDate).format('YYYY-MM-DD')
+              )
+            }
             readOnly
             fullWidth
           />
@@ -376,11 +411,15 @@ function PageAccessCardVehicleList() {
             name="unit_id"
             items={dataUnits.map((itemData) => ({
               label: itemData.unit_code,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.unit_code || '',
-              value: dataUnits.find((itemData) => itemData.id === fields.unit_id)?.id || '',
+              label:
+                dataUnits.find((itemData) => itemData.id === fields.unit_id)
+                  ?.unit_code || '',
+              value:
+                dataUnits.find((itemData) => itemData.id === fields.unit_id)
+                  ?.id || ''
             }}
             onChange={(value) => handleChangeField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
@@ -392,7 +431,9 @@ function PageAccessCardVehicleList() {
             label="No. Kartu"
             name="card_no"
             value={fields.card_no}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
             type="tel"
@@ -403,7 +444,9 @@ function PageAccessCardVehicleList() {
             label="No. RFID"
             name="rfid_no"
             value={fields.rfid_no}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
             type="tel"
@@ -414,7 +457,9 @@ function PageAccessCardVehicleList() {
             label="Nama Pemohon"
             name="requester_name"
             value={fields.requester_name}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -424,23 +469,28 @@ function PageAccessCardVehicleList() {
             label="Status Pemohon"
             name="requester_type"
             value={fields.requester_type}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
-            options={[{
-              label: 'Pilih Status',
-              value: '',
-              disabled: true,
-            },
-            ...REQUESTER_TYPE.map((itemData) => ({
-              label: itemData.label,
-              value: itemData.value,
-            }))]}
+            options={[
+              {
+                label: 'Pilih Status',
+                value: '',
+                disabled: true
+              },
+              ...REQUESTER_TYPE.map((itemData) => ({
+                label: itemData.label,
+                value: itemData.value
+              }))
+            ]}
           />
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
         </div>
       </Modal>
 
@@ -451,18 +501,22 @@ function PageAccessCardVehicleList() {
             label="Status Pemohon"
             name="requester_type"
             value={filter.requester_type}
-            onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeFilterField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
-            options={[{
-              label: 'Pilih Status',
-              value: '',
-              disabled: true,
-            },
-            ...REQUESTER_TYPE.map((itemData) => ({
-              label: itemData.label,
-              value: itemData.value,
-            }))]}
+            options={[
+              {
+                label: 'Pilih Status',
+                value: '',
+                disabled: true
+              },
+              ...REQUESTER_TYPE.map((itemData) => ({
+                label: itemData.label,
+                value: itemData.value
+              }))
+            ]}
           />
 
           <Select
@@ -470,33 +524,39 @@ function PageAccessCardVehicleList() {
             label="Jenis Kendaraan"
             name="vehicle_type"
             value={filter.vehicle_type}
-            onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeFilterField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
-            options={[{
-              label: 'Pilih Jenis Kendaraan',
-              value: '',
-              disabled: true,
-            },
-            ...VEHICLE_TYPE.map(((vehicle) => ({
-              value: vehicle.id,
-              label: vehicle.label,
-            }))),
+            options={[
+              {
+                label: 'Pilih Jenis Kendaraan',
+                value: '',
+                disabled: true
+              },
+              ...VEHICLE_TYPE.map((vehicle) => ({
+                value: vehicle.id,
+                label: vehicle.label
+              }))
             ]}
           />
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFilterClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFilterClose} variant="default">
+            Tutup
+          </Button>
           <Button onClick={handleSubmitFilter}>Kirim</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

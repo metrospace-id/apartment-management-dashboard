@@ -1,21 +1,25 @@
 import { useState, useEffect } from 'react'
 
-import Autocomplete from 'components/Form/Autocomplete'
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
+import Autocomplete from 'components/Form/Autocomplete'
 import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
+import Select from 'components/Form/Select'
 import Toggle from 'components/Form/Toggle'
+import {
+  Edit as IconEdit,
+  TrashAlt as IconTrash,
+  FileText as IconFile
+} from 'components/Icons'
+import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import Table from 'components/Table/Table'
+import type { TableHeaderProps } from 'components/Table/Table'
 import Toast from 'components/Toast'
 import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
-import Select from 'components/Form/Select'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
 
 const PAGE_NAME = 'Role'
@@ -24,28 +28,28 @@ const LEVELS = [
   // { level: '0', label: 'Super Admin' },
   { level: '1', label: 'Admin Department' },
   { level: '2', label: 'Supervisor' },
-  { level: '3', label: 'Karyawan' },
+  { level: '3', label: 'Karyawan' }
 ]
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Nama',
-    key: 'name',
+    key: 'name'
   },
   {
     label: 'Departemen',
-    key: 'department_name',
+    key: 'department_name'
   },
   {
     label: 'Level',
-    key: 'level',
+    key: 'level'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
 interface FieldProps {
@@ -56,41 +60,45 @@ interface FieldProps {
   department_id: number | null
 }
 
-function PageRole() {
+const PageRole = () => {
   const [currentUser, setCurrentUser] = useState<any>({})
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
-  const [dataPermissions, setDataPermissions] = useState<Record<string, any>[]>([])
-  const [dataDepartments, setDataDepartments] = useState<{ id: number, name: string }[]>([])
+  const [dataPermissions, setDataPermissions] = useState<Record<string, any>[]>(
+    []
+  )
+  const [dataDepartments, setDataDepartments] = useState<
+    { id: number; name: string }[]
+  >([])
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState<FieldProps>({
     id: 0,
     name: '',
     level: '',
     permission_ids: [],
-    department_id: null,
+    department_id: null
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
 
@@ -99,7 +107,7 @@ function PageRole() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -107,18 +115,18 @@ function PageRole() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
       name: '',
       level: '',
       permission_ids: [],
-      department_id: null,
+      department_id: null
     })
   }
 
@@ -126,12 +134,12 @@ function PageRole() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -139,7 +147,7 @@ function PageRole() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
   }
 
@@ -148,27 +156,31 @@ function PageRole() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     api({
       url: `/v1/role/${selectedData.id}`,
-      withAuth: true,
-    }).then(({ data: responseData }) => {
-      const mapData = {
-        id: responseData.data.id,
-        name: responseData.data.name,
-        level: responseData.data.level,
-        permission_ids: responseData.data.permissions.map((permission: any) => permission.id),
-        department_id: responseData.data.department_id,
-      }
-      setFields(mapData)
+      withAuth: true
     })
+      .then(({ data: responseData }) => {
+        const mapData = {
+          id: responseData.data.id,
+          name: responseData.data.name,
+          level: responseData.data.level,
+          permission_ids: responseData.data.permissions.map(
+            (permission: any) => permission.id
+          ),
+          department_id: responseData.data.department_id
+        }
+        setFields(mapData)
+      })
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -178,27 +190,31 @@ function PageRole() {
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     api({
       url: `/v1/role/${selectedData.id}`,
-      withAuth: true,
-    }).then(({ data: responseData }) => {
-      const mapData = {
-        id: responseData.data.id,
-        name: responseData.data.name,
-        level: responseData.data.level,
-        permission_ids: responseData.data.permissions.map((permission: any) => permission.id),
-        department_id: responseData.data.department_id,
-      }
-      setFields(mapData)
+      withAuth: true
     })
+      .then(({ data: responseData }) => {
+        const mapData = {
+          id: responseData.data.id,
+          name: responseData.data.name,
+          level: responseData.data.level,
+          permission_ids: responseData.data.permissions.map(
+            (permission: any) => permission.id
+          ),
+          department_id: responseData.data.department_id
+        }
+        setFields(mapData)
+      })
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -207,12 +223,12 @@ function PageRole() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
-      id: selectedData.id,
+      id: selectedData.id
     }))
   }
 
@@ -221,14 +237,26 @@ function PageRole() {
       const newPermissions = [...fields.permission_ids]
       const permissionId = permission.id
       const permissionChildren = permission.children || []
-      const permissionChildrenIds = permissionChildren.map((child: any) => child.id)
-      const permissionSubChildren = permissionChildren.flatMap((child: any) => child.children || [])
-      const permissionSubChildrenIds = permissionSubChildren.map((subChild: any) => subChild.id)
+      const permissionChildrenIds = permissionChildren.map(
+        (child: any) => child.id
+      )
+      const permissionSubChildren = permissionChildren.flatMap(
+        (child: any) => child.children || []
+      )
+      const permissionSubChildrenIds = permissionSubChildren.map(
+        (subChild: any) => subChild.id
+      )
 
       if (newPermissions.includes(permissionId)) {
-        const filteredPermissions = newPermissions.filter((id) => id !== permissionId)
-        const filteredChildren = filteredPermissions.filter((id) => !permissionChildrenIds.includes(id))
-        const filteredSubChildren = filteredChildren.filter((id) => !permissionSubChildrenIds.includes(id))
+        const filteredPermissions = newPermissions.filter(
+          (id) => id !== permissionId
+        )
+        const filteredChildren = filteredPermissions.filter(
+          (id) => !permissionChildrenIds.includes(id)
+        )
+        const filteredSubChildren = filteredChildren.filter(
+          (id) => !permissionSubChildrenIds.includes(id)
+        )
         newPermissions.splice(0, newPermissions.length, ...filteredSubChildren)
       } else {
         newPermissions.push(permissionId)
@@ -238,7 +266,7 @@ function PageRole() {
 
       setFields((prevState) => ({
         ...prevState,
-        permission_ids: newPermissions,
+        permission_ids: newPermissions
       }))
     }
   }
@@ -246,19 +274,19 @@ function PageRole() {
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -269,8 +297,8 @@ function PageRole() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -280,7 +308,7 @@ function PageRole() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
@@ -292,17 +320,19 @@ function PageRole() {
       params: {
         page,
         limit: PAGE_SIZE,
-        search,
-      },
-    }).then(({ data: responseData }) => {
-      setData(responseData.data)
+        search
+      }
     })
+      .then(({ data: responseData }) => {
+        setData(responseData.data)
+      })
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -312,66 +342,73 @@ function PageRole() {
       url: '/v1/permission',
       withAuth: true,
       params: {
-        limit: 9999,
-      },
-    }).then(({ data: responseData }) => {
-      const permissions: any[] = []
-
-      if (responseData.data?.data?.length) {
-        const idMapping = responseData.data.data.reduce((acc: any, el: any, i: any) => {
-          acc[el.name] = i
-          return acc
-        }, {})
-
-        responseData.data.data.forEach((el: any) => {
-          if (!el.parent) {
-            permissions.push(el)
-            return
-          }
-          const parentEl: any = responseData.data?.data[idMapping[el.parent]]
-          parentEl.children = [...(parentEl.children || []), el]
-        })
+        limit: 9999
       }
-
-      setDataPermissions(permissions)
     })
+      .then(({ data: responseData }) => {
+        const permissions: any[] = []
+
+        if (responseData.data?.data?.length) {
+          const idMapping = responseData.data.data.reduce(
+            (acc: any, el: any, i: any) => {
+              acc[el.name] = i
+              return acc
+            },
+            {}
+          )
+
+          responseData.data.data.forEach((el: any) => {
+            if (!el.parent) {
+              permissions.push(el)
+              return
+            }
+            const parentEl: any = responseData.data?.data[idMapping[el.parent]]
+            parentEl.children = [...(parentEl.children || []), el]
+          })
+        }
+
+        setDataPermissions(permissions)
+      })
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/role/create',
-    withAuth: true,
-    method: 'POST',
-    data: {
-      name: fields.name,
-      level: fields.level,
-      permission_ids: fields.permission_ids,
-      department_id: fields.department_id,
-    },
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/role/create',
+      withAuth: true,
+      method: 'POST',
+      data: {
+        name: fields.name,
+        level: fields.level,
+        permission_ids: fields.permission_ids,
+        department_id: fields.department_id
+      }
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/role/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: {
-      name: fields.name,
-      level: fields.level,
-      permission_ids: fields.permission_ids,
-      department_id: fields.department_id,
-    },
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/role/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: {
+        name: fields.name,
+        level: fields.level,
+        permission_ids: fields.permission_ids,
+        department_id: fields.department_id
+      }
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/role/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/role/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -383,21 +420,23 @@ function PageRole() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetRoles()
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetRoles()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -410,7 +449,12 @@ function PageRole() {
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
@@ -418,29 +462,46 @@ function PageRole() {
           <>
             {userPermissions.includes('role-edit') && (
               <Popover content="Ubah">
-                <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon
+                  onClick={() => handleModalUpdateOpen(column)}
+                >
                   <IconEdit className="w-4 h-4" />
                 </Button>
               </Popover>
             )}
             {userPermissions.includes('role-edit') && (
               <Popover content="Hapus">
-                <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  icon
+                  onClick={() => handleModalDeleteOpen(column)}
+                >
                   <IconTrash className="w-4 h-4" />
                 </Button>
               </Popover>
             )}
           </>
         )}
-        {currentUser.id === 1 && column.id === 1 && userPermissions.includes('role-edit') && (
-          <Popover content="Ubah">
-            <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-              <IconEdit className="w-4 h-4" />
-            </Button>
-          </Popover>
-        )}
+        {currentUser.id === 1 &&
+          column.id === 1 &&
+          userPermissions.includes('role-edit') && (
+            <Popover content="Ubah">
+              <Button
+                variant="primary"
+                size="sm"
+                icon
+                onClick={() => handleModalUpdateOpen(column)}
+              >
+                <IconEdit className="w-4 h-4" />
+              </Button>
+            </Popover>
+          )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -470,9 +531,15 @@ function PageRole() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
+            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>
+              Tambah
+            </Button>
           </div>
 
           <Table
@@ -488,7 +555,11 @@ function PageRole() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title} size="lg">
-        <form autoComplete="off" className="flex flex-col gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
+        <form
+          autoComplete="off"
+          className="flex flex-col gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <Input
             placeholder="Nama Role"
             label="Nama Role"
@@ -504,13 +575,21 @@ function PageRole() {
             name="department_id"
             items={dataDepartments.map((itemData) => ({
               label: itemData.name,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.name || '',
-              value: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.id || '',
+              label:
+                dataDepartments.find(
+                  (itemData) => itemData.id === fields.department_id
+                )?.name || '',
+              value:
+                dataDepartments.find(
+                  (itemData) => itemData.id === fields.department_id
+                )?.id || ''
             }}
-            onChange={(value) => handleChangeField('department_id', +value.value)}
+            onChange={(value) =>
+              handleChangeField('department_id', +value.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -522,22 +601,28 @@ function PageRole() {
             onChange={(e) => handleChangeField(e.target.name, e.target.value)}
             readOnly={modalForm.readOnly}
             fullWidth
-            options={[{
-              label: 'Pilih Level',
-              value: '',
-              disabled: true,
-            },
-            ...LEVELS.map((level) => ({
-              label: level.label,
-              value: level.level,
-            })),
+            options={[
+              {
+                label: 'Pilih Level',
+                value: '',
+                disabled: true
+              },
+              ...LEVELS.map((level) => ({
+                label: level.label,
+                value: level.level
+              }))
             ]}
           />
           <div>
-            <p className="text-sm text-slate-600 font-medium">Pilih Permission</p>
+            <p className="text-sm text-slate-600 font-medium">
+              Pilih Permission
+            </p>
             <div className="grid grid-cols-1 mt-2 md:grid-cols-2 gap-4">
               {dataPermissions.map((permission) => (
-                <div key={permission.id} className="bg-slate-100 rounded-lg p-4">
+                <div
+                  key={permission.id}
+                  className="bg-slate-100 rounded-lg p-4"
+                >
                   <Toggle
                     label={permission.description}
                     checked={fields.permission_ids.includes(permission.id)}
@@ -545,7 +630,7 @@ function PageRole() {
                   />
 
                   <div className="pl-4 flex flex-col gap-2">
-                    {permission.children && permission.children.map((child: any) => (
+                    {permission.children?.map((child: any) => (
                       <div key={child.id}>
                         <Toggle
                           label={child.description}
@@ -554,12 +639,16 @@ function PageRole() {
                         />
                         {child.children && (
                           <div className="pl-4 flex flex-col gap-2">
-                            {child.children && child.children.map((subChild: any) => (
+                            {child.children?.map((subChild: any) => (
                               <Toggle
                                 key={subChild.id}
                                 label={subChild.description}
-                                checked={fields.permission_ids.includes(subChild.id)}
-                                onChange={() => handleSelectPermission(subChild)}
+                                checked={fields.permission_ids.includes(
+                                  subChild.id
+                                )}
+                                onChange={() =>
+                                  handleSelectPermission(subChild)
+                                }
                               />
                             ))}
                           </div>
@@ -573,29 +662,42 @@ function PageRole() {
           </div>
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

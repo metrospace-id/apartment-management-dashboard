@@ -23,8 +23,10 @@ import api from 'utils/api'
 const PAGE_NAME = 'Kalender'
 
 const EVENT_TYPE_CLASS_NAME: Record<string, string> = {
-  private: 'bg-green-700 border-green-700 px-1 cursor-pointer text-white hover:opacity-70 hover:bg-red-500',
-  public: 'bg-yellow-700 border-yellow-700 px-1 cursor-pointer text-white hover:opacity-70 hover:bg-red-500',
+  private:
+    'bg-green-700 border-green-700 px-1 cursor-pointer text-white hover:opacity-70 hover:bg-red-500',
+  public:
+    'bg-yellow-700 border-yellow-700 px-1 cursor-pointer text-white hover:opacity-70 hover:bg-red-500'
 }
 
 let initialView = 'dayGridMonth'
@@ -32,7 +34,8 @@ if (window.innerWidth < 640) {
   initialView = 'timeGridDay'
 }
 
-const eventClassNameByType = (eventType: string) => EVENT_TYPE_CLASS_NAME[eventType]
+const eventClassNameByType = (eventType: string) =>
+  EVENT_TYPE_CLASS_NAME[eventType]
 
 function renderEventContent(eventInfo: any) {
   return (
@@ -42,13 +45,16 @@ function renderEventContent(eventInfo: any) {
   )
 }
 
-function Calendar() {
-  const [currentUser, setCurrentUser] = useState<{ id: number; name: string } | null>(null)
+const Calendar = () => {
+  const [currentUser, setCurrentUser] = useState<{
+    id: number
+    name: string
+  } | null>(null)
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
   const [modalEventOpen, setModalEventOpen] = useState(false)
   const [fields, setFields] = useState({
@@ -61,11 +67,11 @@ function Calendar() {
     timeEnd: '',
     all_day: 1,
     type: 'private',
-    created_by: 0,
+    created_by: 0
   })
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [submitType, setSubmitType] = useState('create')
   const [isLoadingData, setIsLoadingData] = useState(false)
@@ -73,18 +79,22 @@ function Calendar() {
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
 
-  const mappedEvent = useMemo(() => data.data.map((event) => ({
-    ...event,
-    className: eventClassNameByType(event.type),
-  })), [data])
+  const mappedEvent = useMemo(
+    () =>
+      data.data.map((event) => ({
+        ...event,
+        className: eventClassNameByType(event.type)
+      })),
+    [data]
+  )
 
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -100,7 +110,7 @@ function Calendar() {
       timeEnd: '',
       all_day: 1,
       type: 'private',
-      created_by: 0,
+      created_by: 0
     })
   }
 
@@ -108,14 +118,17 @@ function Calendar() {
     handleModalEventClose()
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
-  const handleChangeField = (fieldName: string, value: string | number | boolean) => {
+  const handleChangeField = (
+    fieldName: string,
+    value: string | number | boolean
+  ) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -127,11 +140,15 @@ function Calendar() {
       description: arg.event._def.extendedProps.description,
       start: dayjs(arg.event._instance?.range.start).format('YYYY-MM-DD'),
       timeStart: dayjs(arg.event._instance?.range.start).format('HH:mm'),
-      end: arg.event._instance?.range.end ? dayjs(arg.event._instance?.range.end).format('YYYY-MM-DD') : '',
-      timeEnd: arg.event._instance?.range.end ? dayjs(arg.event._instance?.range.end).format('HH:mm') : '',
+      end: arg.event._instance?.range.end
+        ? dayjs(arg.event._instance?.range.end).format('YYYY-MM-DD')
+        : '',
+      timeEnd: arg.event._instance?.range.end
+        ? dayjs(arg.event._instance?.range.end).format('HH:mm')
+        : '',
       all_day: arg.event._def.extendedProps.all_day,
       type: arg.event._def.extendedProps.type,
-      created_by: arg.event._def.extendedProps.created_by,
+      created_by: arg.event._def.extendedProps.created_by
     })
     setSubmitType('update')
   }
@@ -148,30 +165,33 @@ function Calendar() {
       timeEnd: dayjs(arg.end).format('HH:mm'),
       all_day: 1,
       type: 'private',
-      created_by: 0,
+      created_by: 0
     })
     setSubmitType('create')
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/calendar/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/calendar/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/calendar/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/calendar/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/calendar/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/calendar/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleGetCalendars = () => {
     setIsLoadingData(true)
@@ -180,8 +200,8 @@ function Calendar() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -189,9 +209,10 @@ function Calendar() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -201,7 +222,7 @@ function Calendar() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -212,7 +233,7 @@ function Calendar() {
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -221,7 +242,7 @@ function Calendar() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
   }
@@ -234,21 +255,23 @@ function Calendar() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetCalendars()
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetCalendars()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -278,7 +301,7 @@ function Calendar() {
             headerToolbar={{
               left: 'prev,next',
               center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay',
+              right: 'dayGridMonth,timeGridWeek,timeGridDay'
             }}
             events={mappedEvent}
             eventContent={renderEventContent}
@@ -293,14 +316,23 @@ function Calendar() {
         </div>
       </div>
 
-      <Modal open={modalEventOpen} size="sm" title={fields.id ? 'Edit Acara' : 'Buat Acara Baru'}>
+      <Modal
+        open={modalEventOpen}
+        size="sm"
+        title={fields.id ? 'Edit Acara' : 'Buat Acara Baru'}
+      >
         <form autoComplete="off" className="grid grid-cols-2 gap-4 p-6">
           <DatePicker
             label="Tanggal mulai"
             placeholder="Tanggal mulai"
             name="start"
             value={fields.start ? dayjs(fields.start).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('start', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            onChange={(selectedDate) =>
+              handleChangeField(
+                'start',
+                dayjs(selectedDate).format('YYYY-MM-DD')
+              )
+            }
             disabled
           />
 
@@ -309,7 +341,9 @@ function Calendar() {
             placeholder="Tanggal selesai"
             name="end"
             value={fields.end ? dayjs(fields.end).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('end', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            onChange={(selectedDate) =>
+              handleChangeField('end', dayjs(selectedDate).format('YYYY-MM-DD'))
+            }
             disabled
           />
 
@@ -340,7 +374,9 @@ function Calendar() {
                 name="type"
                 value="private"
                 checked={fields.type === 'private'}
-                onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+                onChange={(e) =>
+                  handleChangeField(e.target.name, e.target.value)
+                }
                 readOnly={fields.created_by !== currentUser?.id}
               />
               <Radio
@@ -348,39 +384,56 @@ function Calendar() {
                 name="type"
                 value="public"
                 checked={fields.type === 'public'}
-                onChange={(e) => handleChangeField(e.target.name, e.target.value)}
+                onChange={(e) =>
+                  handleChangeField(e.target.name, e.target.value)
+                }
                 readOnly={fields.created_by !== currentUser?.id}
               />
             </div>
           </div>
         </form>
         <div className="p-4 flex items-center gap-2 justify-end">
-          <Button onClick={handleModalEventClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalEventClose} variant="default">
+            Tutup
+          </Button>
           {fields.created_by === currentUser?.id && (
             <>
-              <Button onClick={handleModalDeleteOpen} variant="danger">Hapus</Button>
-              <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+              <Button onClick={handleModalDeleteOpen} variant="danger">
+                Hapus
+              </Button>
+              <Button
+                onClick={() =>
+                  handleClickConfirm(fields.id ? 'update' : 'create')
+                }
+              >
+                Kirim
+              </Button>
             </>
           )}
-
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
-      {(isLoadingSubmit || isLoadingData) && (
-        <LoadingOverlay />
-      )}
+      {(isLoadingSubmit || isLoadingData) && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

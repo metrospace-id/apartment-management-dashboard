@@ -1,6 +1,6 @@
 declare module 'react-qr-scanner'
 
-export { }
+export {}
 declare global {
   interface DataTableProps {
     data: Record<string, any>[]
@@ -10,11 +10,11 @@ declare global {
   }
 
   interface DocumentProps {
-    id: number,
+    id: number
     name: string
     header: string
     subheader: string
     content: string
-    picture: null | string,
+    picture: null | string
   }
 }

@@ -1,15 +1,26 @@
 import React from 'react'
 
 export interface BadgeProps extends React.InputHTMLAttributes<HTMLSpanElement> {
-  variant?: 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'danger' | 'default'
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'info'
+    | 'warning'
+    | 'danger'
+    | 'default'
 }
 
-function Badge({
-  variant = 'default', children, className, ...props
-}: BadgeProps) {
+const Badge = ({
+  variant = 'default',
+  children,
+  className,
+  ...props
+}: BadgeProps) => {
   let backgroundColorClass = 'bg-primary text-white disabled:hover:opacity-50'
   if (variant === 'secondary') {
-    backgroundColorClass = 'bg-transparent border text-primary disabled:hover:opacity-50'
+    backgroundColorClass =
+      'bg-transparent border text-primary disabled:hover:opacity-50'
   } else if (variant === 'success') {
     backgroundColorClass = 'bg-green-500 text-white disabled:hover:opacity-50'
   } else if (variant === 'info') {
@@ -24,7 +35,10 @@ function Badge({
 
   return (
     // eslint-disable-next-line react/button-has-type
-    <span {...props} className={`text-[10px] font-medium py-1 px-2 rounded ${backgroundColorClass} ${className}`}>
+    <span
+      {...props}
+      className={`text-[10px] font-medium py-1 px-2 rounded ${backgroundColorClass} ${className}`}
+    >
       {children}
     </span>
   )

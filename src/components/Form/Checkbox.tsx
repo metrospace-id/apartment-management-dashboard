@@ -1,18 +1,18 @@
-import {
-  HTMLAttributes, ReactNode, useEffect, useState,
-} from 'react'
+import { HTMLAttributes, ReactNode, useEffect, useState } from 'react'
+
 import { Check as IconChcek, Minus as IconMinus } from '../Icons'
 
-export interface CheckboxProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
-  id?: string;
-  hint?: string;
-  label?: string | ReactNode;
-  error?: boolean;
-  className?: string;
+export interface CheckboxProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  id?: string
+  hint?: string
+  label?: string | ReactNode
+  error?: boolean
+  className?: string
   iconCheckClassName?: string
   checkBoxClassName?: string
-  labelClassName?: string;
-  hintTextClassName?: string;
+  labelClassName?: string
+  hintTextClassName?: string
   value?: string | number
   disabled?: boolean
   checked?: boolean
@@ -20,7 +20,7 @@ export interface CheckboxProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onC
   onClick?: () => void
 }
 
-function Checkbox({
+const Checkbox = ({
   id,
   label,
   hint,
@@ -35,11 +35,14 @@ function Checkbox({
   indeterminate = false,
   onClick,
   ...props
-}: CheckboxProps) {
+}: CheckboxProps) => {
   const [isCheckced, setIsChecked] = useState(false)
 
-  const checkedClass = disabled ? 'bg-neutral-200 hover:bg-neutral-200' : 'bg-primary border-primary hover:bg-sky-500'
-  const disabledClass = 'bg-neutral-100 border-neutral-200 hover:border-neutral-200 hover:bg-neutral-100 cursor-not-allowed'
+  const checkedClass = disabled
+    ? 'bg-neutral-200 hover:bg-neutral-200'
+    : 'bg-primary border-primary hover:bg-sky-500'
+  const disabledClass =
+    'bg-neutral-100 border-neutral-200 hover:border-neutral-200 hover:bg-neutral-100 cursor-not-allowed'
 
   const handleClickCheck = () => {
     if (!disabled) {
@@ -63,19 +66,22 @@ function Checkbox({
             onClick={handleClickCheck}
             className={`${disabled ? disabledClass : 'hover:bg-primary-50 border-neutral-300 hover:border-sky-500 cursor-pointer'} w-5 h-5 lg:w-6 lg:h-6 ${checkBoxClassName} border-[2px] rounded-md  active:outline-primary-100 active:outline-2 ${isCheckced ? checkedClass : ''} flex flex-col items-center justify-center`}
           >
-            {isCheckced && !indeterminate && <IconChcek className={`text-white ${iconCheckClassName}`} />}
-            {isCheckced && indeterminate && <IconMinus className={`text-white ${iconCheckClassName}`} />}
+            {isCheckced && !indeterminate && (
+              <IconChcek className={`text-white ${iconCheckClassName}`} />
+            )}
+            {isCheckced && indeterminate && (
+              <IconMinus className={`text-white ${iconCheckClassName}`} />
+            )}
           </div>
         </div>
         {label && (
-        <label
-          htmlFor={id}
-          className={`text-body-m-regular ${disabled ? 'text-neutral-300' : 'text-neutral-600'} ${labelClassName || ''}`}
-        >
-          {label}
-        </label>
+          <label
+            htmlFor={id}
+            className={`text-body-m-regular ${disabled ? 'text-neutral-300' : 'text-neutral-600'} ${labelClassName || ''}`}
+          >
+            {label}
+          </label>
         )}
-
       </div>
       <span
         className={`text-body-s-regular mt-1 ${

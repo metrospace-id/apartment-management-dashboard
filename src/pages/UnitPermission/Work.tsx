@@ -1,12 +1,8 @@
 import dayjs from 'dayjs'
-import {
-  useEffect,
-  useState,
-  useRef,
-} from 'react'
-import QRCode from 'react-qr-code'
 import html2canvas from 'html2canvas'
 import JSPDF from 'jspdf'
+import { useEffect, useState, useRef } from 'react'
+import QRCode from 'react-qr-code'
 
 import Breadcrumb from 'components/Breadcrumb'
 import Button from 'components/Button'
@@ -15,7 +11,10 @@ import DatePicker from 'components/Form/DatePicker'
 import Input from 'components/Form/Input'
 import TextArea from 'components/Form/TextArea'
 import {
-  Edit as IconEdit, FileText as IconFile, TrashAlt as IconTrash, Book as IconPrint,
+  Edit as IconEdit,
+  FileText as IconFile,
+  TrashAlt as IconTrash,
+  Book as IconPrint
 } from 'components/Icons'
 import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
@@ -34,49 +33,53 @@ const PAGE_NAME = 'Izin Kerja'
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'No Unit',
-    key: 'unit_code',
+    key: 'unit_code'
   },
   {
     label: 'Nama Pemohon',
-    key: 'requester_name',
+    key: 'requester_name'
   },
   {
     label: 'Nama Pekerja',
-    key: 'worker_name',
+    key: 'worker_name'
   },
   {
     label: 'Jenis Pekerjaan',
-    key: 'work_category',
+    key: 'work_category'
   },
   {
     label: 'Tanggal Pekerjaan',
-    key: 'start_date',
+    key: 'start_date'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
-function PageWork() {
+const PageWork = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
-  const [dataUnits, setDataUnits] = useState<{
-    unit_id: number,
-    unit_code: string,
-    owner_name: string,
-    owner_phone: string,
-    name: string,
-    phone: string
-  }[]>([])
-  const [dataCategories, setDataCategories] = useState<{ id: number, name: string }[]>([])
+  const [dataUnits, setDataUnits] = useState<
+    {
+      unit_id: number
+      unit_code: string
+      owner_name: string
+      owner_phone: string
+      name: string
+      phone: string
+    }[]
+  >([])
+  const [dataCategories, setDataCategories] = useState<
+    { id: number; name: string }[]
+  >([])
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
     id: 0,
@@ -90,33 +93,34 @@ function PageWork() {
     work_description: '',
     start_date: dayjs().format('YYYY-MM-DD'),
     end_date: dayjs().format('YYYY-MM-DD'),
-    created_at: '',
+    created_at: ''
   })
   const [filter, setFilter] = useState({
     start_date: '',
     end_date: '',
-    work_category_id: 0,
+    work_category_id: 0
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false)
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
-  const [documentPrint, setDocumentPrint] = useState<DocumentProps>(DOCUMENT_DEFAULT)
+  const [documentPrint, setDocumentPrint] =
+    useState<DocumentProps>(DOCUMENT_DEFAULT)
   const [isModalPrintOpen, setIsModalPrintOpen] = useState(false)
   const documentPdfRef = useRef<HTMLDivElement | null>(null)
 
@@ -133,7 +137,7 @@ function PageWork() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -152,7 +156,7 @@ function PageWork() {
       work_description: fieldData.work_description,
       start_date: fieldData.start_date,
       end_date: fieldData.end_date,
-      created_at: fieldData.created_at,
+      created_at: fieldData.created_at
     }))
   }
 
@@ -166,7 +170,8 @@ function PageWork() {
         const pdf = new JSPDF()
         const imgProperties = pdf.getImageProperties(canvas)
         const pdfWidth = pdf.internal.pageSize.getWidth()
-        const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width
+        const pdfHeight =
+          (imgProperties.height * pdfWidth) / imgProperties.width
 
         pdf.addImage(canvas, 'PNG', 0, 0, pdfWidth, pdfHeight)
         pdf.save(`${PAGE_NAME}.pdf`)
@@ -178,11 +183,11 @@ function PageWork() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
@@ -196,7 +201,7 @@ function PageWork() {
       work_description: '',
       start_date: dayjs().format('YYYY-MM-DD'),
       end_date: dayjs().format('YYYY-MM-DD'),
-      created_at: '',
+      created_at: ''
     })
   }
 
@@ -212,12 +217,12 @@ function PageWork() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -225,7 +230,7 @@ function PageWork() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
   }
 
@@ -233,7 +238,7 @@ function PageWork() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     setFields((prevState) => ({
       ...prevState,
@@ -246,7 +251,7 @@ function PageWork() {
       work_category_id: fieldData.work_category_id,
       work_description: fieldData.work_description,
       start_date: fieldData.start_date,
-      end_date: fieldData.end_date,
+      end_date: fieldData.end_date
     }))
   }
 
@@ -254,7 +259,7 @@ function PageWork() {
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     setFields((prevState) => ({
       ...prevState,
@@ -267,7 +272,7 @@ function PageWork() {
       work_category_id: fieldData.work_category_id,
       work_description: fieldData.work_description,
       start_date: fieldData.start_date,
-      end_date: fieldData.end_date,
+      end_date: fieldData.end_date
     }))
   }
 
@@ -275,12 +280,12 @@ function PageWork() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
-      id: fieldData.id,
+      id: fieldData.id
     }))
   }
 
@@ -293,14 +298,14 @@ function PageWork() {
       ...prevState,
       requester_name: requesterName || '',
       requester_phone: requesterPhone || '',
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -310,22 +315,25 @@ function PageWork() {
     }
   }
 
-  const handleChangeFilterField = (fieldName: string, value: string | number) => {
+  const handleChangeFilterField = (
+    fieldName: string,
+    value: string | number
+  ) => {
     setFilter((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -340,8 +348,8 @@ function PageWork() {
         page,
         limit: PAGE_SIZE,
         search,
-        ...filter,
-      },
+        ...filter
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -349,9 +357,10 @@ function PageWork() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -362,8 +371,8 @@ function PageWork() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -373,7 +382,7 @@ function PageWork() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
@@ -384,8 +393,8 @@ function PageWork() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -395,7 +404,7 @@ function PageWork() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
@@ -404,7 +413,7 @@ function PageWork() {
     api({
       url: '/v1/document/1',
       withAuth: true,
-      method: 'GET',
+      method: 'GET'
     })
       .then(({ data: responseData }) => {
         if (responseData.data.id) {
@@ -414,30 +423,33 @@ function PageWork() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/work/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/work/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/work/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/work/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/work/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/work/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -448,21 +460,23 @@ function PageWork() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetWorks()
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetWorks()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -485,33 +499,53 @@ function PageWork() {
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
         {userPermissions.includes('unit-permission-work-edit') && (
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Ubah">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('unit-permission-work-print') && (
-        <Popover content="Print">
-          <Button variant="default" size="sm" icon onClick={() => handleModalPrintOpen(column)}>
-            <IconPrint className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Print">
+            <Button
+              variant="default"
+              size="sm"
+              icon
+              onClick={() => handleModalPrintOpen(column)}
+            >
+              <IconPrint className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('unit-permission-work-delete') && (
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Hapus">
+            <Button
+              variant="danger"
+              size="sm"
+              icon
+              onClick={() => handleModalDeleteOpen(column)}
+            >
+              <IconTrash className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -539,11 +573,19 @@ function PageWork() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama, no. unit" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama, no. unit"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
+            <Button onClick={handleModalFilterOpen} variant="secondary">
+              Filter
+            </Button>
             <div className="sm:ml-auto flex gap-1">
-              <Button onClick={handleExportExcel} variant="warning">Export</Button>
+              <Button onClick={handleExportExcel} variant="warning">
+                Export
+              </Button>
               <Button onClick={handleModalCreateOpen}>Tambah</Button>
             </div>
           </div>
@@ -561,18 +603,28 @@ function PageWork() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <Autocomplete
             placeholder="Nomor Unit"
             label="Nomor Unit"
             name="unit_id"
             items={dataUnits.map((itemData) => ({
               label: itemData.unit_code,
-              value: itemData.unit_id,
+              value: itemData.unit_id
             }))}
             value={{
-              label: dataUnits.find((itemData) => itemData.unit_id === fields.unit_id)?.unit_code || '',
-              value: dataUnits.find((itemData) => itemData.unit_id === fields.unit_id)?.unit_id || '',
+              label:
+                dataUnits.find(
+                  (itemData) => itemData.unit_id === fields.unit_id
+                )?.unit_code || '',
+              value:
+                dataUnits.find(
+                  (itemData) => itemData.unit_id === fields.unit_id
+                )?.unit_id || ''
             }}
             onChange={(value) => handleChangeUnitField('unit_id', value.value)}
             readOnly={modalForm.readOnly}
@@ -605,7 +657,9 @@ function PageWork() {
             name="worker_phone"
             type="tel"
             value={fields.worker_phone}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -614,8 +668,15 @@ function PageWork() {
             label="Tanggal Mulai"
             placeholder="Tanggal Mulai"
             name="start_date"
-            value={fields.start_date ? dayjs(fields.start_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            value={
+              fields.start_date ? dayjs(fields.start_date).toDate() : undefined
+            }
+            onChange={(selectedDate) =>
+              handleChangeField(
+                'start_date',
+                dayjs(selectedDate).format('YYYY-MM-DD')
+              )
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -624,8 +685,15 @@ function PageWork() {
             label="Tanggal Selesai"
             placeholder="Tanggal Selesai"
             name="end_date"
-            value={fields.end_date ? dayjs(fields.end_date).toDate() : undefined}
-            onChange={(selectedDate) => handleChangeField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+            value={
+              fields.end_date ? dayjs(fields.end_date).toDate() : undefined
+            }
+            onChange={(selectedDate) =>
+              handleChangeField(
+                'end_date',
+                dayjs(selectedDate).format('YYYY-MM-DD')
+              )
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -636,13 +704,21 @@ function PageWork() {
             name="work_category_id"
             items={dataCategories.map((itemData) => ({
               label: itemData.name,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataCategories.find((itemData) => itemData.id === fields.work_category_id)?.name || '',
-              value: dataCategories.find((itemData) => itemData.id === fields.work_category_id)?.id || '',
+              label:
+                dataCategories.find(
+                  (itemData) => itemData.id === fields.work_category_id
+                )?.name || '',
+              value:
+                dataCategories.find(
+                  (itemData) => itemData.id === fields.work_category_id
+                )?.id || ''
             }}
-            onChange={(value) => handleChangeField('work_category_id', value.value)}
+            onChange={(value) =>
+              handleChangeField('work_category_id', value.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -656,27 +732,44 @@ function PageWork() {
             readOnly={modalForm.readOnly}
             fullWidth
           />
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={isModalFilterOpen} title="Filter" size="xs">
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
-
           <div className="flex flex-col gap-2 w-full">
-            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Mulai</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-white">
+              Tanggal Mulai
+            </p>
             <div className="flex flex-col gap-1">
               <DatePicker
                 placeholder="Tanggal Mulai"
                 name="start_date"
-                value={filter.start_date ? dayjs(filter.start_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                value={
+                  filter.start_date
+                    ? dayjs(filter.start_date).toDate()
+                    : undefined
+                }
+                onChange={(selectedDate) =>
+                  handleChangeFilterField(
+                    'start_date',
+                    dayjs(selectedDate).format('YYYY-MM-DD')
+                  )
+                }
                 readOnly={modalForm.readOnly}
                 fullWidth
               />
@@ -684,8 +777,15 @@ function PageWork() {
               <DatePicker
                 placeholder="Tanggal Selesai"
                 name="end_date"
-                value={filter.end_date ? dayjs(filter.end_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                value={
+                  filter.end_date ? dayjs(filter.end_date).toDate() : undefined
+                }
+                onChange={(selectedDate) =>
+                  handleChangeFilterField(
+                    'end_date',
+                    dayjs(selectedDate).format('YYYY-MM-DD')
+                  )
+                }
                 readOnly={modalForm.readOnly}
                 fullWidth
               />
@@ -698,30 +798,43 @@ function PageWork() {
             name="work_category_id"
             items={dataCategories.map((itemData) => ({
               label: itemData.name,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataCategories.find((itemData) => itemData.id === filter.work_category_id)?.name || '',
-              value: dataCategories.find((itemData) => itemData.id === filter.work_category_id)?.id || '',
+              label:
+                dataCategories.find(
+                  (itemData) => itemData.id === filter.work_category_id
+                )?.name || '',
+              value:
+                dataCategories.find(
+                  (itemData) => itemData.id === filter.work_category_id
+                )?.id || ''
             }}
-            onChange={(value) => handleChangeFilterField('work_category_id', value.value)}
+            onChange={(value) =>
+              handleChangeFilterField('work_category_id', value.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFilterClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFilterClose} variant="default">
+            Tutup
+          </Button>
           <Button onClick={handleSubmitFilter}>Kirim</Button>
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
@@ -729,18 +842,29 @@ function PageWork() {
       <Modal open={isModalPrintOpen} title={`Print ${PAGE_NAME}`} size="lg">
         <div className="flex-3 flex flex-col gap-4">
           <div className="bg-slate-100 rounded-md p-4 overflow-scroll h-full">
-            <div className="bg-white p-4 text-slate-600 min-w-[800px] text-pr" ref={documentPdfRef}>
+            <div
+              className="bg-white p-4 text-slate-600 min-w-[800px] text-pr"
+              ref={documentPdfRef}
+            >
               <div className="whitespace-pre-line border-b-2 border-black flex items-center gap-4 min-h-20">
                 <div className="w-[80px]">
                   {documentPrint.picture && (
                     <div className="relative">
-                      <img src={documentPrint.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
+                      <img
+                        src={documentPrint.picture}
+                        alt="doc"
+                        className="w-[100px] h-[100px] object-contain"
+                      />
                     </div>
                   )}
                 </div>
                 <div className="text-center flex-1">
-                  <p className="font-semibold text-lg">{documentPrint.header}</p>
-                  <p className="font-semibold text-xs">{documentPrint.subheader}</p>
+                  <p className="font-semibold text-lg">
+                    {documentPrint.header}
+                  </p>
+                  <p className="font-semibold text-xs">
+                    {documentPrint.subheader}
+                  </p>
                 </div>
                 <div className="w-[100px]" />
               </div>
@@ -748,15 +872,21 @@ function PageWork() {
                 <div className="text-center whitespace-pre-line">
                   <div className="flex justify-between">
                     <div className="flex flex-col text-left">
-                      <p className="text-xs font-semibold">{documentPrint.name}</p>
+                      <p className="text-xs font-semibold">
+                        {documentPrint.name}
+                      </p>
                       <p className="text-xxs font-normal">{`Unit: ${fields.unit_code}`}</p>
                       <p className="text-xxs font-normal">{`Tanggal Keluar: ${dayjs(fields.start_date).format('DD MMMM YYYY')}`}</p>
                     </div>
 
                     <div className="flex flex-col text-right text-xs">
                       <p className="text-xs font-semibold">Pemohon</p>
-                      <p className="text-xxs font-normal">{fields.requester_name}</p>
-                      <p className="text-xxs font-normal">{fields.requester_phone}</p>
+                      <p className="text-xxs font-normal">
+                        {fields.requester_name}
+                      </p>
+                      <p className="text-xxs font-normal">
+                        {fields.requester_phone}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -764,7 +894,9 @@ function PageWork() {
                   <div className="flex flex-col text-left gap-2">
                     <p className="text-xxs font-normal">{`Jenis Pekerjaan: ${dataCategories.find((itemData) => itemData.id === fields.work_category_id)?.name || ''}`}</p>
 
-                    <p className="text-xxs font-normal">{documentPrint.content}</p>
+                    <p className="text-xxs font-normal">
+                      {documentPrint.content}
+                    </p>
                   </div>
                 </div>
                 <div className="text-center whitespace-pre-line">
@@ -774,7 +906,11 @@ function PageWork() {
                       {dayjs(fields.created_at).format('DD MMMM YYYY')}
                     </p>
                     <QRCode
-                      style={{ height: 'auto', maxWidth: '50px', width: '50px' }}
+                      style={{
+                        height: 'auto',
+                        maxWidth: '50px',
+                        width: '50px'
+                      }}
                       size={150}
                       value={window.location.href}
                       viewBox="0 0 150 150"
@@ -787,17 +923,20 @@ function PageWork() {
         </div>
 
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalPrintClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalPrintClose} variant="default">
+            Tutup
+          </Button>
           <Button onClick={handlePrintDocument}>Print</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

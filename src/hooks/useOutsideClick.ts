@@ -5,7 +5,10 @@ interface UseOutsideClick {
   callback: () => void
 }
 
-const useOutsideClick = (ref: UseOutsideClick['ref'], callback: UseOutsideClick['callback']) => {
+const useOutsideClick = (
+  ref: UseOutsideClick['ref'],
+  callback: UseOutsideClick['callback']
+) => {
   const handleClick = (e: any) => {
     if (ref?.current && !ref.current.contains(e.target)) {
       callback()

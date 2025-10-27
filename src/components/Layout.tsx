@@ -1,34 +1,30 @@
-import {
-  ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useCookies } from 'react-cookie'
-import relativeTime from 'dayjs/plugin/relativeTime'
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { useCookies } from 'react-cookie'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 import useOutsideClick from 'hooks/useOutsideClick'
 import api from 'utils/api'
 import { truncate } from 'utils/string'
+
 import packageJson from '../../package.json'
+
 import SideBar from './SideBar'
 
 dayjs.extend(relativeTime)
 
-const NOTIFICATIONS = Array.from(Array(10).keys()).map((key) => ({
-  title: `Notifikasi ke ${key + 1}`,
-  description: `Deskipsi notifikasi ke ${key + 1}. Isinya deskripsi notifikasi singkat padat.`,
-}))
+// const NOTIFICATIONS = Array.from(Array(10).keys()).map((key) => ({
+//   title: `Notifikasi ke ${key + 1}`,
+//   description: `Deskipsi notifikasi ke ${key + 1}. Isinya deskripsi notifikasi singkat padat.`
+// }))
 
 interface LayoutProps {
   children: ReactNode
 }
 
-function Layout({ children }: LayoutProps) {
-  const [cookies, setCookie, removeCookie] = useCookies(['token'])
+const Layout = ({ children }: LayoutProps) => {
+  const [cookies, _, removeCookie] = useCookies(['token'])
   const location = useLocation()
   const navigation = useNavigate()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
@@ -37,22 +33,27 @@ function Layout({ children }: LayoutProps) {
   const [profile, setProfile] = useState({
     name: '',
     email: '',
-    picture: '',
+    picture: ''
   })
-  const [notifications, setNotifications] = useState<{
-    id: number,
-    title: string,
-    message: string,
-    created_at: string,
-    url: string,
-    is_read: number
-  }[]>([])
+  const [notifications, setNotifications] = useState<
+    {
+      id: number
+      title: string
+      message: string
+      created_at: string
+      url: string
+      is_read: number
+    }[]
+  >([])
   const [theme, setTheme] = useState(localStorage.theme)
 
   const notificationElRef = useRef<HTMLDivElement | null>(null)
   const profileElRef = useRef<HTMLDivElement | null>(null)
 
-  const hasNewNotification = useMemo(() => notifications.some((notification) => notification.is_read === 0), [notifications])
+  const hasNewNotification = useMemo(
+    () => notifications.some((notification) => notification.is_read === 0),
+    [notifications]
+  )
 
   useOutsideClick(notificationElRef, () => setIsNotificationOpen(false))
   useOutsideClick(profileElRef, () => setIsProfileOpen(false))
@@ -94,55 +95,61 @@ function Layout({ children }: LayoutProps) {
   const handleGetProfile = () => {
     api({
       withAuth: true,
-      url: '/v1/user/profile',
-    }).then(({ data }) => {
-      setProfile({
-        ...data.data,
-        name: data.data.name,
-        email: data.data.email,
-        picture: data.data.picture,
-      })
-      localStorage.setItem('user', JSON.stringify(data.data))
-      if (data.data.email_verified_at === null) {
-        navigation('/profile')
-      }
-    }).catch(() => {
-      removeCookie('token')
-      window.location.href = '/login'
+      url: '/v1/user/profile'
     })
+      .then(({ data }) => {
+        setProfile({
+          ...data.data,
+          name: data.data.name,
+          email: data.data.email,
+          picture: data.data.picture
+        })
+        localStorage.setItem('user', JSON.stringify(data.data))
+        if (data.data.email_verified_at === null) {
+          navigation('/profile')
+        }
+      })
+      .catch(() => {
+        removeCookie('token')
+        window.location.href = '/login'
+      })
   }
 
   const handleGetNotification = () => {
     api({
       withAuth: true,
-      url: '/v1/notification',
-    }).then(({ data: responseData }) => {
-      if (responseData.data.data.length > 0) {
-        setNotifications(responseData.data.data)
-      }
-    }).catch((error) => {
-      console.error(error)
+      url: '/v1/notification'
     })
+      .then(({ data: responseData }) => {
+        if (responseData.data.data.length > 0) {
+          setNotifications(responseData.data.data)
+        }
+      })
+      .catch((error) => {
+        console.error(error)
+      })
   }
 
   const handleClickNotificationDetail = (notification: {
-    id: number,
-    title: string,
-    message: string,
-    created_at: string,
-    url: string,
+    id: number
+    title: string
+    message: string
+    created_at: string
+    url: string
     is_read: number
   }) => {
     if (notification.is_read === 0) {
       api({
         withAuth: true,
         url: `/v1/notification/read/${notification.id}`,
-        method: 'POST',
-      }).then(() => {
-        navigation(notification.url)
-      }).catch((error) => {
-        console.error(error)
+        method: 'POST'
       })
+        .then(() => {
+          navigation(notification.url)
+        })
+        .catch((error) => {
+          console.error(error)
+        })
     } else {
       navigation(notification.url)
     }
@@ -172,16 +179,20 @@ function Layout({ children }: LayoutProps) {
   }, [cookies])
 
   return (
-
     <main className="h-[100vh] flex relative">
       <SideBar open={isSidebarOpen} />
       {isSidebarOpen && (
-        <div className="absolute w-screen h-screen block z-20 bg-black opacity-70 sm:hidden dark:opacity-30" onClick={handleClickSideBar} role="presentation" />
+        <div
+          className="absolute w-screen h-screen block z-20 bg-black opacity-70 sm:hidden dark:opacity-30"
+          onClick={handleClickSideBar}
+          role="presentation"
+        />
       )}
 
-      <div className={`relative flex-1 w-full ${isSidebarOpen ? 'max-w-[calc(100vw-250px)]' : ''}`}>
+      <div
+        className={`relative flex-1 w-full ${isSidebarOpen ? 'max-w-[calc(100vw-250px)]' : ''}`}
+      >
         <header className="p-4 flex bg-white border-b border-slate-100 shadow-sm gap-4 dark:bg-black dark:border-slate-700">
-
           <div className="flex items-center gap-2">
             <div
               className="flex items-center justify-center relative"
@@ -189,8 +200,19 @@ function Layout({ children }: LayoutProps) {
               onClick={handleClickSideBar}
             >
               <div className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4 text-slate-600 dark:text-white"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                  />
                 </svg>
               </div>
             </div>
@@ -203,20 +225,45 @@ function Layout({ children }: LayoutProps) {
               onClick={handleClickFullScreen}
             >
               <div className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4 text-slate-600 dark:text-white"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"
+                  />
                 </svg>
               </div>
             </div>
 
-            <div className="flex items-center justify-center relative" ref={notificationElRef}>
+            <div
+              className="flex items-center justify-center relative"
+              ref={notificationElRef}
+            >
               <div
                 className={`${isNotificationOpen ? 'bg-slate-200 dark:bg-slate-700' : ''} w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700`}
                 role="presentation"
                 onClick={handleClickNotification}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-4 h-4 text-slate-600 dark:text-white"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+                  />
                 </svg>
               </div>
 
@@ -225,32 +272,61 @@ function Layout({ children }: LayoutProps) {
               )}
 
               <div className="absolute shadow-lg z-20 top-12 right-[-104px] w-screen overflow-hidden sm:right-0 sm:w-[320px] sm:rounded-md">
-                <div className={`transition-all bg-white ${isNotificationOpen ? 'mt-0' : 'mt-[-200%]'}`}>
+                <div
+                  className={`transition-all bg-white ${isNotificationOpen ? 'mt-0' : 'mt-[-200%]'}`}
+                >
                   <div className="bg-primary p-4 dark:bg-black">
                     <p className="text-md text-white font-medium">Notifikasi</p>
                   </div>
                   <div className="bg-white max-h-[250px] overflow-scroll dark:bg-slate-900">
                     <ul>
-                      {notifications.length > 0 ? notifications.map((notification) => (
-                        <li className="p-4 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700" key={notification.title} role="presentation" onClick={() => handleClickNotificationDetail(notification)}>
-                          <p className="text-sm text-slate-600 font-medium dark:text-white">
-                            {notification.title}
-                            {notification.is_read === 0 && (
-                              <span className="bg-red-500 text-white text-xxs font-medium px-1 ml-1 rounded-sm">Baru</span>
-
-                            )}
-                          </p>
-                          <p className="text-xs text-slate-500 font-normal dark:text-white">{truncate(notification.message, 100)}</p>
-                          <span className="flex gap-1 items-center mt-2 text-slate-400 dark:text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                            </svg>
-                            <p className="text-xs">{dayjs(notification.created_at).fromNow()}</p>
-                          </span>
-                        </li>
-                      )) : (
+                      {notifications.length > 0 ? (
+                        notifications.map((notification) => (
+                          <li
+                            className="p-4 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
+                            key={notification.title}
+                            role="presentation"
+                            onClick={() =>
+                              handleClickNotificationDetail(notification)
+                            }
+                          >
+                            <p className="text-sm text-slate-600 font-medium dark:text-white">
+                              {notification.title}
+                              {notification.is_read === 0 && (
+                                <span className="bg-red-500 text-white text-xxs font-medium px-1 ml-1 rounded-sm">
+                                  Baru
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-xs text-slate-500 font-normal dark:text-white">
+                              {truncate(notification.message, 100)}
+                            </p>
+                            <span className="flex gap-1 items-center mt-2 text-slate-400 dark:text-white">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-3 h-3"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                />
+                              </svg>
+                              <p className="text-xs">
+                                {dayjs(notification.created_at).fromNow()}
+                              </p>
+                            </span>
+                          </li>
+                        ))
+                      ) : (
                         <li className="p-4 ">
-                          <p className="text-sm text-slate-600 font-medium dark:text-white">Belum ada notifikasi</p>
+                          <p className="text-sm text-slate-600 font-medium dark:text-white">
+                            Belum ada notifikasi
+                          </p>
                         </li>
                       )}
                     </ul>
@@ -266,12 +342,34 @@ function Layout({ children }: LayoutProps) {
                 onClick={handleClickTheme}
               >
                 {theme === 'dark' ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-600 dark:text-white">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6 text-slate-600 dark:text-white"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+                    />
                   </svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-600 dark:text-white">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-4 h-4 text-slate-600 dark:text-white"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"
+                    />
                   </svg>
                 )}
               </div>
@@ -285,33 +383,86 @@ function Layout({ children }: LayoutProps) {
                 role="presentation"
                 onClick={handleClickProfile}
               >
-                <img src={profile.picture || 'https://via.placeholder.com/300x300'} className="rounded-full w-8 h-8" alt="avatar" />
+                <img
+                  src={profile.picture || 'https://via.placeholder.com/300x300'}
+                  className="rounded-full w-8 h-8"
+                  alt="avatar"
+                />
               </div>
 
               <div className="absolute shadow-lg z-20 top-12 right-[-16px] w-screen overflow-hidden sm:right-0 sm:w-[200px] sm:rounded-md">
-                <div className={`transition-all bg-white ${isProfileOpen ? 'mt-0' : 'mt-[-200%]'} dark:bg-slate-900`}>
+                <div
+                  className={`transition-all bg-white ${isProfileOpen ? 'mt-0' : 'mt-[-200%]'} dark:bg-slate-900`}
+                >
                   <div className="p-4">
                     <p className="text-xs text-slate-600 font-medium dark:text-white">{`Halo, ${profile.name}`}</p>
-                    <p className="text-xxs text-slate-600 font-medium ">{profile.email}</p>
+                    <p className="text-xxs text-slate-600 font-medium ">
+                      {profile.email}
+                    </p>
                     <p className="text-micro text-slate-500 font-regular dark:text-white">{`v${packageJson.version}`}</p>
                   </div>
                   <div className="border-b border-slate-200 py-2">
                     <ul>
-                      <li className="py-2 px-4 cursor-pointer flex gap-1 items-center text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 dark:text-white" onClick={() => navigation('/profile')} role="presentation">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                      <li
+                        className="py-2 px-4 cursor-pointer flex gap-1 items-center text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 dark:text-white"
+                        onClick={() => navigation('/profile')}
+                        role="presentation"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                          />
                         </svg>
                         <p className="text-sm font-medium">Profile</p>
                       </li>
-                      <li className="py-2 px-4 cursor-pointer flex gap-1 items-center text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 dark:text-white" onClick={() => navigation('/app-todo')} role="presentation">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+                      <li
+                        className="py-2 px-4 cursor-pointer flex gap-1 items-center text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 dark:text-white"
+                        onClick={() => navigation('/app-todo')}
+                        role="presentation"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"
+                          />
                         </svg>
                         <p className="text-sm font-medium">Todo List</p>
                       </li>
-                      <li className="py-2 px-4 cursor-pointer flex gap-1 items-center text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 dark:text-white" onClick={() => navigation('/app-note')} role="presentation">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                      <li
+                        className="py-2 px-4 cursor-pointer flex gap-1 items-center text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 dark:text-white"
+                        onClick={() => navigation('/app-note')}
+                        role="presentation"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                          />
                         </svg>
                         <p className="text-sm font-medium">Notes</p>
                       </li>
@@ -319,9 +470,24 @@ function Layout({ children }: LayoutProps) {
                   </div>
                   <div className="py-2">
                     <ul>
-                      <li className="py-2 px-4 cursor-pointer flex gap-1 items-center text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 dark:text-white" onClick={handleClickLogout} role="presentation">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25" />
+                      <li
+                        className="py-2 px-4 cursor-pointer flex gap-1 items-center text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 dark:text-white"
+                        onClick={handleClickLogout}
+                        role="presentation"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H2.25"
+                          />
                         </svg>
                         <p className="text-sm font-medium">Logout</p>
                       </li>
@@ -331,9 +497,10 @@ function Layout({ children }: LayoutProps) {
               </div>
             </div>
           </div>
-
         </header>
-        <div className={`${isSidebarOpen ? 'max-w-[calc(100vw-250px)]' : ''} h-[calc(100vh-65px)] overflow-scroll bg-slate-100 dark:bg-slate-800 relative`}>
+        <div
+          className={`${isSidebarOpen ? 'max-w-[calc(100vw-250px)]' : ''} h-[calc(100vh-65px)] overflow-scroll bg-slate-100 dark:bg-slate-800 relative`}
+        >
           {children}
         </div>
       </div>

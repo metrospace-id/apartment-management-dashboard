@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import {
-  Sort as IconSort,
-} from '../Icons'
-import LoadingContent from '../Loading/LoadingContent'
-import Pagination from './Pagination'
+
 import Checkbox from '../Form/Checkbox'
+import { Sort as IconSort } from '../Icons'
+import LoadingContent from '../Loading/LoadingContent'
+
+import Pagination from './Pagination'
 
 export interface TableHeaderProps {
   label: string
@@ -40,7 +40,7 @@ interface TableProps {
   isLoading?: boolean
 }
 
-export default function Table({
+const Table = ({
   tableHeaders,
   tableData,
   isStripped = true,
@@ -52,8 +52,8 @@ export default function Table({
   onClickRow,
   onClickCheckBox,
   checkedIds,
-  isLoading,
-}: TableProps) {
+  isLoading
+}: TableProps) => {
   const [selectedIds, setSelectedIds] = useState<number[]>([])
 
   const handleCheckAll = () => {
@@ -70,7 +70,9 @@ export default function Table({
   const handleCheck = (id: number) => {
     const isExist = selectedIds.includes(id)
     if (isExist) {
-      const newSelectedIds = selectedIds.filter((selectedId) => selectedId !== id)
+      const newSelectedIds = selectedIds.filter(
+        (selectedId) => selectedId !== id
+      )
       setSelectedIds(newSelectedIds)
       onClickCheckBox?.(newSelectedIds)
     } else {
@@ -96,11 +98,7 @@ export default function Table({
             <thead>
               <tr className="text-table-header leading-6">
                 {withCheckBox && (
-                  <th
-                    aria-label="checkbox"
-                    className="py-3 px-4"
-                    rowSpan={2}
-                  >
+                  <th aria-label="checkbox" className="py-3 px-4" rowSpan={2}>
                     <div className="flex items-center w-full justify-center">
                       <Checkbox
                         onClick={handleCheckAll}
@@ -118,12 +116,18 @@ export default function Table({
                     colSpan={header.colSpan}
                     rowSpan={header.rowSpan}
                   >
-                    <div className={`flex items-center w-full ${header.subheaders && !header.sort ? 'justify-center' : 'justify-between'}`}>
+                    <div
+                      className={`flex items-center w-full ${header.subheaders && !header.sort ? 'justify-center' : 'justify-between'}`}
+                    >
                       {header.label}
                       {header.sort && (
-                      <span className="cursor-pointer" onClick={header.onSort} role="presentation">
-                        <IconSort />
-                      </span>
+                        <span
+                          className="cursor-pointer"
+                          onClick={header.onSort}
+                          role="presentation"
+                        >
+                          <IconSort />
+                        </span>
                       )}
                     </div>
                   </th>
@@ -140,9 +144,13 @@ export default function Table({
                         <div className="flex justify-center items-center w-full">
                           {subheader.label}
                           {subheader.sort && (
-                          <span className="cursor-pointer" onClick={subheader.onSort} role="presentation">
-                            <IconSort />
-                          </span>
+                            <span
+                              className="cursor-pointer"
+                              onClick={subheader.onSort}
+                              role="presentation"
+                            >
+                              <IconSort />
+                            </span>
                           )}
                         </div>
                       </th>
@@ -156,16 +164,12 @@ export default function Table({
               <tbody>
                 {tableData.map((data, index) => (
                   <tr
-                    // eslint-disable-next-line react/no-array-index-key
                     key={index}
                     className={`${isStripped ? 'odd:bg-sky-50 dark:odd:bg-sky-900' : ''} bg-white text-sm leading-6 text-slate-500 ${onClickRow ? 'hover:bg-sky-50 cursor-pointer' : ''} dark:bg-slate-800 dark:text-white`}
                     onClick={() => onClickRow?.(data.id)}
                   >
                     {withCheckBox && (
-                      <td
-                        aria-label="checkbox"
-                        className="py-3 px-4"
-                      >
+                      <td aria-label="checkbox" className="py-3 px-4">
                         <div className="flex items-center w-full justify-center">
                           <Checkbox
                             onClick={() => handleCheck(data.id)}
@@ -177,10 +181,22 @@ export default function Table({
                     {tableHeaders.map((header) => {
                       if (header.subheaders) {
                         return header.subheaders?.map((subheader) => (
-                          <td key={`${subheader.key}-${subheader.label}`} className={`py-3 px-4 text-ellipsis ${header.hasAction ? '' : 'text-ellipsis overflow-hidden'} text-center`}>{data[subheader.key]}</td>
+                          <td
+                            key={`${subheader.key}-${subheader.label}`}
+                            className={`py-3 px-4 text-ellipsis ${header.hasAction ? '' : 'text-ellipsis overflow-hidden'} text-center`}
+                          >
+                            {data[subheader.key]}
+                          </td>
                         ))
                       }
-                      return <td key={`${header.key}-${header.label}`} className={`py-3 px-4 ${header.className} ${header.hasAction ? '' : 'text-ellipsis overflow-hidden'} whitespace-nowrap`}>{data[header.key]}</td>
+                      return (
+                        <td
+                          key={`${header.key}-${header.label}`}
+                          className={`py-3 px-4 ${header.className} ${header.hasAction ? '' : 'text-ellipsis overflow-hidden'} whitespace-nowrap`}
+                        >
+                          {data[header.key]}
+                        </td>
+                      )
                     })}
                   </tr>
                 ))}
@@ -199,7 +215,14 @@ export default function Table({
           </table>
         )}
       </div>
-      <Pagination limit={limit} page={page} total={total} onChangePage={onChangePage} />
+      <Pagination
+        limit={limit}
+        page={page}
+        total={total}
+        onChangePage={onChangePage}
+      />
     </div>
   )
 }
+
+export default Table

@@ -1,61 +1,61 @@
-import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
+import { useState, useEffect } from 'react'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Input from 'components/Form/Input'
-import Modal from 'components/Modal'
 import DatePicker from 'components/Form/DatePicker'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
+import Input from 'components/Form/Input'
+import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Table from 'components/Table/Table'
 import Toast from 'components/Toast'
 import { PAGE_SIZE } from 'constants/form'
-import { exportToExcel } from 'utils/export'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
+import { exportToExcel } from 'utils/export'
 
 const PAGE_NAME = 'Histori Barang'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Nama Barang',
-    key: 'item_name',
+    key: 'item_name'
   },
   {
     label: 'Tanggal',
-    key: 'updated_at',
+    key: 'updated_at'
   },
   {
     label: 'Oleh',
-    key: 'updated_by_name',
+    key: 'updated_by_name'
   },
   {
     label: 'Deskripsi',
-    key: 'description',
+    key: 'description'
   },
   {
     label: 'Debit',
-    key: 'debit',
+    key: 'debit'
   },
   {
     label: 'Kredit',
-    key: 'credit',
+    key: 'credit'
   },
   {
     label: 'Saldo',
-    key: 'quantity_after',
-  },
+    key: 'quantity_after'
+  }
 ]
 
-function PageItemHistory() {
-  const [userPermissions, setUserPermissions] = useState<string[]>([])
+const PageItemHistory = () => {
+  const [_userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
   const [page, setPage] = useState(1)
 
@@ -63,11 +63,11 @@ function PageItemHistory() {
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [filter, setFilter] = useState({
     start_date: '',
-    end_date: '',
+    end_date: ''
   })
   const [search, setSearch] = useState('')
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false)
@@ -84,7 +84,7 @@ function PageItemHistory() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -96,10 +96,13 @@ function PageItemHistory() {
     }, 500)
   }
 
-  const handleChangeFilterField = (fieldName: string, value: string | number) => {
+  const handleChangeFilterField = (
+    fieldName: string,
+    value: string | number
+  ) => {
     setFilter((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -113,8 +116,8 @@ function PageItemHistory() {
         page,
         limit: PAGE_SIZE,
         search,
-        ...filter,
-      },
+        ...filter
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -122,9 +125,10 @@ function PageItemHistory() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -140,9 +144,11 @@ function PageItemHistory() {
     updated_by_name: column.updated_by_name,
     updated_at: dayjs(column.updated_at).format('YYYY-MM-DD HH:mm:ss'),
     description: column.description,
-    debit: column.quantity_after < column.quantity_before ? column.quantity : '-',
-    credit: column.quantity_after >= column.quantity_before ? column.quantity : '-',
-    quantity_after: column.quantity_after,
+    debit:
+      column.quantity_after < column.quantity_before ? column.quantity : '-',
+    credit:
+      column.quantity_after >= column.quantity_before ? column.quantity : '-',
+    quantity_after: column.quantity_after
   }))
 
   useEffect(() => {
@@ -166,11 +172,19 @@ function PageItemHistory() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
+            <Button onClick={handleModalFilterOpen} variant="secondary">
+              Filter
+            </Button>
             <div className="sm:ml-auto flex gap-1">
-              <Button onClick={handleExportExcel} variant="warning">Export</Button>
+              <Button onClick={handleExportExcel} variant="warning">
+                Export
+              </Button>
             </div>
           </div>
 
@@ -188,41 +202,60 @@ function PageItemHistory() {
 
       <Modal open={isModalFilterOpen} title="Filter" size="xs">
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
-
           <div className="flex flex-col gap-2 w-full">
-            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-white">
+              Tanggal
+            </p>
             <div className="flex flex-col gap-1">
               <DatePicker
                 placeholder="Tanggal Awal"
                 name="start_date"
-                value={filter.start_date ? dayjs(filter.start_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                value={
+                  filter.start_date
+                    ? dayjs(filter.start_date).toDate()
+                    : undefined
+                }
+                onChange={(selectedDate) =>
+                  handleChangeFilterField(
+                    'start_date',
+                    dayjs(selectedDate).format('YYYY-MM-DD')
+                  )
+                }
                 fullWidth
               />
 
               <DatePicker
                 placeholder="Tanggal Akhir"
                 name="end_date"
-                value={filter.end_date ? dayjs(filter.end_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                value={
+                  filter.end_date ? dayjs(filter.end_date).toDate() : undefined
+                }
+                onChange={(selectedDate) =>
+                  handleChangeFilterField(
+                    'end_date',
+                    dayjs(selectedDate).format('YYYY-MM-DD')
+                  )
+                }
                 fullWidth
               />
             </div>
           </div>
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFilterClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFilterClose} variant="default">
+            Tutup
+          </Button>
           <Button onClick={handleSubmitFilter}>Kirim</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

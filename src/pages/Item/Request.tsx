@@ -1,14 +1,9 @@
 import dayjs from 'dayjs'
-import {
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-} from 'react'
-import { useNavigate } from 'react-router-dom'
-import QRCode from 'react-qr-code'
 import html2canvas from 'html2canvas'
 import JSPDF from 'jspdf'
+import { useEffect, useMemo, useState, useRef } from 'react'
+import QRCode from 'react-qr-code'
+import { useNavigate } from 'react-router-dom'
 
 import Badge from 'components/Badge'
 import Breadcrumb from 'components/Breadcrumb'
@@ -23,7 +18,7 @@ import {
   Edit as IconEdit,
   FileText as IconFile,
   TrashAlt as IconTrash,
-  Book as IconPrint,
+  Book as IconPrint
 } from 'components/Icons'
 import Layout from 'components/Layout'
 import LoadingOverlay from 'components/Loading/LoadingOverlay'
@@ -33,7 +28,11 @@ import type { TableHeaderProps } from 'components/Table/Table'
 import Table from 'components/Table/Table'
 import Toast from 'components/Toast'
 import { MODAL_CONFIRM_TYPE, PAGE_SIZE, DOCUMENT_DEFAULT } from 'constants/form'
-import { ITEM_REQUEST_STATUS, ITEM_REQUEST_TYPE, ITEM_UNITS } from 'constants/item'
+import {
+  ITEM_REQUEST_STATUS,
+  ITEM_REQUEST_TYPE,
+  ITEM_UNITS
+} from 'constants/item'
 import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
 import { exportToExcel } from 'utils/export'
@@ -43,42 +42,44 @@ const PAGE_NAME = 'Permintaan Barang'
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'No. Permintaan',
-    key: 'request_number',
+    key: 'request_number'
   },
   {
     label: 'Department',
-    key: 'department_name',
+    key: 'department_name'
   },
   {
     label: 'Jenis Permintaan',
-    key: 'type',
+    key: 'type'
   },
   {
     label: 'Status',
-    key: 'status',
+    key: 'status'
   },
   {
     label: 'Dibuat Oleh',
-    key: 'created_by_name',
+    key: 'created_by_name'
   },
   {
     label: 'Disetujui Oleh',
-    key: 'approved_by_name',
+    key: 'approved_by_name'
   },
   {
     label: 'Dikeluarkan Oleh',
-    key: 'issued_by_name',
+    key: 'issued_by_name'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
 const renderStatusLabel = (status: number) => {
-  const statusData = ITEM_REQUEST_STATUS.find((itemData) => itemData.id === status)
+  const statusData = ITEM_REQUEST_STATUS.find(
+    (itemData) => itemData.id === status
+  )
   const label = statusData?.label || '-'
 
   let variant = 'default'
@@ -96,7 +97,7 @@ const renderStatusLabel = (status: number) => {
   }
   return {
     label,
-    variant,
+    variant
   }
 }
 
@@ -116,54 +117,57 @@ interface FieldProps {
   created_at?: string
 }
 
-function PageItemRequest() {
+const PageItemRequest = () => {
   const navigate = useNavigate()
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
-  const [dataDepartments, setDataDepartments] = useState<{ id: number, name: string }[]>([])
-  const [dataItems, setDataItems] = useState<{ id: number, name: string }[]>([])
+  const [dataDepartments, setDataDepartments] = useState<
+    { id: number; name: string }[]
+  >([])
+  const [dataItems, setDataItems] = useState<{ id: number; name: string }[]>([])
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState<FieldProps>({
     id: 0,
     type: '',
     department_id: null,
     status: '',
-    items: [],
+    items: []
   })
   const [filter, setFilter] = useState({
     start_date: '',
     end_date: '',
-    status: '',
+    status: ''
   })
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     variant: 'default',
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false)
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
   const [isModalDeleteItemOpen, setIsModalDeleteItemOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState({ id: 0, item_stock_id: 0 })
   const [currentStatus, setCurrentStatus] = useState(0)
-  const [documentPrint, setDocumentPrint] = useState<DocumentProps>(DOCUMENT_DEFAULT)
+  const [documentPrint, setDocumentPrint] =
+    useState<DocumentProps>(DOCUMENT_DEFAULT)
   const [isModalPrintOpen, setIsModalPrintOpen] = useState(false)
   const documentPdfRef = useRef<HTMLDivElement | null>(null)
 
@@ -188,7 +192,7 @@ function PageItemRequest() {
     setToast({
       variant: 'default',
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -197,24 +201,30 @@ function PageItemRequest() {
     setIsLoadingData(true)
     api({
       url: `/v1/item-request/${fieldData.id}`,
-      withAuth: true,
-    }).then(({ data: responseData }) => {
-      setFields((prevState) => ({
-        ...prevState,
-        ...responseData.data,
-        tax: responseData.data.tax ? `${responseData.data.tax}`.replace(/\./g, ',') : 0,
-        discount: responseData.data.discount ? `${responseData.data.discount}`.replace(/\./g, ',') : 0,
-      }))
-      setCurrentStatus(+responseData.data.status)
-      setIsLoadingData(false)
+      withAuth: true
     })
+      .then(({ data: responseData }) => {
+        setFields((prevState) => ({
+          ...prevState,
+          ...responseData.data,
+          tax: responseData.data.tax
+            ? `${responseData.data.tax}`.replace(/\./g, ',')
+            : 0,
+          discount: responseData.data.discount
+            ? `${responseData.data.discount}`.replace(/\./g, ',')
+            : 0
+        }))
+        setCurrentStatus(+responseData.data.status)
+        setIsLoadingData(false)
+      })
       .catch((error) => {
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -229,7 +239,8 @@ function PageItemRequest() {
         const pdf = new JSPDF()
         const imgProperties = pdf.getImageProperties(canvas)
         const pdfWidth = pdf.internal.pageSize.getWidth()
-        const pdfHeight = (imgProperties.height * pdfWidth) / imgProperties.width
+        const pdfHeight =
+          (imgProperties.height * pdfWidth) / imgProperties.width
 
         pdf.addImage(canvas, 'PNG', 0, 0, pdfWidth, pdfHeight)
         pdf.save(`${PAGE_NAME}.pdf`)
@@ -241,18 +252,18 @@ function PageItemRequest() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
       type: '',
       department_id: null,
       status: '',
-      items: [],
+      items: []
     })
   }
 
@@ -268,12 +279,12 @@ function PageItemRequest() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -281,7 +292,7 @@ function PageItemRequest() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
   }
 
@@ -290,26 +301,28 @@ function PageItemRequest() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     api({
       url: `/v1/item-request/${fieldData.id}`,
-      withAuth: true,
-    }).then(({ data: responseData }) => {
-      setFields((prevState) => ({
-        ...prevState,
-        ...responseData.data,
-      }))
-      setCurrentStatus(+responseData.data.status)
-      setIsLoadingData(false)
+      withAuth: true
     })
+      .then(({ data: responseData }) => {
+        setFields((prevState) => ({
+          ...prevState,
+          ...responseData.data
+        }))
+        setCurrentStatus(+responseData.data.status)
+        setIsLoadingData(false)
+      })
       .catch((error) => {
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -319,26 +332,28 @@ function PageItemRequest() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     api({
       url: `/v1/item-request/${fieldData.id}`,
-      withAuth: true,
-    }).then(({ data: responseData }) => {
-      setFields((prevState) => ({
-        ...prevState,
-        ...responseData.data,
-      }))
-      setCurrentStatus(+responseData.data.status)
-      setIsLoadingData(false)
+      withAuth: true
     })
+      .then(({ data: responseData }) => {
+        setFields((prevState) => ({
+          ...prevState,
+          ...responseData.data
+        }))
+        setCurrentStatus(+responseData.data.status)
+        setIsLoadingData(false)
+      })
       .catch((error) => {
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -347,12 +362,12 @@ function PageItemRequest() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
-      id: fieldData.id,
+      id: fieldData.id
     }))
   }
 
@@ -360,12 +375,12 @@ function PageItemRequest() {
     setModalConfirm({
       title: 'Belanja barang pesanan',
       description: 'Barang pesanan akan dibuat menjadi pembelian',
-      open: true,
+      open: true
     })
     setSubmitType('purchase')
     setFields((prevState) => ({
       ...prevState,
-      id: fieldData.id,
+      id: fieldData.id
     }))
   }
 
@@ -383,17 +398,19 @@ function PageItemRequest() {
     handleClickCancelDeleteItem()
     setIsLoadingSubmit(true)
 
-    const newItems = fields.items.filter((item: any) => item.id !== selectedItem.id)
+    const newItems = fields.items.filter(
+      (item: any) => item.id !== selectedItem.id
+    )
     setTimeout(() => {
       setIsLoadingSubmit(false)
       setToast({
         variant: 'default',
         open: true,
-        message: 'Berhasil menghapus barang.',
+        message: 'Berhasil menghapus barang.'
       })
       setFields((prevState) => ({
         ...prevState,
-        items: newItems,
+        items: newItems
       }))
     }, 500)
   }
@@ -408,16 +425,16 @@ function PageItemRequest() {
           id: `temp-${itemLength + 1}`,
           item_stock_id: 0,
           quantity: 0,
-          unit: '',
-        },
-      ],
+          unit: ''
+        }
+      ]
     }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -427,44 +444,55 @@ function PageItemRequest() {
     }
   }
 
-  const handleChangeItemField = (fieldIndex: number, fieldName: string, value: string | number) => {
+  const handleChangeItemField = (
+    fieldIndex: number,
+    fieldName: string,
+    value: string | number
+  ) => {
     setFields((prevState) => ({
       ...prevState,
       items: (prevState.items as any).map((item: any, index: number) => ({
         ...item,
-        [fieldName]: index === fieldIndex ? value : item[fieldName],
-      })),
+        [fieldName]: index === fieldIndex ? value : item[fieldName]
+      }))
     }))
   }
 
-  const handleChangeNumericItemField = (fieldIndex: number, fieldName: string, value: string) => {
+  const handleChangeNumericItemField = (
+    fieldIndex: number,
+    fieldName: string,
+    value: string
+  ) => {
     if (/^\d*$/.test(value) || value === '') {
       setFields((prevState) => ({
         ...prevState,
         items: (prevState.items as any).map((item: any, index: number) => ({
           ...item,
-          [fieldName]: index === fieldIndex ? value : item[fieldName],
-        })),
+          [fieldName]: index === fieldIndex ? value : item[fieldName]
+        }))
       }))
     }
   }
 
-  const handleChangeFilterField = (fieldName: string, value: string | number) => {
+  const handleChangeFilterField = (
+    fieldName: string,
+    value: string | number
+  ) => {
     setFilter((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -479,8 +507,8 @@ function PageItemRequest() {
         page,
         limit: PAGE_SIZE,
         search,
-        ...filter,
-      },
+        ...filter
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -489,9 +517,10 @@ function PageItemRequest() {
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -502,8 +531,8 @@ function PageItemRequest() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -514,7 +543,7 @@ function PageItemRequest() {
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
@@ -525,8 +554,8 @@ function PageItemRequest() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -537,7 +566,7 @@ function PageItemRequest() {
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
@@ -546,7 +575,7 @@ function PageItemRequest() {
     api({
       url: '/v1/document/5',
       withAuth: true,
-      method: 'GET',
+      method: 'GET'
     })
       .then(({ data: responseData }) => {
         if (responseData.data.id) {
@@ -557,30 +586,33 @@ function PageItemRequest() {
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
       })
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/item-request/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/item-request/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/item-request/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/item-request/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/item-request/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/item-request/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -593,23 +625,25 @@ function PageItemRequest() {
       navigate(`/item/purchase?request_id=${fields.id}`)
     }
 
-    apiSubmit().then(() => {
-      handleGetItemRequests()
-      handleModalFormClose()
-      setToast({
-        variant: 'default',
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetItemRequests()
+        handleModalFormClose()
+        setToast({
+          variant: 'default',
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           variant: 'error',
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -623,48 +657,81 @@ function PageItemRequest() {
     id: column.id,
     request_number: column.request_number,
     department_name: column.department_name,
-    type: <Badge variant={+column.type === 1 ? 'info' : 'primary'}>{ITEM_REQUEST_TYPE.find((type) => type.id === +column.type)?.label}</Badge>,
-    status: <Badge variant={renderStatusLabel(column.status).variant as any}>{renderStatusLabel(column.status).label}</Badge>,
+    type: (
+      <Badge variant={+column.type === 1 ? 'info' : 'primary'}>
+        {ITEM_REQUEST_TYPE.find((type) => type.id === +column.type)?.label}
+      </Badge>
+    ),
+    status: (
+      <Badge variant={renderStatusLabel(column.status).variant as any}>
+        {renderStatusLabel(column.status).label}
+      </Badge>
+    ),
     created_by_name: column.created_by_name,
     approved_by_name: column.approved_by_name || '-',
     issued_by_name: column.issued_by_name || '-',
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
         {userPermissions.includes('item-request-edit') && (
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Ubah">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {+column.type === 2 && column.status > 1 && (
-        <Popover content="Beli">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalPurchaseOpen(column)}>
-            <IconCart className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Beli">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalPurchaseOpen(column)}
+            >
+              <IconCart className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('item-request-print') && (
-        <Popover content="Print">
-          <Button variant="default" size="sm" icon onClick={() => handleModalPrintOpen(column)}>
-            <IconPrint className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Print">
+            <Button
+              variant="default"
+              size="sm"
+              icon
+              onClick={() => handleModalPrintOpen(column)}
+            >
+              <IconPrint className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('item-request-delete') && (
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Hapus">
+            <Button
+              variant="danger"
+              size="sm"
+              icon
+              onClick={() => handleModalDeleteOpen(column)}
+            >
+              <IconTrash className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -692,11 +759,19 @@ function PageItemRequest() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari no. permintaan, departemen" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari no. permintaan, departemen"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button onClick={handleModalFilterOpen} variant="secondary">Filter</Button>
+            <Button onClick={handleModalFilterOpen} variant="secondary">
+              Filter
+            </Button>
             <div className="sm:ml-auto flex gap-1">
-              <Button onClick={handleExportExcel} variant="warning">Export</Button>
+              <Button onClick={handleExportExcel} variant="warning">
+                Export
+              </Button>
               <Button onClick={handleModalCreateOpen}>Tambah</Button>
             </div>
           </div>
@@ -714,21 +789,32 @@ function PageItemRequest() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <Select
             placeholder="Jenis Permintaan"
             label="Jenis Permintaan"
             name="type"
             value={fields.type}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly || currentStatus > 1}
             fullWidth
-            options={[{
-              label: 'Pilih Jenis Permintaan',
-              value: '',
-              disabled: true,
-            },
-            ...ITEM_REQUEST_TYPE.map((type) => ({ value: type.id, label: type.label }))]}
+            options={[
+              {
+                label: 'Pilih Jenis Permintaan',
+                value: '',
+                disabled: true
+              },
+              ...ITEM_REQUEST_TYPE.map((type) => ({
+                value: type.id,
+                label: type.label
+              }))
+            ]}
           />
 
           <Autocomplete
@@ -737,13 +823,21 @@ function PageItemRequest() {
             name="department_id"
             items={dataDepartments.map((itemData) => ({
               label: itemData.name,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.name || '',
-              value: dataDepartments.find((itemData) => itemData.id === fields.department_id)?.id || '',
+              label:
+                dataDepartments.find(
+                  (itemData) => itemData.id === fields.department_id
+                )?.name || '',
+              value:
+                dataDepartments.find(
+                  (itemData) => itemData.id === fields.department_id
+                )?.id || ''
             }}
-            onChange={(value) => handleChangeField('department_id', value.value)}
+            onChange={(value) =>
+              handleChangeField('department_id', value.value)
+            }
             readOnly={modalForm.readOnly || currentStatus > 1}
             fullWidth
           />
@@ -754,23 +848,31 @@ function PageItemRequest() {
               label="Status"
               name="status"
               value={fields.status}
-              onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+              onChange={(e) =>
+                handleChangeNumericField(e.target.name, e.target.value)
+              }
               readOnly={modalForm.readOnly || currentStatus > 1}
               fullWidth
-              options={[{
-                label: 'Pilih Status',
-                value: '',
-                disabled: true,
-              },
-              ...statuses.map((status) => ({ value: status.id, label: status.label })),
+              options={[
+                {
+                  label: 'Pilih Status',
+                  value: '',
+                  disabled: true
+                },
+                ...statuses.map((status) => ({
+                  value: status.id,
+                  label: status.label
+                }))
               ]}
             />
           )}
 
           <div className="sm:col-span-2">
             <p className="text-sm text-slate-600 font-medium mb-2">Barang</p>
-            {(!modalForm.readOnly && currentStatus < 2) && (
-            <Button size="sm" variant="secondary" onClick={handleAddItem}>Tambah</Button>
+            {!modalForm.readOnly && currentStatus < 2 && (
+              <Button size="sm" variant="secondary" onClick={handleAddItem}>
+                Tambah
+              </Button>
             )}
 
             <div className="border border-slate-200 dark:border-slate-700 rounded-md w-full overflow-scroll mt-2">
@@ -786,21 +888,45 @@ function PageItemRequest() {
                 <tbody>
                   {fields.items.length ? (
                     fields.items.map((item: any, index: number) => (
-                      <tr key={item.id} className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900">
+                      <tr
+                        key={item.id}
+                        className="text-center font-regular text-slate-500 dark:text-white odd:bg-sky-50 dark:odd:bg-sky-900"
+                      >
                         <td className="p-2" aria-label="Item Name">
                           <Autocomplete
                             name="item_stock_id"
                             placeholder="Cari Barang"
-                            items={dataItems.filter((itemData) => !fields.items.find((fieldItem) => fieldItem.item_stock_id === itemData.id))
+                            items={dataItems
+                              .filter(
+                                (itemData) =>
+                                  !fields.items.find(
+                                    (fieldItem) =>
+                                      fieldItem.item_stock_id === itemData.id
+                                  )
+                              )
                               .map((itemData) => ({
                                 label: itemData.name,
-                                value: itemData.id,
+                                value: itemData.id
                               }))}
                             value={{
-                              label: dataItems.find((itemData) => itemData.id === item.item_stock_id)?.name || '',
-                              value: dataItems.find((itemData) => itemData.id === item.item_stock_id)?.id || '',
+                              label:
+                                dataItems.find(
+                                  (itemData) =>
+                                    itemData.id === item.item_stock_id
+                                )?.name || '',
+                              value:
+                                dataItems.find(
+                                  (itemData) =>
+                                    itemData.id === item.item_stock_id
+                                )?.id || ''
                             }}
-                            onChange={(value) => handleChangeItemField(index, 'item_stock_id', value.value)}
+                            onChange={(value) =>
+                              handleChangeItemField(
+                                index,
+                                'item_stock_id',
+                                value.value
+                              )
+                            }
                             readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
                           />
@@ -809,7 +935,13 @@ function PageItemRequest() {
                           <Input
                             name="quantity"
                             value={(+item.quantity).toLocaleString()}
-                            onChange={(e) => handleChangeNumericItemField(index, e.target.name, e.target.value.replace(/\W+/g, ''))}
+                            onChange={(e) =>
+                              handleChangeNumericItemField(
+                                index,
+                                e.target.name,
+                                e.target.value.replace(/\W+/g, '')
+                              )
+                            }
                             readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
                           />
@@ -820,22 +952,39 @@ function PageItemRequest() {
                             placeholder="Satuan"
                             items={ITEM_UNITS.map((itemData) => ({
                               label: itemData,
-                              value: itemData,
+                              value: itemData
                             }))}
                             value={{
-                              label: ITEM_UNITS.find((itemData) => itemData === item.unit) || '',
-                              value: ITEM_UNITS.find((itemData) => itemData === item.unit) || '',
+                              label:
+                                ITEM_UNITS.find(
+                                  (itemData) => itemData === item.unit
+                                ) || '',
+                              value:
+                                ITEM_UNITS.find(
+                                  (itemData) => itemData === item.unit
+                                ) || ''
                             }}
-                            onChange={(value) => handleChangeItemField(index, 'unit', value.value)}
+                            onChange={(value) =>
+                              handleChangeItemField(index, 'unit', value.value)
+                            }
                             readOnly={modalForm.readOnly || currentStatus > 1}
                             fullWidth
                           />
                         </td>
                         <td className="p-2 w-fit" aria-label="Item Action">
-                          {(!modalForm.readOnly && currentStatus < 2) && (
-                          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteItemOpen(item)}>
-                            <IconTrash className="text-white" width={16} height={16} />
-                          </Button>
+                          {!modalForm.readOnly && currentStatus < 2 && (
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              icon
+                              onClick={() => handleModalDeleteItemOpen(item)}
+                            >
+                              <IconTrash
+                                className="text-white"
+                                width={16}
+                                height={16}
+                              />
+                            </Button>
                           )}
                         </td>
                       </tr>
@@ -853,29 +1002,53 @@ function PageItemRequest() {
           </div>
 
           {!!fields.id && +fields.type === 1 && currentStatus === 2 && (
-          <Toggle label="Barang Telah Dikeluarkan" name="status" checked={+fields.status === 3} onChange={(e) => handleChangeField('status', e.target.checked ? '3' : '2')} />
+            <Toggle
+              label="Barang Telah Dikeluarkan"
+              name="status"
+              checked={+fields.status === 3}
+              onChange={(e) =>
+                handleChangeField('status', e.target.checked ? '3' : '2')
+              }
+            />
           )}
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
-          {(!modalForm.readOnly && currentStatus < 3) && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
+          {!modalForm.readOnly && currentStatus < 3 && (
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={isModalFilterOpen} title="Filter" size="xs">
         <form autoComplete="off" className="grid grid-cols-1 gap-4 p-6">
-
           <div className="flex flex-col gap-2 w-full">
-            <p className="text-sm font-medium text-slate-600 dark:text-white">Tanggal Permintaan</p>
+            <p className="text-sm font-medium text-slate-600 dark:text-white">
+              Tanggal Permintaan
+            </p>
             <div className="flex flex-col gap-1">
               <DatePicker
                 placeholder="Tanggal Awal"
                 name="start_date"
-                value={filter.start_date ? dayjs(filter.start_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('start_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                value={
+                  filter.start_date
+                    ? dayjs(filter.start_date).toDate()
+                    : undefined
+                }
+                onChange={(selectedDate) =>
+                  handleChangeFilterField(
+                    'start_date',
+                    dayjs(selectedDate).format('YYYY-MM-DD')
+                  )
+                }
                 readOnly={modalForm.readOnly || currentStatus > 1}
                 fullWidth
               />
@@ -883,8 +1056,15 @@ function PageItemRequest() {
               <DatePicker
                 placeholder="Tanggal Akhir"
                 name="end_date"
-                value={filter.end_date ? dayjs(filter.end_date).toDate() : undefined}
-                onChange={(selectedDate) => handleChangeFilterField('end_date', dayjs(selectedDate).format('YYYY-MM-DD'))}
+                value={
+                  filter.end_date ? dayjs(filter.end_date).toDate() : undefined
+                }
+                onChange={(selectedDate) =>
+                  handleChangeFilterField(
+                    'end_date',
+                    dayjs(selectedDate).format('YYYY-MM-DD')
+                  )
+                }
                 readOnly={modalForm.readOnly || currentStatus > 1}
                 fullWidth
               />
@@ -896,41 +1076,56 @@ function PageItemRequest() {
             label="Status"
             name="status"
             value={filter.status}
-            onChange={(e) => handleChangeFilterField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeFilterField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly || currentStatus > 1}
             fullWidth
-            options={[{
-              label: 'Pilih Status',
-              value: '',
-              disabled: true,
-            },
-            ...ITEM_REQUEST_STATUS.map((status) => ({ value: status.id, label: status.label })),
+            options={[
+              {
+                label: 'Pilih Status',
+                value: '',
+                disabled: true
+              },
+              ...ITEM_REQUEST_STATUS.map((status) => ({
+                value: status.id,
+                label: status.label
+              }))
             ]}
           />
-
         </form>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalFilterClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFilterClose} variant="default">
+            Tutup
+          </Button>
           <Button onClick={handleSubmitFilter}>Kirim</Button>
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
       <Modal open={isModalDeleteItemOpen} title="Hapus Barang" size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">Apa anda yakin ingin menghapus barang?</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            Apa anda yakin ingin menghapus barang?
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleClickCancelDeleteItem} variant="default">Kembali</Button>
+          <Button onClick={handleClickCancelDeleteItem} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmitDeleteItem}>Ya</Button>
         </div>
       </Modal>
@@ -938,18 +1133,29 @@ function PageItemRequest() {
       <Modal open={isModalPrintOpen} title={`Print ${PAGE_NAME}`} size="lg">
         <div className="flex-3 flex flex-col gap-4">
           <div className="bg-slate-100 rounded-md p-4 overflow-scroll h-full">
-            <div className="bg-white p-4 text-slate-600 min-w-[800px] text-pr" ref={documentPdfRef}>
+            <div
+              className="bg-white p-4 text-slate-600 min-w-[800px] text-pr"
+              ref={documentPdfRef}
+            >
               <div className="whitespace-pre-line border-b-2 border-black flex items-center gap-4 min-h-20">
                 <div className="w-[80px]">
                   {documentPrint.picture && (
-                  <div className="relative">
-                    <img src={documentPrint.picture} alt="doc" className="w-[100px] h-[100px] object-contain" />
-                  </div>
+                    <div className="relative">
+                      <img
+                        src={documentPrint.picture}
+                        alt="doc"
+                        className="w-[100px] h-[100px] object-contain"
+                      />
+                    </div>
                   )}
                 </div>
                 <div className="text-center flex-1">
-                  <p className="font-semibold text-lg">{documentPrint.header}</p>
-                  <p className="font-semibold text-xs">{documentPrint.subheader}</p>
+                  <p className="font-semibold text-lg">
+                    {documentPrint.header}
+                  </p>
+                  <p className="font-semibold text-xs">
+                    {documentPrint.subheader}
+                  </p>
                 </div>
                 <div className="w-[100px]" />
               </div>
@@ -957,7 +1163,9 @@ function PageItemRequest() {
                 <div className="text-center whitespace-pre-line">
                   <div className="flex justify-between">
                     <div className="flex flex-col text-left">
-                      <p className="text-xs font-semibold">{documentPrint.name}</p>
+                      <p className="text-xs font-semibold">
+                        {documentPrint.name}
+                      </p>
                       <p className="text-xxs font-normal">
                         Divisi:&nbsp;
                         {fields.department_name}
@@ -966,34 +1174,48 @@ function PageItemRequest() {
 
                     <div className="flex flex-col text-right text-xs">
                       <p className="text-xs font-semibold">Pemohon</p>
-                      <p className="text-xxs font-normal">{fields.created_by_name}</p>
+                      <p className="text-xxs font-normal">
+                        {fields.created_by_name}
+                      </p>
                       {/* <p className="text-xxs font-normal">081xxxxxxxxx</p> */}
                     </div>
                   </div>
                 </div>
                 <div className="text-center whitespace-pre-line">
                   <div className="flex flex-col text-left gap-2">
-
                     <table className="w-full mb-4">
                       <thead>
                         <tr className="border-t-1 border-slate-300">
                           <td className="text-xxs font-semibold">No.</td>
-                          <td className="text-xxs font-semibold">Nama Barang</td>
+                          <td className="text-xxs font-semibold">
+                            Nama Barang
+                          </td>
                           <td className="text-xxs font-semibold">Jumlah</td>
                         </tr>
                       </thead>
                       <tbody>
                         {fields.items.map((item, index) => (
-                          <tr className="border-t-1 border-slate-300 last:border-b-0" key={item.id}>
+                          <tr
+                            className="border-t-1 border-slate-300 last:border-b-0"
+                            key={item.id}
+                          >
                             <td className="text-xxs">{index + 1}</td>
-                            <td className="text-xxs">{dataItems.find((itemData) => itemData.id === item.item_stock_id)?.name || ''}</td>
-                            <td className="text-xxs">{(+item.quantity).toLocaleString('id')}</td>
+                            <td className="text-xxs">
+                              {dataItems.find(
+                                (itemData) => itemData.id === item.item_stock_id
+                              )?.name || ''}
+                            </td>
+                            <td className="text-xxs">
+                              {(+item.quantity).toLocaleString('id')}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
 
-                    <p className="text-xxs font-normal">{documentPrint.content}</p>
+                    <p className="text-xxs font-normal">
+                      {documentPrint.content}
+                    </p>
                   </div>
                 </div>
                 <div className="text-center whitespace-pre-line">
@@ -1003,7 +1225,11 @@ function PageItemRequest() {
                       {dayjs(fields.created_at).format('DD MMMM YYYY')}
                     </p>
                     <QRCode
-                      style={{ height: 'auto', maxWidth: '50px', width: '50px' }}
+                      style={{
+                        height: 'auto',
+                        maxWidth: '50px',
+                        width: '50px'
+                      }}
                       size={150}
                       value={window.location.href}
                       viewBox="0 0 150 150"
@@ -1016,17 +1242,21 @@ function PageItemRequest() {
         </div>
 
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalPrintClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalPrintClose} variant="default">
+            Tutup
+          </Button>
           <Button onClick={handlePrintDocument}>Print</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} variant={toast.variant} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

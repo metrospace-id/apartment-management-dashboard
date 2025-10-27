@@ -1,15 +1,16 @@
 // import dynamic from 'next/dynamic'
-import { useEffect, useRef, useState } from 'react'
-import TWDatepicker from 'tailwind-datepicker-react'
 import dayjs from 'dayjs'
-import type { IOptions } from 'tailwind-datepicker-react/types/Options'
+import { useEffect, useRef, useState } from 'react'
 import ReactModal from 'react-modal'
+import TWDatepicker from 'tailwind-datepicker-react'
+import type { IOptions } from 'tailwind-datepicker-react/types/Options'
 
 import {
   Calendar as IconCalendar,
   ArrowLeft as IconArrowLeft,
-  ArrowRight as IconArrowRight,
+  ArrowRight as IconArrowRight
 } from 'components/Icons'
+
 import Input, { InputProps } from './Input'
 
 const options: IOptions = {
@@ -32,12 +33,11 @@ const options: IOptions = {
       'bg-base-white text-neutral-200 hover:text-neutral-50 hover:bg-primary-50 dark:text-slate-700 dark:hover:bg-primary-100 dark:hover:text-primary-500',
     input: '',
     inputIcon: '',
-    selected:
-      'text-white bg-primary dark:text-base-white dark:bg-primary',
+    selected: 'text-white bg-primary dark:text-base-white dark:bg-primary'
   },
   icons: {
     prev: () => <IconArrowLeft />,
-    next: () => <IconArrowRight />,
+    next: () => <IconArrowRight />
   },
   datepickerClassNames:
     'datepicker top-0 pt-0 [&_.bg-primary-500]:!text-base-white !relative',
@@ -50,8 +50,8 @@ const options: IOptions = {
   inputDateFormatProp: {
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
-  },
+    year: 'numeric'
+  }
 }
 
 const isValidDate = (date: Date) => {
@@ -68,7 +68,7 @@ interface DatepickerProps extends Omit<InputProps, 'onChange' | 'value'> {
   disableFuture?: boolean
 }
 
-export default function DatePicker({
+const DatePicker = ({
   id,
   onChange,
   value,
@@ -77,7 +77,7 @@ export default function DatePicker({
   disabled,
   readOnly,
   ...props
-}: DatepickerProps) {
+}: DatepickerProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [localValue, setLocalValue] = useState('')
   const calendarWrapperRef = useRef<HTMLDivElement>(null)
@@ -99,12 +99,12 @@ export default function DatePicker({
     overlay: {
       backgroundColor: 'transparent',
       zIndex: 9999,
-      top: calendarWrapperRef.current?.getBoundingClientRect()?.top,
+      top: calendarWrapperRef.current?.getBoundingClientRect()?.top
     },
     content: {
       left: calendarWrapperRef.current?.getBoundingClientRect()?.left,
-      width: calendarWrapperRef.current?.clientWidth,
-    },
+      width: calendarWrapperRef.current?.clientWidth
+    }
   }
 
   useEffect(() => {
@@ -114,10 +114,7 @@ export default function DatePicker({
   }, [value])
 
   return (
-    <div
-      id={id}
-      className="w-full relative"
-    >
+    <div id={id} className="w-full relative">
       <Input
         {...props}
         disabled={disabled}
@@ -135,13 +132,12 @@ export default function DatePicker({
           onRequestClose={() => setIsOpen(false)}
           className="mt-1 max-h-[calc(36px*5)] absolute z-50 focus-visible:outline-none"
         >
-
           <TWDatepicker
             options={{
               ...options,
               ...(option || {}),
               ...(disableFuture && { maxDate: currDate }),
-              defaultDate,
+              defaultDate
             }}
             onChange={handleChange}
             show={isOpen}
@@ -152,7 +148,8 @@ export default function DatePicker({
           </TWDatepicker>
         </ReactModal>
       </div>
-
     </div>
   )
 }
+
+export default DatePicker

@@ -1,249 +1,247 @@
-import {
-  createBrowserRouter,
-} from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 
-import PageLogin from 'pages/Login'
-import PageHome from 'pages/Home'
-import PagePermission from 'pages/Permission'
-import PageRole from 'pages/Role'
-import PageUser from 'pages/User'
-import PageUnitApartment from 'pages/Unit/Apartment'
-import PageUnitCafe from 'pages/Unit/Cafe'
-import PageCalendar from 'pages/Calendar'
-import PageCategoryWork from 'pages/Category/Work'
-import PageCategoryRenovation from 'pages/Category/Renovation'
-import PageCategoryItem from 'pages/Category/Item'
+import PageAccessCardParking from 'pages/AccessCard/Park'
+import PageAccessCardUnit from 'pages/AccessCard/Unit'
+import PageAccessCardVehicleList from 'pages/AccessCard/VehicleList'
+import PageAreaList from 'pages/Area/List'
 import PageAssetGroup from 'pages/Asset/Group'
+import PageAssetList from 'pages/Asset/List'
 import PageAssetLocation from 'pages/Asset/Location'
 import PageAssetType from 'pages/Asset/Type'
-import PageAssetList from 'pages/Asset/List'
-import PageOwner from 'pages/Owner'
-import PageTenantUnit from 'pages/Tenant/Unit'
-import PageAccessCardUnit from 'pages/AccessCard/Unit'
-import PageAccessCardParking from 'pages/AccessCard/Park'
-import PageAccessCardVehicleList from 'pages/AccessCard/VehicleList'
-import PageError404 from 'pages/Error/404'
-import PageWork from 'pages/UnitPermission/Work'
-import PageRenovation from 'pages/UnitPermission/Renovation'
-import PageIncomingItem from 'pages/UnitPermission/IncomingItem'
-import PageOutgoingItem from 'pages/UnitPermission/OutgoingItem'
-import PageItemStock from 'pages/Item/Stock'
-import PageItemHistory from 'pages/Item/History'
-import PageDepartment from 'pages/Department'
-import PageItemRequest from 'pages/Item/Request'
-import PageVendorList from 'pages/Vendor/List'
-import PageVendorContract from 'pages/Vendor/Contract'
-import PageItemPurchase from 'pages/Item/Purchase'
-import PageMaintenanceAsset from 'pages/Maintenance/List'
-import PageMaintenanceChecklist from 'pages/Maintenance/Checklist'
-import PageTodoList from 'pages/TodoList'
-import PageNote from 'pages/Note'
-import PageProfile from 'pages/Profile'
+import PageCalendar from 'pages/Calendar'
 import PageCategoryInquiry from 'pages/Category/Inquiry'
+import PageCategoryItem from 'pages/Category/Item'
+import PageCategoryRenovation from 'pages/Category/Renovation'
+import PageCategoryWork from 'pages/Category/Work'
+import PageDepartment from 'pages/Department'
+import PageError404 from 'pages/Error/404'
+import PageFinancialReport from 'pages/FinancialReport'
+import PageHome from 'pages/Home'
 import PageInquiryTicket from 'pages/Inquiry/Ticket'
 import PageInquiryWorkOrder from 'pages/Inquiry/WorkOrder'
-import PageTemplateForm from 'pages/Template/Form'
-import PageTemplateDocument from 'pages/Template/Document'
-import PageUnitFacility from 'pages/Unit/Facility'
-import PageAreaList from 'pages/Area/List'
+import PageItemHistory from 'pages/Item/History'
+import PageItemPurchase from 'pages/Item/Purchase'
+import PageItemRequest from 'pages/Item/Request'
+import PageItemStock from 'pages/Item/Stock'
+import PageLogin from 'pages/Login'
+import PageMaintenanceChecklist from 'pages/Maintenance/Checklist'
+import PageMaintenanceAsset from 'pages/Maintenance/List'
 import PageNews from 'pages/News'
-import PageUnitPermissionFacility from 'pages/UnitPermission/Facility'
+import PageNote from 'pages/Note'
+import PageOwner from 'pages/Owner'
+import PagePermission from 'pages/Permission'
+import PageProfile from 'pages/Profile'
+import PageRole from 'pages/Role'
+import PageTemplateDocument from 'pages/Template/Document'
+import PageTemplateForm from 'pages/Template/Form'
 import PageTenantCafe from 'pages/Tenant/Cafe'
-import PageFinancialReport from 'pages/FinancialReport'
+import PageTenantUnit from 'pages/Tenant/Unit'
+import PageTodoList from 'pages/TodoList'
+import PageUnitApartment from 'pages/Unit/Apartment'
+import PageUnitCafe from 'pages/Unit/Cafe'
+import PageUnitFacility from 'pages/Unit/Facility'
+import PageUnitPermissionFacility from 'pages/UnitPermission/Facility'
+import PageIncomingItem from 'pages/UnitPermission/IncomingItem'
+import PageOutgoingItem from 'pages/UnitPermission/OutgoingItem'
+import PageRenovation from 'pages/UnitPermission/Renovation'
+import PageWork from 'pages/UnitPermission/Work'
+import PageUser from 'pages/User'
+import PageVendorContract from 'pages/Vendor/Contract'
+import PageVendorList from 'pages/Vendor/List'
 
 const router = createBrowserRouter([
   {
     path: '/',
-    Component: PageHome,
+    Component: PageHome
   },
   {
     path: '/login',
-    Component: PageLogin,
+    Component: PageLogin
   },
   {
     path: '/permission',
-    Component: PagePermission,
+    Component: PagePermission
   },
   {
     path: '/role',
-    Component: PageRole,
+    Component: PageRole
   },
   {
     path: '/user',
-    Component: PageUser,
+    Component: PageUser
   },
   {
     path: '/department',
-    Component: PageDepartment,
+    Component: PageDepartment
   },
   {
     path: '/unit/apartment',
-    Component: PageUnitApartment,
+    Component: PageUnitApartment
   },
   {
     path: '/unit/cafe',
-    Component: PageUnitCafe,
+    Component: PageUnitCafe
   },
   {
     path: '/unit/facility',
-    Component: PageUnitFacility,
+    Component: PageUnitFacility
   },
   {
     path: '/category/work',
-    Component: PageCategoryWork,
+    Component: PageCategoryWork
   },
   {
     path: '/category/renovation',
-    Component: PageCategoryRenovation,
+    Component: PageCategoryRenovation
   },
   {
     path: '/category/item',
-    Component: PageCategoryItem,
+    Component: PageCategoryItem
   },
   {
     path: '/category/inquiry',
-    Component: PageCategoryInquiry,
+    Component: PageCategoryInquiry
   },
   {
     path: '/asset/group',
-    Component: PageAssetGroup,
+    Component: PageAssetGroup
   },
   {
     path: '/asset/location',
-    Component: PageAssetLocation,
+    Component: PageAssetLocation
   },
   {
     path: '/asset/type',
-    Component: PageAssetType,
+    Component: PageAssetType
   },
   {
     path: '/asset/list',
-    Component: PageAssetList,
+    Component: PageAssetList
   },
   {
     path: '/area/list',
-    Component: PageAreaList,
+    Component: PageAreaList
   },
   {
     path: '/template/form',
-    Component: PageTemplateForm,
+    Component: PageTemplateForm
   },
   {
     path: '/template/document',
-    Component: PageTemplateDocument,
+    Component: PageTemplateDocument
   },
   {
     path: '/owner',
-    Component: PageOwner,
+    Component: PageOwner
   },
   {
     path: '/tenant-unit',
-    Component: PageTenantUnit,
+    Component: PageTenantUnit
   },
   {
     path: '/tenant-cafe',
-    Component: PageTenantCafe,
+    Component: PageTenantCafe
   },
   {
     path: '/access-card/unit',
-    Component: PageAccessCardUnit,
+    Component: PageAccessCardUnit
   },
   {
     path: '/access-card/parking',
-    Component: PageAccessCardParking,
+    Component: PageAccessCardParking
   },
   {
     path: '/access-card/vehicle-list',
-    Component: PageAccessCardVehicleList,
+    Component: PageAccessCardVehicleList
   },
   {
     path: '/unit-permission/work',
-    Component: PageWork,
+    Component: PageWork
   },
   {
     path: '/unit-permission/renovation',
-    Component: PageRenovation,
+    Component: PageRenovation
   },
   {
     path: '/unit-permission/incoming-item',
-    Component: PageIncomingItem,
+    Component: PageIncomingItem
   },
   {
     path: '/unit-permission/outgoing-item',
-    Component: PageOutgoingItem,
+    Component: PageOutgoingItem
   },
   {
     path: '/unit-permission/facility',
-    Component: PageUnitPermissionFacility,
+    Component: PageUnitPermissionFacility
   },
   {
     path: '/vendor/list',
-    Component: PageVendorList,
+    Component: PageVendorList
   },
   {
     path: '/vendor/contract',
-    Component: PageVendorContract,
+    Component: PageVendorContract
   },
   {
     path: '/item/stock',
-    Component: PageItemStock,
+    Component: PageItemStock
   },
   {
     path: '/item/history',
-    Component: PageItemHistory,
+    Component: PageItemHistory
   },
   {
     path: '/item/request',
-    Component: PageItemRequest,
+    Component: PageItemRequest
   },
   {
     path: '/item/purchase',
-    Component: PageItemPurchase,
+    Component: PageItemPurchase
   },
   {
     path: '/maintenance/asset',
-    Component: PageMaintenanceAsset,
+    Component: PageMaintenanceAsset
   },
   {
     path: '/maintenance/checklist',
-    Component: PageMaintenanceChecklist,
+    Component: PageMaintenanceChecklist
   },
   {
     path: '/inquiry/ticket',
-    Component: PageInquiryTicket,
+    Component: PageInquiryTicket
   },
   {
     path: '/inquiry/workorder',
-    Component: PageInquiryWorkOrder,
+    Component: PageInquiryWorkOrder
   },
   {
     path: '/news',
-    Component: PageNews,
+    Component: PageNews
   },
   {
     path: '/financial-report',
-    Component: PageFinancialReport,
+    Component: PageFinancialReport
   },
   {
     path: '/app-calendar',
-    Component: PageCalendar,
+    Component: PageCalendar
   },
   {
     path: '/app-todo',
-    Component: PageTodoList,
+    Component: PageTodoList
   },
   {
     path: '/app-note',
-    Component: PageNote,
+    Component: PageNote
   },
   {
     path: '/profile',
-    Component: PageProfile,
+    Component: PageProfile
   },
   {
     path: '*',
-    Component: PageError404,
-  },
+    Component: PageError404
+  }
 ])
 
 export default router

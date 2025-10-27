@@ -1,64 +1,66 @@
-import {
-  useState, useEffect, useRef,
-} from 'react'
+import { useState, useEffect, useRef } from 'react'
 import QRCode from 'react-qr-code'
 
-import Layout from 'components/Layout'
 import Breadcrumb from 'components/Breadcrumb'
-import Table from 'components/Table/Table'
 import Button from 'components/Button'
-import Modal from 'components/Modal'
-import Input from 'components/Form/Input'
-import Popover from 'components/Popover'
-import { Edit as IconEdit, TrashAlt as IconTrash, FileText as IconFile } from 'components/Icons'
-import type { TableHeaderProps } from 'components/Table/Table'
-import useDebounce from 'hooks/useDebounce'
-import LoadingOverlay from 'components/Loading/LoadingOverlay'
-import Toast from 'components/Toast'
 import Autocomplete from 'components/Form/Autocomplete'
-import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import Input from 'components/Form/Input'
 import TextArea from 'components/Form/TextArea'
-import { svgToImage } from 'utils/file'
+import {
+  Edit as IconEdit,
+  TrashAlt as IconTrash,
+  FileText as IconFile
+} from 'components/Icons'
+import Layout from 'components/Layout'
+import LoadingOverlay from 'components/Loading/LoadingOverlay'
+import Modal from 'components/Modal'
+import Popover from 'components/Popover'
+import Table from 'components/Table/Table'
+import type { TableHeaderProps } from 'components/Table/Table'
+import Toast from 'components/Toast'
+import { PAGE_SIZE, MODAL_CONFIRM_TYPE } from 'constants/form'
+import useDebounce from 'hooks/useDebounce'
 import api from 'utils/api'
+import { svgToImage } from 'utils/file'
 
 const PAGE_NAME = 'List Aset'
 
 const TABLE_HEADERS: TableHeaderProps[] = [
   {
     label: 'Kode',
-    key: 'code',
+    key: 'code'
   },
   {
     label: 'Nama',
-    key: 'name',
+    key: 'name'
   },
   {
     label: 'Golongan',
-    key: 'asset_group_name',
+    key: 'asset_group_name'
   },
   {
     label: 'Lokasi',
-    key: 'asset_location_name',
+    key: 'asset_location_name'
   },
   {
     label: 'Jenis',
-    key: 'asset_type_name',
+    key: 'asset_type_name'
   },
   {
     label: 'Aksi',
     key: 'action',
     className: 'w-[100px]',
-    hasAction: true,
-  },
+    hasAction: true
+  }
 ]
 
-function PageAssetList() {
+const PageAssetList = () => {
   const [userPermissions, setUserPermissions] = useState<string[]>([])
   const [data, setData] = useState<DataTableProps>({
     data: [],
     page: 1,
     limit: 10,
-    total: 0,
+    total: 0
   })
   const [page, setPage] = useState(1)
   const [fields, setFields] = useState({
@@ -72,28 +74,36 @@ function PageAssetList() {
     form_checklist_id: 0,
     year: '',
     brand: '',
-    notes: '',
+    notes: ''
   })
-  const [dataAssetGroup, setDataAssetGroup] = useState<{ id: number, name: string }[]>([])
-  const [dataAssetLocation, setDataAssetLocation] = useState<{ id: number, name: string }[]>([])
-  const [dataAssetType, setDataAssetType] = useState<{ id: number, name: string }[]>([])
-  const [dataFormMaintenance, setDataFormMaintenance] = useState<{ id: number, name: string, type: string }[]>([])
+  const [dataAssetGroup, setDataAssetGroup] = useState<
+    { id: number; name: string }[]
+  >([])
+  const [dataAssetLocation, setDataAssetLocation] = useState<
+    { id: number; name: string }[]
+  >([])
+  const [dataAssetType, setDataAssetType] = useState<
+    { id: number; name: string }[]
+  >([])
+  const [dataFormMaintenance, setDataFormMaintenance] = useState<
+    { id: number; name: string; type: string }[]
+  >([])
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [toast, setToast] = useState({
     open: false,
-    message: '',
+    message: ''
   })
   const [search, setSearch] = useState('')
   const [modalForm, setModalForm] = useState({
     title: '',
     open: false,
-    readOnly: false,
+    readOnly: false
   })
   const [modalConfirm, setModalConfirm] = useState({
     title: '',
     description: '',
-    open: false,
+    open: false
   })
   const [submitType, setSubmitType] = useState('create')
   const qrCodeRef = useRef<any>(null)
@@ -103,7 +113,7 @@ function PageAssetList() {
   const handleCloseToast = () => {
     setToast({
       open: false,
-      message: '',
+      message: ''
     })
   }
 
@@ -111,11 +121,11 @@ function PageAssetList() {
     setModalForm({
       title: '',
       open: false,
-      readOnly: false,
+      readOnly: false
     })
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setFields({
       id: 0,
@@ -128,7 +138,7 @@ function PageAssetList() {
       form_checklist_id: 0,
       year: '',
       brand: '',
-      notes: '',
+      notes: ''
     })
   }
 
@@ -136,12 +146,12 @@ function PageAssetList() {
     if (submitType !== 'delete') {
       setModalForm((prevState) => ({
         ...prevState,
-        open: true,
+        open: true
       }))
     }
     setModalConfirm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
   }
 
@@ -149,7 +159,7 @@ function PageAssetList() {
     setModalForm({
       title: `Tambah ${PAGE_NAME} Baru`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
   }
 
@@ -157,7 +167,7 @@ function PageAssetList() {
     setModalForm({
       title: `Detail ${PAGE_NAME}`,
       open: true,
-      readOnly: true,
+      readOnly: true
     })
     setFields({
       id: fieldData.id,
@@ -170,7 +180,7 @@ function PageAssetList() {
       form_maintenance_id: fieldData.form_maintenance_id,
       year: fieldData.year,
       brand: fieldData.brand,
-      notes: fieldData.notes,
+      notes: fieldData.notes
     })
   }
 
@@ -178,7 +188,7 @@ function PageAssetList() {
     setModalForm({
       title: `Ubah ${PAGE_NAME}`,
       open: true,
-      readOnly: false,
+      readOnly: false
     })
     setFields({
       id: fieldData.id,
@@ -191,7 +201,7 @@ function PageAssetList() {
       form_maintenance_id: fieldData.form_maintenance_id,
       year: fieldData.year,
       brand: fieldData.brand,
-      notes: fieldData.notes,
+      notes: fieldData.notes
     })
   }
 
@@ -199,19 +209,19 @@ function PageAssetList() {
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE.delete.title,
       description: MODAL_CONFIRM_TYPE.delete.description,
-      open: true,
+      open: true
     })
     setSubmitType('delete')
     setFields((prevState) => ({
       ...prevState,
-      id: fieldData.id,
+      id: fieldData.id
     }))
   }
 
   const handleChangeField = (fieldName: string, value: string | number) => {
     setFields((prevState) => ({
       ...prevState,
-      [fieldName]: value,
+      [fieldName]: value
     }))
   }
 
@@ -224,12 +234,12 @@ function PageAssetList() {
   const handleClickConfirm = (type: string) => {
     setModalForm((prevState) => ({
       ...prevState,
-      open: false,
+      open: false
     }))
     setModalConfirm({
       title: MODAL_CONFIRM_TYPE[type].title,
       description: MODAL_CONFIRM_TYPE[type].description,
-      open: true,
+      open: true
     })
     setSubmitType(type)
   }
@@ -243,8 +253,8 @@ function PageAssetList() {
       params: {
         page,
         limit: PAGE_SIZE,
-        search,
-      },
+        search
+      }
     })
       .then(({ data: responseData }) => {
         setData(responseData.data)
@@ -252,9 +262,10 @@ function PageAssetList() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -266,8 +277,8 @@ function PageAssetList() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -277,9 +288,10 @@ function PageAssetList() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -291,8 +303,8 @@ function PageAssetList() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -302,9 +314,10 @@ function PageAssetList() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -316,8 +329,8 @@ function PageAssetList() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -327,9 +340,10 @@ function PageAssetList() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
@@ -341,8 +355,8 @@ function PageAssetList() {
       withAuth: true,
       method: 'GET',
       params: {
-        limit: 9999,
-      },
+        limit: 9999
+      }
     })
       .then(({ data: responseData }) => {
         if (responseData.data.data.length > 0) {
@@ -352,32 +366,36 @@ function PageAssetList() {
       .catch((error) => {
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingData(false)
       })
   }
 
-  const apiSubmitCreate = () => api({
-    url: '/v1/asset/create',
-    withAuth: true,
-    method: 'POST',
-    data: fields,
-  })
+  const apiSubmitCreate = () =>
+    api({
+      url: '/v1/asset/create',
+      withAuth: true,
+      method: 'POST',
+      data: fields
+    })
 
-  const apiSubmitUpdate = () => api({
-    url: `/v1/asset/${fields.id}`,
-    withAuth: true,
-    method: 'PUT',
-    data: fields,
-  })
+  const apiSubmitUpdate = () =>
+    api({
+      url: `/v1/asset/${fields.id}`,
+      withAuth: true,
+      method: 'PUT',
+      data: fields
+    })
 
-  const apiSubmitDelete = () => api({
-    url: `/v1/asset/${fields.id}`,
-    withAuth: true,
-    method: 'DELETE',
-  })
+  const apiSubmitDelete = () =>
+    api({
+      url: `/v1/asset/${fields.id}`,
+      withAuth: true,
+      method: 'DELETE'
+    })
 
   const handleClickSubmit = () => {
     setIsLoadingSubmit(true)
@@ -388,21 +406,23 @@ function PageAssetList() {
       apiSubmit = apiSubmitDelete
     }
 
-    apiSubmit().then(() => {
-      handleGetAssets()
-      handleModalFormClose()
-      setToast({
-        open: true,
-        message: MODAL_CONFIRM_TYPE[submitType].message,
+    apiSubmit()
+      .then(() => {
+        handleGetAssets()
+        handleModalFormClose()
+        setToast({
+          open: true,
+          message: MODAL_CONFIRM_TYPE[submitType].message
+        })
       })
-    })
       .catch((error) => {
         handleModalConfirmClose()
         setToast({
           open: true,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message
         })
-      }).finally(() => {
+      })
+      .finally(() => {
         setIsLoadingSubmit(false)
       })
   }
@@ -421,26 +441,41 @@ function PageAssetList() {
     action: (
       <div className="flex items-center gap-1">
         <Popover content="Detail">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalDetailOpen(column)}>
+          <Button
+            variant="primary"
+            size="sm"
+            icon
+            onClick={() => handleModalDetailOpen(column)}
+          >
             <IconFile className="w-4 h-4" />
           </Button>
         </Popover>
         {userPermissions.includes('asset-list-edit') && (
-        <Popover content="Ubah">
-          <Button variant="primary" size="sm" icon onClick={() => handleModalUpdateOpen(column)}>
-            <IconEdit className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Ubah">
+            <Button
+              variant="primary"
+              size="sm"
+              icon
+              onClick={() => handleModalUpdateOpen(column)}
+            >
+              <IconEdit className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
         {userPermissions.includes('asset-list-delete') && (
-        <Popover content="Hapus">
-          <Button variant="danger" size="sm" icon onClick={() => handleModalDeleteOpen(column)}>
-            <IconTrash className="w-4 h-4" />
-          </Button>
-        </Popover>
+          <Popover content="Hapus">
+            <Button
+              variant="danger"
+              size="sm"
+              icon
+              onClick={() => handleModalDeleteOpen(column)}
+            >
+              <IconTrash className="w-4 h-4" />
+            </Button>
+          </Popover>
         )}
       </div>
-    ),
+    )
   }))
 
   useEffect(() => {
@@ -469,9 +504,15 @@ function PageAssetList() {
         <div className="w-full p-4 bg-white rounded-lg dark:bg-black">
           <div className="mb-4 flex gap-4 flex-col sm:flex-row sm:items-center">
             <div className="w-full sm:w-[30%]">
-              <Input placeholder="Cari nama" onChange={(e) => setSearch(e.target.value)} fullWidth />
+              <Input
+                placeholder="Cari nama"
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
             </div>
-            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>Tambah</Button>
+            <Button className="sm:ml-auto" onClick={handleModalCreateOpen}>
+              Tambah
+            </Button>
           </div>
 
           <Table
@@ -487,7 +528,11 @@ function PageAssetList() {
       </div>
 
       <Modal open={modalForm.open} title={modalForm.title}>
-        <form autoComplete="off" className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6" onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}>
+        <form
+          autoComplete="off"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6"
+          onSubmit={() => handleClickConfirm(fields.id ? 'update' : 'create')}
+        >
           <Input
             placeholder="Nama Aset"
             label="Nama Aset"
@@ -504,13 +549,21 @@ function PageAssetList() {
             name="asset_group_id"
             items={dataAssetGroup.map((itemData) => ({
               label: itemData.name,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataAssetGroup.find((itemData) => itemData.id === fields.asset_group_id)?.name || '',
-              value: dataAssetGroup.find((itemData) => itemData.id === fields.asset_group_id)?.id || '',
+              label:
+                dataAssetGroup.find(
+                  (itemData) => itemData.id === fields.asset_group_id
+                )?.name || '',
+              value:
+                dataAssetGroup.find(
+                  (itemData) => itemData.id === fields.asset_group_id
+                )?.id || ''
             }}
-            onChange={(value) => handleChangeField('asset_group_id', value.value)}
+            onChange={(value) =>
+              handleChangeField('asset_group_id', value.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -521,13 +574,21 @@ function PageAssetList() {
             name="asset_location_id"
             items={dataAssetLocation.map((itemData) => ({
               label: itemData.name,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataAssetLocation.find((itemData) => itemData.id === fields.asset_location_id)?.name || '',
-              value: dataAssetLocation.find((itemData) => itemData.id === fields.asset_location_id)?.id || '',
+              label:
+                dataAssetLocation.find(
+                  (itemData) => itemData.id === fields.asset_location_id
+                )?.name || '',
+              value:
+                dataAssetLocation.find(
+                  (itemData) => itemData.id === fields.asset_location_id
+                )?.id || ''
             }}
-            onChange={(value) => handleChangeField('asset_location_id', value.value)}
+            onChange={(value) =>
+              handleChangeField('asset_location_id', value.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -538,13 +599,21 @@ function PageAssetList() {
             name="asset_type_id"
             items={dataAssetType.map((itemData) => ({
               label: itemData.name,
-              value: itemData.id,
+              value: itemData.id
             }))}
             value={{
-              label: dataAssetType.find((itemData) => itemData.id === fields.asset_type_id)?.name || '',
-              value: dataAssetType.find((itemData) => itemData.id === fields.asset_type_id)?.id || '',
+              label:
+                dataAssetType.find(
+                  (itemData) => itemData.id === fields.asset_type_id
+                )?.name || '',
+              value:
+                dataAssetType.find(
+                  (itemData) => itemData.id === fields.asset_type_id
+                )?.id || ''
             }}
-            onChange={(value) => handleChangeField('asset_type_id', value.value)}
+            onChange={(value) =>
+              handleChangeField('asset_type_id', value.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -565,7 +634,9 @@ function PageAssetList() {
             name="year"
             type="tel"
             value={fields.year}
-            onChange={(e) => handleChangeNumericField(e.target.name, e.target.value)}
+            onChange={(e) =>
+              handleChangeNumericField(e.target.name, e.target.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -586,16 +657,25 @@ function PageAssetList() {
             placeholder="Form Maintenance"
             label="Form Maintenance"
             name="form_maintenance_id"
-            items={dataFormMaintenance.filter((itemData) => itemData.type === '1')
+            items={dataFormMaintenance
+              .filter((itemData) => itemData.type === '1')
               .map((itemData) => ({
                 label: itemData.name,
-                value: itemData.id,
+                value: itemData.id
               }))}
             value={{
-              label: dataFormMaintenance.find((itemData) => itemData.id === fields.form_maintenance_id)?.name || '',
-              value: dataFormMaintenance.find((itemData) => itemData.id === fields.form_maintenance_id)?.id || '',
+              label:
+                dataFormMaintenance.find(
+                  (itemData) => itemData.id === fields.form_maintenance_id
+                )?.name || '',
+              value:
+                dataFormMaintenance.find(
+                  (itemData) => itemData.id === fields.form_maintenance_id
+                )?.id || ''
             }}
-            onChange={(value) => handleChangeField('form_maintenance_id', value.value)}
+            onChange={(value) =>
+              handleChangeField('form_maintenance_id', value.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -604,16 +684,25 @@ function PageAssetList() {
             placeholder="Form Checklist"
             label="Form Checklist"
             name="form_checklist_id"
-            items={dataFormMaintenance.filter((itemData) => itemData.type === '2')
+            items={dataFormMaintenance
+              .filter((itemData) => itemData.type === '2')
               .map((itemData) => ({
                 label: itemData.name,
-                value: itemData.id,
+                value: itemData.id
               }))}
             value={{
-              label: dataFormMaintenance.find((itemData) => itemData.id === fields.form_checklist_id)?.name || '',
-              value: dataFormMaintenance.find((itemData) => itemData.id === fields.form_checklist_id)?.id || '',
+              label:
+                dataFormMaintenance.find(
+                  (itemData) => itemData.id === fields.form_checklist_id
+                )?.name || '',
+              value:
+                dataFormMaintenance.find(
+                  (itemData) => itemData.id === fields.form_checklist_id
+                )?.id || ''
             }}
-            onChange={(value) => handleChangeField('form_checklist_id', value.value)}
+            onChange={(value) =>
+              handleChangeField('form_checklist_id', value.value)
+            }
             readOnly={modalForm.readOnly}
             fullWidth
           />
@@ -644,35 +733,47 @@ function PageAssetList() {
               </div>
             </div>
           )}
-
         </form>
         <div className="flex gap-2 justify-end p-4">
           {modalForm.readOnly && (
             <Button onClick={handleSaveQR}>Save QR Code</Button>
           )}
-          <Button onClick={handleModalFormClose} variant="default">Tutup</Button>
+          <Button onClick={handleModalFormClose} variant="default">
+            Tutup
+          </Button>
           {!modalForm.readOnly && (
-            <Button onClick={() => handleClickConfirm(fields.id ? 'update' : 'create')}>Kirim</Button>
+            <Button
+              onClick={() =>
+                handleClickConfirm(fields.id ? 'update' : 'create')
+              }
+            >
+              Kirim
+            </Button>
           )}
         </div>
       </Modal>
 
       <Modal open={modalConfirm.open} title={modalConfirm.title} size="sm">
         <div className="p-6">
-          <p className="text-sm text-slate-600 dark:text-white">{modalConfirm.description}</p>
+          <p className="text-sm text-slate-600 dark:text-white">
+            {modalConfirm.description}
+          </p>
         </div>
         <div className="flex gap-2 justify-end p-4">
-          <Button onClick={handleModalConfirmClose} variant="default">Kembali</Button>
+          <Button onClick={handleModalConfirmClose} variant="default">
+            Kembali
+          </Button>
           <Button onClick={handleClickSubmit}>Kirim</Button>
         </div>
       </Modal>
 
-      {isLoadingSubmit && (
-        <LoadingOverlay />
-      )}
+      {isLoadingSubmit && <LoadingOverlay />}
 
-      <Toast open={toast.open} message={toast.message} onClose={handleCloseToast} />
-
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={handleCloseToast}
+      />
     </Layout>
   )
 }

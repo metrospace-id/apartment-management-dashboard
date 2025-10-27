@@ -10,15 +10,13 @@ interface ApiProps {
   params?: Record<string, any>
 }
 
-const api = ({
-  withAuth, method, url, data, headers, params,
-}: ApiProps) => {
+const api = ({ withAuth, method, url, data, headers, params }: ApiProps) => {
   const token = new Cookies().get('token')
   const newHeaders: Record<string, any> = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'x-api-key': process.env.REACT_APP_API_KEY,
-    ...headers,
+    ...headers
   }
 
   if (withAuth) {
@@ -31,7 +29,7 @@ const api = ({
     withCredentials: false,
     headers: newHeaders,
     params,
-    data,
+    data
   })
 }
 

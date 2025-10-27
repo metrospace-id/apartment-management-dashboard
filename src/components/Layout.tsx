@@ -384,7 +384,7 @@ const Layout = ({ children }: LayoutProps) => {
                 onClick={handleClickProfile}
               >
                 <img
-                  src={profile.picture || 'https://via.placeholder.com/300x300'}
+                  src={profile.picture || 'https://placehold.co/300x300'}
                   className="rounded-full w-8 h-8"
                   alt="avatar"
                 />

@@ -282,8 +282,7 @@ const PageProfile = () => {
         name: localStorageUser.name,
         email: localStorageUser.email,
         email_verified_at: localStorageUser.email_verified_at,
-        picture:
-          localStorageUser.picture || 'https://via.placeholder.com/300x300'
+        picture: localStorageUser.picture || 'https://placehold.co/300x300'
       }))
       setIsLoadingSubmit(false)
     }, 500)
